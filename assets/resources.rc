@@ -1,0 +1,4 @@
+// Win32 Icon Resource Info
+// Compile with: rc /r icons.rc
+
+APPICON ICON "icon.ico"

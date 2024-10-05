@@ -1,0 +1,10 @@
+build
+
+*.res
+*.zip
+
+*.sublime-*
+*.swp*
+
+notes.txt
+notes.md
