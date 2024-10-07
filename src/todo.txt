@@ -1,0 +1,19 @@
+Todo:
+
+-attack code
+--normal attack code
+--charged attack code
+--jump
+
+-enemies
+--make enemy group
+--make enemy type
+--make enemy attack code
+--make a friggin boss
+
+-sprites
+--cleaver
+--rapier
+--jump attacks
+--normal enemy
+--Bosss!!!!

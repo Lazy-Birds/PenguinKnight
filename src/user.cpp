@@ -27,8 +27,6 @@ struct Entity
     Vector2 anchor;
 
     i32 facing;
-    Image *player_spr_left;
-    Image *player_spr_right;
 
     i32 sprite_index;
     f32 animation_time;
@@ -47,6 +45,9 @@ Entity enemy_plant = {};
 Image spr_guy;
 
 bool swing_weapon;
+
+f32 walk_frame = 0;
+f32 attack_frame = 0;
 
 Rectangle2 get_entity_rect(Entity *entity) {
     return r2_bounds(entity->position, entity->size, v2_zero, v2_one);
@@ -108,10 +109,12 @@ void load_enemy() {
 
 void GameStart(Game_Input *input, Game_Output *out)
 {
+    load_weapon();
+
     player.position = v2(out->width*.5, out->height*.5);
-    player.size = v2(48, 48);
+    player.size = v2(48, 64);
     player.anchor = v2(0.5, 0.5);
-    player.facing = -1;
+    player.facing = 1;
     player.max_health = 5;
     player.current_health = 4;
     player.min_health = 0;
@@ -119,40 +122,9 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_stamina = player.max_stamina;
     player.invuln = false;
     player.alive = true;
-    static Image penguin_knight_left[] = 
-    {
-        LoadImage(S("penguin_walking_left1.png")),
-        LoadImage(S("penguin_walking_left2.png")),
-        LoadImage(S("penguin_walking_left3.png")),
-        LoadImage(S("penguin_walking_left4.png")),
-    };
-    static Image penguin_knight_right[] = 
-    {
-        LoadImage(S("penguin_walking_right1.png")),
-        LoadImage(S("penguin_walking_right2.png")),
-        LoadImage(S("penguin_walking_right3.png")),
-        LoadImage(S("penguin_walking_right4.png")),
-    };
-    player.player_spr_left = penguin_knight_left;
-    player.player_spr_right = penguin_knight_right;
-    static Image excalibrrr[] = 
-    {
-        LoadImage(S("Excalibrrr_right1.png")),
-        LoadImage(S("Excalibrrr_right2.png")),
-        LoadImage(S("Excalibrrr_right3.png")),
-        LoadImage(S("Excalibrrr_right4.png")),
-        LoadImage(S("Excalibrrr_right5.png")),
-        LoadImage(S("Excalibrrr_left1.png")),
-        LoadImage(S("Excalibrrr_left2.png")),
-        LoadImage(S("Excalibrrr_left3.png")),
-        LoadImage(S("Excalibrrr_left4.png")),
-        LoadImage(S("Excalibrrr_left5.png")),
-    };
-    player.weapon.image = excalibrrr;
-    player.weapon.name = S("Excalibrrr");
+    player.weapon = sword;
     player.weapon.position = player.position;
-    player.weapon.size = v2(96, 48);
-    player.weapon.weapon_swing = 0;
+    
 
     swing_weapon = false;
 
@@ -161,11 +133,30 @@ void GameStart(Game_Input *input, Game_Output *out)
     load_enemy();
 }
 
+i32 get_frame_walk(f32 dt) {
+    return floor_f32(walk_frame*dt*3);
+}
+
+i32 get_frame_attack(Weapon weapon, f32 dt) {
+    return floor_f32(2+attack_frame*dt*6);
+}
+
+void frame_updates() {
+    if (walk_frame == 29) {
+        walk_frame = 0;
+    } else {
+        walk_frame++;
+    }
+
+    attack_frame++;
+}
+
 void GameUpdate(Game_Input *input, Game_Output *out)
 {   
     f32 max_speed = 600.0;
     Controller c0 = input->controllers[0];
     f32 dt = input->dt;
+
 
     if (c0.right && !swing_weapon)
     {
@@ -175,10 +166,10 @@ void GameUpdate(Game_Input *input, Game_Output *out)
             player.velocity.x = move_f32(player.velocity.x, 300, 300 * dt);
         }
         
-        if (player.facing > 0) {
-            player.facing = -1;
+        if (player.facing < 0) {
+            player.facing = 1;
         } else {
-            player.facing--;
+            player.facing++;
         }
     }
     else if (c0.left && !swing_weapon)
@@ -188,10 +179,10 @@ void GameUpdate(Game_Input *input, Game_Output *out)
         } else {
             player.velocity.x = move_f32(player.velocity.x, -300, 300 * dt);
         }
-        if (player.facing < 0) {
-            player.facing = 1;
+        if (player.facing > 0) {
+            player.facing = -1;
         } else {
-            player.facing++;
+            player.facing--;
         }
     }
     else
@@ -200,7 +191,8 @@ void GameUpdate(Game_Input *input, Game_Output *out)
         player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
     }
 
-    if (c0.a && player.current_stamina > 20) {
+
+    if (c0.up && player.current_stamina > 20) {
         if (player.position.y==out->height-player.size.y || entity_on_wall(&player)) {
             player.velocity.y=-248;
             player.current_stamina-=20;
@@ -210,16 +202,20 @@ void GameUpdate(Game_Input *input, Game_Output *out)
     if ((input->mouse.left) && player.current_stamina > 20 && !swing_weapon) {
         swing_weapon = true;
         player.current_stamina-=20;
+        attack_frame = 0;
     }
 
     if (player.current_stamina < player.max_stamina) {
         player.current_stamina+=20*dt;
     }
 
+
+
     player.velocity.y+=496*input->dt;
 
     f32 dy = player.velocity.y*input->dt;
     f32 dx = player.velocity.x*input->dt;
+
 
     for (int i = 0; i < abs_f32(dy); i++) {
         player.position.y+=sign_f32(dy);
@@ -228,6 +224,7 @@ void GameUpdate(Game_Input *input, Game_Output *out)
             player.velocity.y=0;
         }
     }
+
 
     for (int i = 0; i < abs_f32(dx); i++) {
         player.position.x+=sign_f32(dx);
@@ -245,6 +242,8 @@ void GameRender(Game_Input *input, Game_Output *out)
 
 void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 {
+    frame_updates();
+
     DrawClear(v4(0.2, 0.2, 0.2, 1));
 
     static b32 initted = false;
@@ -257,6 +256,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     GameUpdate(input, out);
     GameRender(input, out);
 
+    f32 dt = input->dt;
     
 
     DrawRect(r2_bounds(v2(enemy_plant.position.x-player.position.x+out->width*.5, enemy_plant.position.y), v2(8*enemy_plant.max_health, 8), v2_zero, v2_one), v4_black);
@@ -272,7 +272,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
     if (player.alive)
     {
-        if (r2_intersects(r2_bounds(player.weapon.position, player.weapon.size, v2_zero, v2_one), get_entity_rect(&enemy_plant))
+        /*if (r2_intersects(r2_bounds(player.weapon.position, player.weapon.size, v2_zero, v2_one), get_entity_rect(&enemy_plant))
                 && enemy_plant.current_health > enemy_plant.min_health && !enemy_plant.invuln && player.facing < 0)
             {
                 enemy_plant.current_health = enemy_plant.current_health-1;
@@ -280,39 +280,27 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             } else if (r2_intersects(r2_bounds(player.weapon.position, v2(player.weapon.size.x, player.weapon.size.y), v2_zero, v2_one), get_entity_rect(&enemy_plant))
                 && enemy_plant.current_health > enemy_plant.min_health && !enemy_plant.invuln && player.facing > 0) {
 
-            }
-        if (!swing_weapon && player.facing < 0) {
-            DrawImage(player.weapon.image[0], v2(player.position.x-player.position.x+out->width*.5-15, player.position.y-18));
-        } else if (!swing_weapon && player.facing > 0) {
-            DrawImage(player.weapon.image[5], v2(player.position.x-player.position.x+out->width*.5-30, player.position.y-18));
-        }
+            }*/
         if (swing_weapon) 
         {
-            if (player.weapon.weapon_swing%18/3 == 5)
+            if (get_frame_attack(player.weapon, dt) == player.weapon.weapon_frames-1)
             {
                 swing_weapon = false;
-                player.weapon.weapon_swing = 0;
                 enemy_plant.invuln = false;
-            } 
-            else if (player.facing < 0)
-            {
-                player.weapon.position = player.position;
-                DrawImage(player.weapon.image[player.weapon.weapon_swing%18/3], v2(player.position.x-player.position.x+out->width*.5-15, player.position.y-18));
-            } else {
-                player.weapon.position = player.position;
-                DrawImage(player.weapon.image[player.weapon.weapon_swing%18/3+5], v2(player.position.x-player.position.x+out->width*.5-30, player.position.y-18));
             }
-            
-            player.weapon.weapon_swing++;
-        }
-        if (player.facing > 0)
+            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_attack(player.weapon, dt), player.facing);
+        } else if (player.facing > 0 && player.velocity.x > 0)
         {
-            DrawImage(player.player_spr_left[player.facing%32/8], v2(player.position.x-player.position.x+out->width*.5, player.position.y));
+            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_walk(dt), player.facing);
         } 
-        else
+        else if (player.facing < 0 && player.velocity.x < 0)
         {
-            DrawImage(player.player_spr_right[abs_i32(player.facing%32/8)], v2(player.position.x-player.position.x+out->width*.5, player.position.y));
+            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_walk(dt), player.facing);
+        } else 
+        {
+            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 0, player.facing);
         }
+        
     }
 
     DrawRect(r2_bounds(v2(72, 24), v2(16+8*player.max_health, 8), v2_zero, v2_one), v4_black);
