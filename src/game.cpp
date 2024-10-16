@@ -698,8 +698,8 @@ void DrawImageExt(Image image, Rectangle2 rect, Vector4 color, Rectangle2 uv)
             if (u < 0) u += 1;
             if (v < 0) v += 1;
 
-            i32 sample_x = (i32)(u * image.size.width) % image.size.width;
-            i32 sample_y = (i32)(v * image.size.height) % image.size.height;
+            i32 sample_x = round_i32(u * image.size.width) % image.size.width;
+            i32 sample_y = round_i32(v * image.size.height) % image.size.height;
 
             assert((sample_x >= 0 && sample_x < image.size.width) && (sample_y >= 0 && sample_y < image.size.height));
 
@@ -722,6 +722,10 @@ void DrawImageExt(Image image, Rectangle2 rect, Vector4 color, Rectangle2 uv)
 
         at += out->width - (in_x1 - in_x0);
     }
+}
+
+void DrawImageMirroredX(Image image, Vector2 pos) {
+    DrawImageExt(image, r2(pos, pos + v2_from_v2i(image.size)), v4_white, r2_from_f32(1, 0, 0, 1));
 }
 
 #if 0

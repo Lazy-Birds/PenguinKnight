@@ -1,7 +1,12 @@
+Notes:
+17 milliseconds ~= 1 frame
+
 Todo:
 
+-general code
+--generic time code!!!!
+
 -attack code
---normal attack code
 --charged attack code
 --jump
 
@@ -17,3 +22,7 @@ Todo:
 --jump attacks
 --normal enemy
 --Bosss!!!!
+--Research Parallax
+
+Completed:
+--normal attack code

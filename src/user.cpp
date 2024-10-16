@@ -1,14 +1,24 @@
+#include "background.cpp"
+
 struct texture {
     u32 pixel;
     Image image;
+};
+
+struct time {
+    int seconds;
+    int partial_seconds;
 };
 
 #include "weapon.cpp"
 
 struct Entity
 {
-    u64 id;
-    u64 type;
+    i32 constitution;
+    i32 rigour;
+    i32 strength;
+    i32 dexterity;
+    i32 mental;
 
     i32 max_health;
     i32 current_health;
@@ -38,16 +48,21 @@ struct Entity
 
 #include "entity.cpp"
 
+time game_time = {0, 0};
+
 Entity player = {};
 
-Entity enemy_plant = {};
-
-Image spr_guy;
-
 bool swing_weapon;
+bool charging_weapon;
+bool on_cooldown;
+bool charged_attack;
+
+Image *charge_meter;
 
 f32 walk_frame = 0;
 f32 attack_frame = 0;
+i32 charging = 0;
+i32 weapon_cooldown = 0;
 
 Rectangle2 get_entity_rect(Entity *entity) {
     return r2_bounds(entity->position, entity->size, v2_zero, v2_one);
@@ -58,79 +73,133 @@ bool entity_on_wall(Entity *entity_one) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
             r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
             return true;
-        } 
-    }
-
-    return false;
+    } 
 }
 
-bool wall_ahead(Entity *entity_one) {
-    for (int i = 0; i < wall_count; i++) {
-        if (r2_intersects(r2_bounds(v2(entity_one->position.x+1, entity_one->position.y), entity_one->size, v2_zero, v2_one),
-            r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool wall_behind(Entity *entity_one) {
-    for (int i = 0; i < wall_count; i++) {
-        if (r2_intersects(r2_bounds(v2(entity_one->position.x-1, entity_one->position.y), entity_one->size, v2_zero, v2_one),
-            r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
-            return true;
-        } 
-    }
-
-    return false;
+return false;
 }
 
 bool wall_intersects(Entity *entity) {
     for (int i = 0; i < wall_count; i++) {
-        if (r2_intersects(r2_bounds(v2(entity->position.x, entity->position.y), entity->size, v2_zero, v2_one),
-        r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+        if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
             return true;
         }
     }
     return false;
 }
 
-void load_enemy() {
-    enemy_plant.wall_type.image = LoadImage(S("plant_idle1.png"));
-    enemy_plant.max_health = 5;
-    enemy_plant.current_health = 5;
-    enemy_plant.min_health = 0;
-    enemy_plant.position = v2(528, 480);
-    enemy_plant.size = v2(48, 48);
-    enemy_plant.invuln = false;
-    enemy_plant.alive = true;
+bool entity_in_air(Entity *entity_one) {
+    for (int i = 0; i < wall_count; i++) {
+        if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+2), entity_one->size, v2_zero, v2_one),
+            r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+            return false;
+    }
+}
+return true;
+}
+
+void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr) {
+    i32 damage = weapon.base_damage + (weapon.damage_multiplier*dmg_attr);
+
+    for (int i = 0; i < enemy_count; i++) {
+        if (!enemy[i].invuln)
+        {
+            if (facing > 0) {
+                if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
+                    get_entity_rect(&enemy[i]))) {
+                    if (enemy[i].current_health < damage) {
+                        enemy[i].current_health = 0;
+                        enemy[i].alive = false;
+                    } else {
+                        enemy[i].current_health-=damage;
+                        enemy[i].invuln = true;
+                    } 
+                }
+            } else {
+                if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
+                    get_entity_rect(&enemy[i]))) {
+                    if (enemy[i].current_health < damage) {
+                        enemy[i].current_health = 0;
+                        enemy[i].alive = false;
+                    } else {
+                        enemy[i].current_health-=damage;
+                        enemy[i].invuln = true;
+                    } 
+                }
+            }
+        }
+    }
+}
+
+void draw_charging(i32 frame) {
+    DrawImage(charge_meter[frame], v2(player.position.x-player.position.x+out->width*.5-16, player.position.y-16));
 }
 
 void GameStart(Game_Input *input, Game_Output *out)
 {
     load_weapon();
 
+    player.constitution = 10;
+    player.rigour = 10;
+    player.strength = 10;
+    player.dexterity = 10;
+    player.mental = 10;
+
     player.position = v2(out->width*.5, out->height*.5);
-    player.size = v2(48, 64);
     player.anchor = v2(0.5, 0.5);
     player.facing = 1;
-    player.max_health = 5;
-    player.current_health = 4;
+    player.max_health = 10*player.constitution;
+    player.current_health = player.max_health;
     player.min_health = 0;
-    player.max_stamina = 100;
+    player.max_stamina = 10*player.rigour;
     player.current_stamina = player.max_stamina;
     player.invuln = false;
     player.alive = true;
-    player.weapon = sword;
+    player.weapon = cleaver;
     player.weapon.position = player.position;
-    
+    player.size = v2(40, 52);
+
+    static Image img[] = {
+        LoadImage(S("charge_left1.png")),
+        LoadImage(S("charge_left2.png")),
+        LoadImage(S("charge_left3.png")),
+        LoadImage(S("charge_left4.png")),
+        LoadImage(S("charge_left5.png")),
+        LoadImage(S("charge_left6.png")),
+        LoadImage(S("charge_left7.png")),
+        LoadImage(S("charge_left8.png")),
+        LoadImage(S("charge_left9.png")),
+        LoadImage(S("charge_right1.png")),
+        LoadImage(S("charge_right2.png")),
+        LoadImage(S("charge_right3.png")),
+        LoadImage(S("charge_right4.png")),
+        LoadImage(S("charge_right5.png")),
+        LoadImage(S("charge_right6.png")),
+        LoadImage(S("charge_right7.png")),
+        LoadImage(S("charge_right8.png")),
+        LoadImage(S("charge_right9.png")),
+    };
+
+    charge_meter = img;
 
     swing_weapon = false;
+    charging_weapon = false;
+    charged_attack = false;
 
-    make_wall();
+    make_world();
 
-    load_enemy();
+    for (int i = 0; i < 800; i++) {
+        spawn_snowflakes(out, input);
+        update_snowflakes(out, player.position.x);
+    }
+}
+
+void increment_time() {
+    game_time.partial_seconds++;
+    if (game_time.partial_seconds == 60) {
+        game_time.seconds++;
+        game_time.partial_seconds = 0;
+    }
 }
 
 i32 get_frame_walk(f32 dt) {
@@ -138,7 +207,11 @@ i32 get_frame_walk(f32 dt) {
 }
 
 i32 get_frame_attack(Weapon weapon, f32 dt) {
-    return floor_f32(2+attack_frame*dt*6);
+    return floor_f32(weapon.weapon_frames.x+attack_frame*dt*10);
+}
+
+i32 get_frame_charged(f32 dt, i32 ch_multi) {
+    return floor_f32(charging*dt*ch_multi);
 }
 
 void frame_updates() {
@@ -147,92 +220,71 @@ void frame_updates() {
     } else {
         walk_frame++;
     }
+    charging++;
+
+    if (on_cooldown) {
+        weapon_cooldown++;
+        charging = 0;
+    }
 
     attack_frame++;
 }
 
+i32 get_dmg_attr() {
+    i32 dmg_attr = 0;
+
+    if (string_equals(player.weapon.damage_attribute, S("Strength"))) {
+        return player.strength;
+    } else if (string_equals(player.weapon.damage_attribute, S("Dexterity"))) {
+        return player.dexterity;
+    } else if (string_equals(player.weapon.damage_attribute, S("Mental"))) {
+        return player.mental;
+    } else {
+        dump(S("We have a problem"));
+        return NULL;
+    }
+}
+
+#include "player.cpp"
+
 void GameUpdate(Game_Input *input, Game_Output *out)
 {   
-    f32 max_speed = 600.0;
+
     Controller c0 = input->controllers[0];
     f32 dt = input->dt;
 
-
-    if (c0.right && !swing_weapon)
-    {
-        if (c0.b) {
-            player.velocity.x = move_f32(player.velocity.x, max_speed, max_speed * dt);
-        } else {
-            player.velocity.x = move_f32(player.velocity.x, 300, 300 * dt);
-        }
+    /*if (game_time.seconds > 2) {
         
-        if (player.facing < 0) {
-            player.facing = 1;
-        } else {
-            player.facing++;
-        }
-    }
-    else if (c0.left && !swing_weapon)
-    {
-        if (c0.b) {
-            player.velocity.x = move_f32(player.velocity.x, -max_speed, max_speed * dt);
-        } else {
-            player.velocity.x = move_f32(player.velocity.x, -300, 300 * dt);
-        }
-        if (player.facing > 0) {
-            player.facing = -1;
-        } else {
-            player.facing--;
-        }
-    }
-    else
-    {
-        player.facing = sign_i32(player.facing);
-        player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
-    }
 
 
-    if (c0.up && player.current_stamina > 20) {
-        if (player.position.y==out->height-player.size.y || entity_on_wall(&player)) {
-            player.velocity.y=-248;
-            player.current_stamina-=20;
+        if (!charged_attack)
+        {   
+            if (input->mouse.right) {
+                dump(S("Right Click!"));
+            }
+            if ((input->mouse.right) && player.current_stamina > 40 && !swing_weapon && !on_cooldown)
+            {
+                charging_weapon = true;
+            } else if (charging > 0 && !input->mouse.right && !on_cooldown) {
+                on_cooldown = true;
+            } else if (on_cooldown && weapon_cooldown*dt*7 == 9) {
+                on_cooldown = false;
+                weapon_cooldown = 0;
+            } else if (!on_cooldown && get_frame_charged(dt, player.weapon.charge_time_multiplier) > 12) {
+                charging = 0;   \
+                
+            }
         }
-    }
-
-    if ((input->mouse.left) && player.current_stamina > 20 && !swing_weapon) {
-        swing_weapon = true;
-        player.current_stamina-=20;
-        attack_frame = 0;
-    }
-
+    }*/
     if (player.current_stamina < player.max_stamina) {
         player.current_stamina+=20*dt;
     }
 
 
 
-    player.velocity.y+=496*input->dt;
-
-    f32 dy = player.velocity.y*input->dt;
-    f32 dx = player.velocity.x*input->dt;
 
 
-    for (int i = 0; i < abs_f32(dy); i++) {
-        player.position.y+=sign_f32(dy);
-        if (wall_intersects(&player)) {
-            player.position.y-=sign_f32(dy);
-            player.velocity.y=0;
-        }
-    }
 
-
-    for (int i = 0; i < abs_f32(dx); i++) {
-        player.position.x+=sign_f32(dx);
-        if (wall_intersects(&player)) {
-            player.position.x-=sign_f32(dx);
-            player.velocity.x=0;
-        }
-    }
 }
 
 void GameRender(Game_Input *input, Game_Output *out)
@@ -242,6 +294,8 @@ void GameRender(Game_Input *input, Game_Output *out)
 
 void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 {
+    increment_time();
+
     frame_updates();
 
     DrawClear(v4(0.2, 0.2, 0.2, 1));
@@ -256,13 +310,17 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     GameUpdate(input, out);
     GameRender(input, out);
 
+    spawn_snowflakes(out, input);
+    update_snowflakes(out, player.position.x);
+
+    for (int i = 0; i < plant_count; i++) {
+        DrawImage(plants[i].image, v2(plants[i].position.x-player.position.x+out->width*.5, plants[i].position.y));
+    }
+
+    player_action(input);
+    player_move(input);
+
     f32 dt = input->dt;
-    
-
-    DrawRect(r2_bounds(v2(enemy_plant.position.x-player.position.x+out->width*.5, enemy_plant.position.y), v2(8*enemy_plant.max_health, 8), v2_zero, v2_one), v4_black);
-    DrawRect(r2_bounds(v2(enemy_plant.position.x-player.position.x+out->width*.5, enemy_plant.position.y), v2(8*enemy_plant.current_health, 8), v2_zero, v2_one), v4_red);
-
-    DrawImage(enemy_plant.wall_type.image, v2(enemy_plant.position.x-player.position.x+out->width*.5, enemy_plant.position.y));
 
     Image icon = LoadImage(S("icon.png"));
     Image weapon_icon = LoadImage(S("Excalibrrr_icon.png"));
@@ -270,45 +328,50 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     DrawImage(icon, v2(16, 16));
     DrawImage(weapon_icon, v2(21, 18));
 
-    if (player.alive)
+    /*if (player.alive)
     {
-        /*if (r2_intersects(r2_bounds(player.weapon.position, player.weapon.size, v2_zero, v2_one), get_entity_rect(&enemy_plant))
-                && enemy_plant.current_health > enemy_plant.min_health && !enemy_plant.invuln && player.facing < 0)
-            {
-                enemy_plant.current_health = enemy_plant.current_health-1;
-                enemy_plant.invuln = true;
-            } else if (r2_intersects(r2_bounds(player.weapon.position, v2(player.weapon.size.x, player.weapon.size.y), v2_zero, v2_one), get_entity_rect(&enemy_plant))
-                && enemy_plant.current_health > enemy_plant.min_health && !enemy_plant.invuln && player.facing > 0) {
+        else if (charging_weapon && !charged_attack) {
+            dump(S("Drawing Charge!"));
 
-            }*/
-        if (swing_weapon) 
-        {
-            if (get_frame_attack(player.weapon, dt) == player.weapon.weapon_frames-1)
-            {
-                swing_weapon = false;
-                enemy_plant.invuln = false;
+            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), player.weapon.weapon_frames.x, player.facing);
+            draw_charging(get_frame_charged(dt, player.weapon.charge_time_multiplier));
+
+            charging_weapon = false;
+            
+            player.velocity.x = move_f32(player.velocity.x, 0, 600 * dt);
+            
+
+        } else if (charged_attack){
+            if (get_frame_charged(dt, player.weapon.charge_time_multiplier) < 12) {
+                draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_charged(dt, player.weapon.charge_time_multiplier), player.facing);
+            } else {
+                charged_attack = false;
+                weapon_cooldown = true;
             }
-            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_attack(player.weapon, dt), player.facing);
-        } else if (player.facing > 0 && player.velocity.x > 0)
-        {
-            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_walk(dt), player.facing);
-        } 
-        else if (player.facing < 0 && player.velocity.x < 0)
-        {
-            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_walk(dt), player.facing);
-        } else 
+        }  else 
         {
             draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 0, player.facing);
         }
         
-    }
+    }*/
 
-    DrawRect(r2_bounds(v2(72, 24), v2(16+8*player.max_health, 8), v2_zero, v2_one), v4_black);
-    DrawRect(r2_bounds(v2(72, 24), v2(16+8*player.current_health, 8), v2_zero, v2_one), v4_red);
+    DrawRect(r2_bounds(v2(72, 24), v2(16+player.max_health, 8), v2_zero, v2_one), v4_black);
+    DrawRect(r2_bounds(v2(72, 24), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
 
     DrawRect(r2_bounds(v2(71, 36), v2(16+player.max_stamina, 8), v2_zero, v2_one), v4_black);
     DrawRect(r2_bounds(v2(71, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
+
+    for (int i = 0; i < plant_count; i++) {
+        DrawImage(plants[i].image, v2(plants[i].position.x-player.position.x+out->width*.5, plants[i].position.y));
+    }
     
+    for (int i = 0; i < enemy_count; i++) {
+        if (enemy[i].alive) {
+            DrawRect(r2_bounds(v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y), v2(enemy[i].max_health, 8), v2_zero, v2_one), v4_black);
+            DrawRect(r2_bounds(v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y), v2(enemy[i].current_health, 8), v2_zero, v2_one), v4_red);
+            DrawImage(enemy[i].wall_type.image, v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y));
+        }
+    }
 
 
     for (int i = 0; i < wall_count; i++) {
