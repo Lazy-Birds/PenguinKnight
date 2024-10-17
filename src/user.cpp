@@ -12,6 +12,14 @@ struct time {
 
 #include "weapon.cpp"
 
+struct Enemy {
+    Image *image;
+    Vector2 frames;
+    i32 damage;
+    i32 type;
+    Vector2 offset;
+};
+
 struct Entity
 {
     i32 constitution;
@@ -44,6 +52,7 @@ struct Entity
     Weapon weapon;
 
     texture wall_type;
+    Enemy enemy;
 };
 
 #include "entity.cpp"
@@ -88,6 +97,23 @@ bool wall_intersects(Entity *entity) {
     return false;
 }
 
+bool wall_ahead(Entity *entity, i32 dir) {
+    for (int i = 0; i < wall_count; i++) {
+        if (dir > 0)
+        {
+            if (r2_intersects(r2_bounds(v2(entity->position.x+1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one)))
+            {
+                return true;
+            }
+        } else if (r2_intersects(r2_bounds(v2(entity->position.x-1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool entity_in_air(Entity *entity_one) {
     for (int i = 0; i < wall_count; i++) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+2), entity_one->size, v2_zero, v2_one),
@@ -98,32 +124,48 @@ bool entity_in_air(Entity *entity_one) {
 return true;
 }
 
-void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr) {
-    i32 damage = weapon.base_damage + (weapon.damage_multiplier*dmg_attr);
+void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 attack_type) {
+    i32 damage = 0;
+    switch (attack_type)
+    {
+    case 0: 
+        {
+            damage = weapon.base_damage + (weapon.damage_multiplier*dmg_attr);
+        } break;
+    case 1: 
+        {
+            damage = 1.25*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
+        } break;
+    case 2: 
+        {
+            damage = 1.5*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
+        } break;
+    }  
+
 
     for (int i = 0; i < enemy_count; i++) {
-        if (!enemy[i].invuln)
+        if (!enemys[i].invuln)
         {
             if (facing > 0) {
                 if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&enemy[i]))) {
-                    if (enemy[i].current_health < damage) {
-                        enemy[i].current_health = 0;
-                        enemy[i].alive = false;
+                    get_entity_rect(&enemys[i]))) {
+                    if (enemys[i].current_health < damage) {
+                        enemys[i].current_health = 0;
+                        enemys[i].alive = false;
                     } else {
-                        enemy[i].current_health-=damage;
-                        enemy[i].invuln = true;
+                        enemys[i].current_health-=damage;
+                        enemys[i].invuln = true;
                     } 
                 }
             } else {
                 if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&enemy[i]))) {
-                    if (enemy[i].current_health < damage) {
-                        enemy[i].current_health = 0;
-                        enemy[i].alive = false;
+                    get_entity_rect(&enemys[i]))) {
+                    if (enemys[i].current_health < damage) {
+                        enemys[i].current_health = 0;
+                        enemys[i].alive = false;
                     } else {
-                        enemy[i].current_health-=damage;
-                        enemy[i].invuln = true;
+                        enemys[i].current_health-=damage;
+                        enemys[i].invuln = true;
                     } 
                 }
             }
@@ -287,6 +329,64 @@ void GameUpdate(Game_Input *input, Game_Output *out)
 
 }
 
+void seal_walk() {
+    for (int i = 0; i < enemy_count; i++) {
+        if (!enemys[i].alive) {continue;}
+        if (enemys[i].enemy.type == 1) {
+            if (wall_ahead(&enemys[i], enemys[i].facing))
+            {
+                if (enemys[i].facing < 0) {
+                    enemys[i].facing = 1;
+                    enemys[i].velocity.x = 0;
+                } else {
+                    enemys[i].facing = -1;
+                    enemys[i].velocity.x = 0;
+                }
+            }
+
+            enemys[i].velocity.y+=496*input->dt;
+            switch (enemys[i].facing)
+            {
+            case -1: 
+                {
+                    enemys[i].velocity.x-=50*input->dt;
+                } break;
+            case 1:
+                {
+                    enemys[i].velocity.x+=50*input->dt;
+                } break;
+            }
+
+            f32 dy = enemys[i].velocity.y*input->dt;
+            f32 dx = enemys[i].velocity.x*input->dt;
+
+            for (int i = 0; i < abs_f32(dy); i++) {
+                enemys[i].position.y+=sign_f32(dy);
+                if (wall_intersects(&enemys[i])) {
+                    enemys[i].position.y-=sign_f32(dy);
+                    enemys[i].velocity.y=0;
+                }
+            }
+
+
+            for (int i = 0; i < abs_f32(dx); i++) {
+                enemys[i].position.x+=sign_f32(dx);
+                if (wall_intersects(&enemys[i])) {
+                    enemys[i].position.x-=sign_f32(dx);
+                    enemys[i].velocity.x=0;
+                }
+            }
+
+            if (invuln_time <= 0){
+                if (r2_intersects(r2_bounds(player.position, player.size, v2_zero, v2_one), r2_bounds(enemys[i].position, enemys[i].size, v2_zero, v2_one)))
+                {
+                    player_hit();
+                }
+            }
+        }
+    }
+}
+
 void GameRender(Game_Input *input, Game_Output *out)
 {
 
@@ -319,6 +419,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
     player_action(input);
     player_move(input);
+
+    seal_walk();
 
     f32 dt = input->dt;
 
@@ -366,10 +468,19 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     }
     
     for (int i = 0; i < enemy_count; i++) {
-        if (enemy[i].alive) {
-            DrawRect(r2_bounds(v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y), v2(enemy[i].max_health, 8), v2_zero, v2_one), v4_black);
-            DrawRect(r2_bounds(v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y), v2(enemy[i].current_health, 8), v2_zero, v2_one), v4_red);
-            DrawImage(enemy[i].wall_type.image, v2(enemy[i].position.x-player.position.x+out->width*.5, enemy[i].position.y));
+        if (enemys[i].alive) {
+            DrawRect(r2_bounds(v2(enemys[i].position.x-player.position.x+out->width*.5, enemys[i].position.y), v2(enemys[i].max_health, 8), v2_zero, v2_one), v4_black);
+            DrawRect(r2_bounds(v2(enemys[i].position.x-player.position.x+out->width*.5, enemys[i].position.y), v2(enemys[i].current_health, 8), v2_zero, v2_one), v4_red);
+            if (enemys[i].facing > 0) 
+            {
+                DrawImageMirroredX(enemys[i].enemy.image[0], v2(enemys[i].position.x-player.position.x+out->width*.5 + enemys[i].enemy.offset.x,
+                   enemys[i].position.y+enemys[i].enemy.offset.y));
+            } else 
+            {
+                DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-player.position.x+out->width*.5 + enemys[i].enemy.offset.x,
+                   enemys[i].position.y+enemys[i].enemy.offset.y));
+            }
+            
         }
     }
 

@@ -11,7 +11,6 @@ Todo:
 --jump
 
 -enemies
---make enemy group
 --make enemy type
 --make enemy attack code
 --make a friggin boss
@@ -26,3 +25,4 @@ Todo:
 
 Completed:
 --normal attack code
+--make enemy group

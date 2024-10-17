@@ -19,6 +19,8 @@ struct Weapon {
     String damage_attribute;
     i32 damage_multiplier;
     Vector2 jump_frame;
+
+    i32 frame_hit;
 };
 
 Weapon sword = {};
@@ -60,6 +62,9 @@ void load_weapon() {
         LoadImage(S("cleaver11.png")),
         LoadImage(S("cleaver12.png")),
         LoadImage(S("cleaver13.png")),
+        LoadImage(S("cleaver14.png")),
+        LoadImage(S("cleaver15.png")),
+        LoadImage(S("cleaver16.png")),
     };
 
     cleaver.image = cleaver_image;
@@ -76,5 +81,6 @@ void load_weapon() {
     cleaver.damage_attribute = S("Strength");
     cleaver.damage_multiplier = 1.5;
     cleaver.charge_time = 9;
-    cleaver.jump_frame = v2(6,7);
+    cleaver.jump_frame = v2(14,15);
+    cleaver.frame_hit = 2;
 }
