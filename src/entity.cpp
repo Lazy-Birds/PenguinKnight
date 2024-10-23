@@ -61,9 +61,36 @@ Entity load_enemy(Vector2 pos, i32 type) {
             enemy_seal.facing = -1;
             enemy_seal.enemy.type = 1;
             enemy_seal.enemy.offset = v2(0, 0);
+            enemy_seal.enemy.enemy_state = 0;
+            enemy_seal.enemy.enemy_time = 0;
 
             return enemy_seal;
-        }
+        } break;
+    case 2:
+        {
+            static Image image[5] = 
+            {
+                LoadImage(S("big_papa1.png")),
+                LoadImage(S("big_papa2.png")),
+                LoadImage(S("big_papa3.png")),
+                LoadImage(S("big_papa4.png")),
+                LoadImage(S("big_papa5.png")),
+            };
+
+            Entity big_papa = {};
+            big_papa.max_health = 750;
+            big_papa.current_health = big_papa.max_health;
+            big_papa.min_health = 0;
+            big_papa.position = pos;
+            big_papa.size = v2(96, 96);
+            big_papa.invuln = false;
+            big_papa.alive = true;
+            big_papa.enemy.image = image;
+            big_papa.enemy.type = 3;
+            big_papa.enemy.offset = v2(0, 0);
+
+            return big_papa;
+        } break;
     default:
         {
             static Image image[1] = {LoadImage(S("penguin_idle1.png"))};
@@ -144,6 +171,11 @@ void make_world() {
                         enemys[enemy_count] = load_enemy(v2(i*48, k*48), 1);
                         enemy_count++;
                     } break;
+                case -18390529:
+                    {
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 2);
+                        enemy_count++;
+                    } break;
                 case 753464831: 
                     {
                         plants[plant_count].position = v2(i*48, k*48);
@@ -179,3 +211,176 @@ void make_world() {
     }
 }
 
+bool entity_on_wall(Entity *entity_one) {
+    for (int i = 0; i < wall_count; i++) {
+        if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
+            r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+            return true;
+    } 
+}
+
+return false;
+}
+
+bool wall_intersects(Entity *entity) {
+    for (int i = 0; i < wall_count; i++) {
+        if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool wall_ahead(Entity *entity) {
+    for (int i = 0; i < wall_count; i++) {
+        if (entity->facing > 0)
+        {
+            if (r2_intersects(r2_bounds(v2(entity->position.x+1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one)))
+            {
+                return true;
+            }
+        } else if (r2_intersects(r2_bounds(v2(entity->position.x-1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool entity_in_air(Entity *entity_one) {
+    for (int i = 0; i < wall_count; i++) {
+        if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+2), entity_one->size, v2_zero, v2_one),
+            r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const i32 SEALNEUTRAL = 0;
+const i32 SEALMOVING = 1;
+const i32 SEALATTACKING = 2;
+
+void seal_action(Entity *seal, Game_Input *input, Entity *player) {
+    if (seal->enemy.enemy_state == SEALNEUTRAL) {
+        if (seal->alive) {
+            seal->enemy.enemy_state = SEALMOVING;
+        }
+    }
+
+    seal->enemy.enemy_time++;
+
+    if (seal->enemy.sleep_time > 0) {
+        seal->enemy.sleep_time-=input->dt;
+        return;
+    }
+
+    if (wall_ahead(seal)) {
+        if (seal->facing > 0) {
+            seal->facing = -1;
+        } else {
+            seal->facing = 1;
+        }
+    }
+
+    switch (seal->enemy.enemy_state) 
+    {
+    case SEALNEUTRAL:
+        {
+        } break;
+    case SEALMOVING:
+        {
+            if (seal->facing > 0) {
+                seal->velocity.x = 200;
+            } else {
+                seal->velocity.x = -200;
+            }
+
+            seal->velocity.y += 496*input->dt;
+
+            f32 dy = seal->velocity.y*input->dt;
+            f32 dx = seal->velocity.x*input->dt;
+
+            for (int i = 0; i < abs_f32(dy); i++) {
+                seal->position.y+=sign_f32(dy);
+                if (wall_intersects(seal)) {
+                    seal->position.y-=sign_f32(dy);
+                    seal->velocity.y=0;
+                }
+            }
+
+
+            for (int i = 0; i < abs_f32(dx); i++) {
+                seal->position.x+=sign_f32(dx);
+                if (wall_intersects(seal)) {
+                    seal->position.x-=sign_f32(dx);
+                    seal->velocity.x=0;
+                }
+            }
+
+            if (invuln_time <= 0){
+                if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(seal->position, seal->size, v2_zero, v2_one)))
+                {
+                    player_hit();
+                }
+            }
+        }
+    } 
+}
+
+/*void seal_walk(Entity *entity, Game_Input *input) {
+    for (int i = 0; i < enemy_count; i++) {
+        if (!enemys[i].alive) {continue;}
+        if (enemys[i].enemy.type == 1) {
+            if (wall_ahead(&enemys[i], enemys[i].facing))
+            {
+                if (enemys[i].facing < 0) {
+                    enemys[i].facing = 1;
+                    enemys[i].velocity.x = 0;
+                } else if (enemys[i].facing > 0) {
+                    enemys[i].facing = -1;
+                    enemys[i].velocity.x = 0;
+                }
+            }
+
+            enemys[i].velocity.y+=496*input->dt;
+
+            if (enemys[i].facing < 0) {
+                enemys[i].velocity.x = -300;
+            } else {
+                enemys[i].velocity.x = 300;
+            }
+
+            f32 dy = enemys[i].velocity.y*input->dt;
+            f32 dx = enemys[i].velocity.x*input->dt;
+
+            dump(i);
+            dump(dx);
+
+            for (int i = 0; i < abs_f32(dy); i++) {
+                enemys[i].position.y+=sign_f32(dy);
+                if (wall_intersects(&enemys[i])) {
+                    enemys[i].position.y-=sign_f32(dy);
+                    enemys[i].velocity.y=0;
+                }
+            }
+
+
+            for (int i = 0; i < abs_f32(dx); i++) {
+                enemys[i].position.x+=sign_f32(dx);
+                if (wall_intersects(&enemys[i])) {
+                    enemys[i].position.x-=sign_f32(dx);
+                    enemys[i].velocity.x=0;
+                }
+            }
+
+            if (invuln_time <= 0){
+                if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(enemys[i].position, enemys[i].size, v2_zero, v2_one)))
+                {
+                    player_hit();
+                }
+            }
+        }
+    }
+}*/

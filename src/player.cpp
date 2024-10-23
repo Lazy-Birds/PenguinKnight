@@ -11,10 +11,10 @@ const i32 STATEJUMPATTACK = 5;
 const i32 EXHAUSTED = 6;
 const i32 LANDED = 7;
 const i32 STATEHIT = 8;
-const i32 DEAD = 9;
+const i32 STATEDASH = 9;
+const i32 DEAD = 10;
 
 f32 state_time = 0;
-f32 invuln_time = 0;
 
 void player_action(Game_Input *input) {
 	f32 max_speed = 600.0;
@@ -37,6 +37,10 @@ void player_action(Game_Input *input) {
 
 	//Gear Change
 	if (player_state == NEUTRAL) {
+		if (!player.alive) {
+			player_state = DEAD;
+			state_time = 0;
+		}
 		if (c0.up || c0.right || c0.left) {
 			player_state = STATEMOVING;
 			state_time = 0;
@@ -49,6 +53,9 @@ void player_action(Game_Input *input) {
 			state_time = 0;
 		} else if (input->mouse.right) {
 			player_state = STATECHARGING;
+			state_time = 0;
+		} else if (c0.b) {
+			player_state = STATEDASH;
 			state_time = 0;
 		}
 	}
@@ -130,6 +137,9 @@ void player_action(Game_Input *input) {
 			} else if (input->mouse.right) {
 				state_time = 0;
 				player_state = STATECHARGING;
+			} else if (c0.b) {
+				state_time = 0;
+				player_state = STATEDASH;
 			} else if (!c0.left && !c0.right && !c0.up) {
 
 				player_state = NEUTRAL;
@@ -201,13 +211,13 @@ void player_action(Game_Input *input) {
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 			
-			if (state_time*9 + player.weapon.charged_frames.x < player.weapon.charged_frames.y) 
+			if (state_time*11 + player.weapon.charged_frames.x < player.weapon.charged_frames.y) 
 			{
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y),
-					state_time*9 + player.weapon.charged_frames.x, player.facing);
+					state_time*11 + player.weapon.charged_frames.x, player.facing);
 				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
-			} else if (state_time*9+ player.weapon.charged_frames.x
-				> player.weapon.charged_frames.y && state_time*9 + player.weapon.charged_frames.x
+			} else if (state_time*11+ player.weapon.charged_frames.x
+				> player.weapon.charged_frames.y && state_time*11 + player.weapon.charged_frames.x
 				< player.weapon.charged_frames.y + 2) 
 			{
 				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
@@ -285,12 +295,16 @@ void player_action(Game_Input *input) {
 			
 			if (state_time == 0)
 			{
+				if (player.current_health <= 20) {
+					player.current_health = 0;
+					player.alive = false;
+				}
 				player.current_health-=20;
 				player.velocity.y = -5000*dt;
 				player.velocity.x = -5000*dt;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
 					player.weapon.frame_hit, player.facing);
-				invuln_time = 100*dt;
+				invuln_time = 80*dt;
 
 			} else {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
@@ -301,6 +315,47 @@ void player_action(Game_Input *input) {
 			
 		} break;
 	case EXHAUSTED:
+		{
+
+		} break;
+	case STATEDASH:
+		{
+			if (player.current_stamina < 10) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					0, player.facing);
+				player_state = NEUTRAL;
+
+			} else if (state_time*60 <= 1) {
+				player.velocity.x = 0;
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x, player.facing);
+				player.current_stamina -= 10;
+			} else if (state_time*60 < 8) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x, player.facing);
+			} else if (state_time*60 < 12) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x+1, player.facing);
+				invuln_time+=(10*dt);
+			} else if (state_time*60 < 15) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x+2, player.facing);
+				player.velocity.x+=600*dt*sign_f32(player.facing);
+			} else if (state_time*60 < 22) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x+3, player.facing);
+				player.velocity.x+=6000*dt*sign_f32(player.facing);
+			} else if (state_time*60 < 26) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					player.weapon.dash_frame.x+1, player.facing);
+				player.velocity.x-=4000*dt*sign_f32(player.facing);
+			} else {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 
+					0, player.facing);
+				player_state = NEUTRAL;
+			}
+		} break;
+	case DEAD:
 		{
 
 		} break;

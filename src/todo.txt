@@ -4,25 +4,29 @@ Notes:
 Todo:
 
 -general code
---generic time code!!!!
+
 
 -attack code
---charged attack code
---jump
+--Make other Weapons
 
 -enemies
---make enemy type
---make enemy attack code
 --make a friggin boss
 
 -sprites
---cleaver
 --rapier
---jump attacks
---normal enemy
 --Bosss!!!!
---Research Parallax
 
-Completed:
+Completed Code:
 --normal attack code
 --make enemy group
+--make enemy type
+--make enemy attack code
+--charged attack code
+--jump
+--generic time code!!!!
+
+Completed Sprites:
+--cleaver
+--jump attacks
+--normal enemy
+--Research Parallax
