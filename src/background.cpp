@@ -37,7 +37,7 @@ void spawn_snowflakes(Game_Output *out, Game_Input *input) {
 	}*/
 
 	for (int i = 0; i < 2; i++) {
-		f32 x = random_f32_between(0, 1)*(out->width+3000);
+		f32 x = random_f32_between(0, 1)*(out->width+4000);
 		i32 snowflake = get_open_snowflake();
 		if (snowflake != 5001) {
 			snow[snowflake].is_alive = true;

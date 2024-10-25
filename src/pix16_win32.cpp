@@ -661,8 +661,8 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
                 player0->down  |= (GetKeyState(VK_DOWN) & (1 << 15)) == (1 << 15);
                 player0->left  |= (GetKeyState(VK_LEFT) & (1 << 15)) == (1 << 15);
                 player0->right |= (GetKeyState(VK_RIGHT) & (1 << 15)) == (1 << 15);
-                player0->a     |= (GetKeyState('X') & (1 << 15)) == (1 << 15);
-                player0->b     |= (GetKeyState('C') & (1 << 15)) == (1 << 15);
+                player0->a     |= (GetKeyState('Q') & (1 << 15)) == (1 << 15);
+                player0->b     |= (GetKeyState('E') & (1 << 15)) == (1 << 15);
 
                 player0->up    |= (GetKeyState('W') & (1 << 15)) == (1 << 15);
                 player0->down  |= (GetKeyState('S') & (1 << 15)) == (1 << 15);

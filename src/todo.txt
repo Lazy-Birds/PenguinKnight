@@ -1,10 +1,16 @@
 Notes:
-17 milliseconds ~= 1 frame
+-17 milliseconds ~= 1 frame
+-Research Windows Controller Input
+-https://learn.microsoft.com/en-us/windows/win32/api/xinput/ns-xinput-xinput_gamepad
+
+80-97 = 3840, 4656
 
 Todo:
 
 -general code
-
+--Camera Shake
+--Jump Vibes
+--Sound37 mmu7778
 
 -attack code
 --Make other Weapons
@@ -15,6 +21,8 @@ Todo:
 -sprites
 --rapier
 --Bosss!!!!
+--Background
+--Decorations
 
 Completed Code:
 --normal attack code

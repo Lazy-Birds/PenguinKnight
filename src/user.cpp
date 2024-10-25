@@ -18,6 +18,7 @@ struct Enemy {
     i32 enemy_state;
 
     f32 sleep_time;
+    i32 guard;
 };
 
 struct Entity
@@ -29,8 +30,8 @@ struct Entity
     i32 mental;
 
     i32 max_health;
-    i32 current_health;
-    i32 min_health;
+    f32 current_health;
+    f32 min_health;
 
     bool invuln;
     bool alive;
@@ -57,6 +58,13 @@ struct Entity
 
 f32 invuln_time = 0;
 
+const i32 CAMERAFOLLOW = 0;
+const i32 CAMERALOCKED = 1;
+
+Vector2 camera_pos;
+Vector2 camera_pos_target;
+i32 camera_state = 0;
+
 void player_hit();
 
 #include "entity.cpp"
@@ -76,6 +84,16 @@ f32 walk_frame = 0;
 f32 attack_frame = 0;
 i32 charging = 0;
 i32 weapon_cooldown = 0;
+
+void set_camera_pos() {
+    if (camera_state == CAMERAFOLLOW) {
+        camera_pos = player.position;
+    } else if (camera_state == CAMERALOCKED) {
+        camera_pos = lerp_v2(camera_pos, camera_pos_target, 0.08);
+    } else {
+        camera_pos = player.position;
+    }
+}
 
 Rectangle2 get_entity_rect(Entity *entity) {
     return r2_bounds(entity->position, entity->size, v2_zero, v2_one);
@@ -181,6 +199,8 @@ void GameStart(Game_Input *input, Game_Output *out)
         LoadImage(S("charge_right9.png")),
     };
 
+    camera_pos = player.position;
+
     charge_meter = img;
 
     swing_weapon = false;
@@ -272,11 +292,11 @@ void GameRender(Game_Input *input, Game_Output *out)
 void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 {
     static b32 initted = false;
-        if (!initted)
-        {
-            GameStart(input, out);
-            initted = true;
-        }
+    if (!initted)
+    {
+        GameStart(input, out);
+        initted = true;
+    }
 
     if (player.alive) {
         DrawClear(v4(0.2, 0.2, 0.2, 1));
@@ -286,17 +306,22 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         GameRender(input, out);
 
         spawn_snowflakes(out, input);
-        update_snowflakes(out, player.position.x);
+        update_snowflakes(out, camera_pos.x);
 
         for (int i = 0; i < plant_count; i++) {
-            DrawImage(plants[i].image, v2(plants[i].position.x-player.position.x+out->width*.5, plants[i].position.y));
+            DrawImage(plants[i].image, v2(plants[i].position.x-camera_pos.x+out->width*.5, plants[i].position.y));
         }
 
         player_action(input);
         player_move(input);
 
+        set_camera_pos();
+
+        spawn_snowflakes(out, input);
+        update_snowflakes(out, camera_pos.x);
+
         for (int i = 0; i < enemy_count; i++) {
-            if (!enemys[i].alive) {continue;}
+            if (!enemys[i].alive || enemys[i].enemy.type == 3) {continue;}
             seal_action(&enemys[i], input, &player);
         }
 
@@ -308,33 +333,6 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawImage(icon, v2(16, 16));
         DrawImage(weapon_icon, v2(21, 18));
 
-    /*if (player.alive)
-    {
-        else if (charging_weapon && !charged_attack) {
-            dump(S("Drawing Charge!"));
-
-            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), player.weapon.weapon_frames.x, player.facing);
-            draw_charging(get_frame_charged(dt, player.weapon.charge_time_multiplier));
-
-            charging_weapon = false;
-            
-            player.velocity.x = move_f32(player.velocity.x, 0, 600 * dt);
-            
-
-        } else if (charged_attack){
-            if (get_frame_charged(dt, player.weapon.charge_time_multiplier) < 12) {
-                draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), get_frame_charged(dt, player.weapon.charge_time_multiplier), player.facing);
-            } else {
-                charged_attack = false;
-                weapon_cooldown = true;
-            }
-        }  else 
-        {
-            draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5, player.position.y), 0, player.facing);
-        }
-        
-    }*/
-
         DrawRect(r2_bounds(v2(72, 24), v2(16+player.max_health, 8), v2_zero, v2_one), v4_black);
         DrawRect(r2_bounds(v2(72, 24), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
 
@@ -342,29 +340,38 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawRect(r2_bounds(v2(71, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
 
         for (int i = 0; i < plant_count; i++) {
-            DrawImage(plants[i].image, v2(plants[i].position.x-player.position.x+out->width*.5, plants[i].position.y));
+            DrawImage(plants[i].image, v2(plants[i].position.x-camera_pos.x+out->width*.5, plants[i].position.y));
+        }
+
+        for (int i = 0; i < wall_count; i++) {
+            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
         }
 
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
-                DrawRect(r2_bounds(v2(enemys[i].position.x-player.position.x+out->width*.5, enemys[i].position.y), v2(enemys[i].max_health, 8), v2_zero, v2_one), v4_black);
-                DrawRect(r2_bounds(v2(enemys[i].position.x-player.position.x+out->width*.5, enemys[i].position.y), v2(enemys[i].current_health, 8), v2_zero, v2_one), v4_red);
-                if (enemys[i].facing > 0) 
-                {
-                    DrawImageMirroredX(enemys[i].enemy.image[0], v2(enemys[i].position.x-player.position.x+out->width*.5 + enemys[i].enemy.offset.x,
-                     enemys[i].position.y+enemys[i].enemy.offset.y));
-                } else 
-                {
-                    DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-player.position.x+out->width*.5 + enemys[i].enemy.offset.x,
-                     enemys[i].position.y+enemys[i].enemy.offset.y));
+                if (enemys[i].enemy.type == 1) {
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y), v2(enemys[i].max_health, 8), v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y), v2(enemys[i].current_health, 8), v2_zero, v2_one), v4_red);
+                    if (enemys[i].facing > 0) 
+                    {
+                        DrawImageMirroredX(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
+                           enemys[i].position.y+enemys[i].enemy.offset.y));
+                    } else 
+                    {
+                        DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
+                           enemys[i].position.y+enemys[i].enemy.offset.y));
+                    }
+                } else if (enemys[i].enemy.type == 3 && abs_f32(player.position.x - enemys[i].position.x) < 700) {
+                    camera_state = CAMERALOCKED;
+                    camera_pos_target = v2(89*48, out->height);
+
+                    DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50), v2(604, 12), v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(out->width*.5-300, out->height-48), v2((enemys[i].current_health/enemys[i].max_health)*600, 8), v2_zero, v2_one), v4_red);
+
+                    penguin_king_action(&enemys[i], &player, input->dt);
                 }
 
             }
-        }
-
-
-        for (int i = 0; i < wall_count; i++) {
-            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-player.position.x+out->width*.5, wall[i].position.y));
         }
     } else {
         DrawClear(v4(0.2, 0.2, 0.2, 1));

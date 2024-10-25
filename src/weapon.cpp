@@ -18,9 +18,10 @@ struct Weapon {
     i32 base_damage;
     String damage_attribute;
     i32 damage_multiplier;
+    i32 guard_damage;
+
     Vector2 jump_frame;
     Vector2 dash_frame;
-
     i32 frame_hit;
 };
 
