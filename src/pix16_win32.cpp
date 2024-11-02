@@ -39,7 +39,7 @@ static void win32__print(const char *format, ...) {
 
 static i32 game_width = 960;
 static i32 game_height = 720;
-static b32 game_pixel_perfect = true;
+static b32 game_pixel_perfect = false;
 
 #define PROFILER 1
 #include "profiler.cpp"
@@ -542,8 +542,6 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
         SetWindowPos(hwnd, HWND_TOP, center_x, center_y, window_width, window_height, SWP_NOOWNERZORDER);
     }
 
-    //win32_toggle_fullscreen(hwnd);
-
     win32_init_xinput();
 
     win32_audio_init();
@@ -610,6 +608,9 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
         arena_reset(temp_arena());
 
         static Game_Input input = {};
+        static Game_Input prev_input = {};
+
+        MemoryCopyStruct(&prev_input, &input);
         {
             input.arena = permanant_storage;
             input.dt = target_dt;
@@ -668,8 +669,8 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
                 player0->down  |= (GetKeyState('S') & (1 << 15)) == (1 << 15);
                 player0->left  |= (GetKeyState('A') & (1 << 15)) == (1 << 15);
                 player0->right |= (GetKeyState('D') & (1 << 15)) == (1 << 15);
-                player0->a     |= (GetKeyState('J') & (1 << 15)) == (1 << 15);
-                player0->b     |= (GetKeyState('K') & (1 << 15)) == (1 << 15);
+                player0->a     |= (GetKeyState('Q') & (1 << 15)) == (1 << 15);
+                player0->b     |= (GetKeyState('E') & (1 << 15)) == (1 << 15);
 
                 player0->start |= (GetKeyState(VK_ESCAPE) & (1 << 15)) == (1 << 15);
                 player0->pause |= (GetKeyState('P') & (1 << 15)) == (1 << 15);
@@ -707,8 +708,7 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
 
         profiler__begin();
 
-        GameSetState(&input, &output);
-
+        GameSetState(&input, &output, &prev_input);
         GameUpdateAndRender(&input, &output);
 
         profiler__end();

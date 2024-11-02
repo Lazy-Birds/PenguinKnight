@@ -48,6 +48,7 @@ struct Game_State
 static Game_State g_state = {0};
 static Game_Input *input = NULL;
 static Game_Output *out  = NULL;
+static Game_Input *prev_input = NULL;
 
 void GameInit()
 {
@@ -59,15 +60,16 @@ void GameInit()
     String data_path = os_get_executable_path();
     if (!os_file_exists(path_join(data_path, S("data"))))
     {
-        data_path = path_join(path_basename(data_path), S("data"));
+        data_path = path_join(path_dirname(data_path), S("data"));
     }
     g_state.data_path = string_copy(g_state.arena, data_path);
 }
 
-void GameSetState(Game_Input *the_input, Game_Output *the_output)
+void GameSetState(Game_Input *the_input, Game_Output *the_output, Game_Input *the_prev_input)
 {
     input = the_input;
     out = the_output;
+    prev_input = the_prev_input;
 }
 
 //
@@ -236,22 +238,27 @@ Sound LoadSound(String path)
     return {};
 }
 
-Font FontMake(Image image, String alphabet, Vector2i monospaced_letter_size)
+Font FontMakeFromImageMono(Image image, String alphabet, Vector2i monospaced_letter_size)
 {
     Font result = {0};
 
     Vector2i cursor = {0, 0};
 
-    result.image = image;
+    String32 unicode_alphabet = string32_from_string(temp_arena(), alphabet);
+    u32 glyph_count = unicode_alphabet.count;
+
+    result.image  = image;
+    result.glyphs = PushArrayZero(g_state.arena, Font_Glyph, glyph_count+1);
+    result.glyph_count = 0;
 
     Font_Glyph *null_glyph = &result.glyphs[0];
     null_glyph->character = 0;
     null_glyph->size = v2i(monospaced_letter_size.x, 0);
     result.glyph_count += 1;
 
-    for (i32 index = 0; index < Min(alphabet.count, count_of(result.glyphs)); index += 1)
+    for (int index = 0; index < glyph_count; index += 1)
     {
-        u32 character = alphabet.data[index];
+        u32 character = unicode_alphabet.data[index];
 
         Font_Glyph *glyph = &result.glyphs[result.glyph_count];
         result.glyph_count += 1;
@@ -259,6 +266,8 @@ Font FontMake(Image image, String alphabet, Vector2i monospaced_letter_size)
         glyph->character = character;
         glyph->pos = cursor;
         glyph->size = monospaced_letter_size;
+        glyph->line_offset = v2i(0, 0);
+        glyph->xadvance = monospaced_letter_size.x;
 
         cursor.x += monospaced_letter_size.x;
         if (cursor.x >= image.size.width)
@@ -268,6 +277,150 @@ Font FontMake(Image image, String alphabet, Vector2i monospaced_letter_size)
         }
     }
 
+    return result;
+}
+
+Font FontMake(Image image, Font_Glyph *glyphs, u64 glyph_count)
+{
+    Font result = {0};
+    result.image = image;
+    result.glyphs = glyphs;
+    result.glyph_count = glyph_count;
+    return result;
+}
+
+Font LoadFont(String path, String alphabet, Vector2i monospaced_letter_size)
+{
+    Font result = {0};
+
+    u64 hash = murmur64(path.data, path.count);
+    Font_Asset *asset = (Font_Asset *)FindAssetByHash(&g_state.fonts, sizeof(Font_Asset), count_of(g_state.fonts), hash);
+
+    if (!asset)
+    {
+        asset = (Font_Asset *)FindFreeAsset(&g_state.fonts, sizeof(Font_Asset), count_of(g_state.fonts));
+
+        if (!asset)
+        {
+            print("[LoadFont] Used all %d slots available! Failed to load font: %.*s\n", count_of(g_state.fonts), LIT(path));
+        }
+    }
+
+    if (asset)
+    {
+        if (asset->info.hash == 0)
+        {
+            Image image = LoadImage(path);
+            if (image.size.x > 0 && image.size.y > 0)
+            {
+                asset->font = FontMakeFromImageMono(image, alphabet, monospaced_letter_size);
+                asset->info.name = path;
+                asset->info.hash = hash;
+            }
+        }
+
+        result = asset->font;
+    }
+
+    return result;
+}
+
+Font LoadFontExt(String path, Font_Glyph *glyphs, u64 glyph_count)
+{
+    Image image = LoadImage(path);
+    return FontMake(image, glyphs, glyph_count);
+}
+
+//
+// Controller API
+//
+
+b32 ControllerPressed(int index, Controller_Button button)
+{
+    b32 result = false;
+    if (index >= 0 && index < count_of(input->controllers))
+    {
+        if (button >= 0 && button < Button_COUNT)
+        {
+            b32 *prev_state = (b32 *)&prev_input->controllers[index];
+            b32 *state = (b32 *)&input->controllers[index];
+
+            result = !prev_state[button] && state[button];
+        }
+    }
+    return result;
+}
+
+b32 ControllerDown(int index, Controller_Button button)
+{
+    b32 result = false;
+    if (index >= 0 && index < count_of(input->controllers))
+    {
+        if (button >= 0 && button < Button_COUNT)
+        {
+            b32 *prev_state = (b32 *)&prev_input->controllers[index];
+            b32 *state = (b32 *)&input->controllers[index];
+
+            result = state[button];
+        }
+    }
+    return result;
+}
+
+b32 ControllerReleased(int index, Controller_Button button)
+{
+    b32 result = false;
+    if (index >= 0 && index < count_of(input->controllers))
+    {
+        if (button >= 0 && button < Button_COUNT)
+        {
+            b32 *prev_state = (b32 *)&prev_input->controllers[index];
+            b32 *state = (b32 *)&input->controllers[index];
+
+            result = prev_state[button] && !state[button];
+        }
+    }
+    return result;
+}
+
+Vector2 MousePosition()
+{
+    return input->mouse.position;
+}
+
+b32 MousePressed(Mouse_Button button)
+{
+    b32 result = false;
+    if (button >= 0 && button < Mouse_COUNT)
+    {
+        b32 *prev_state = (b32 *)&prev_input->mouse;
+        b32 *state = (b32 *)&input->mouse;
+        result = !prev_state[button] && state[button];
+    }
+    return result;
+}
+
+b32 MouseDown(Mouse_Button button)
+{
+    b32 result = false;
+    if (button >= 0 && button < Mouse_COUNT)
+    {
+        b32 *prev_state = (b32 *)&prev_input->mouse;
+        b32 *state = (b32 *)&input->mouse;
+        result = state[button];
+    }
+    return result;
+}
+
+b32 MouseReleased(Mouse_Button button)
+{
+    b32 result = false;
+    if (button >= 0 && button < Mouse_COUNT)
+    {
+        b32 *prev_state = (b32 *)&prev_input->mouse;
+        b32 *state = (b32 *)&input->mouse;
+        result = prev_state[button] && !state[button];
+    }
     return result;
 }
 
@@ -445,6 +598,26 @@ void DrawRectExt(Rectangle2 rect, Vector4 c0, Vector4 c1, Vector4 c2, Vector4 c3
 
         at += out->width - (in_x1 - in_x0);
     }
+}
+
+void DrawRectOutline(Rectangle2 rect, Vector4 color, int thickness)
+{
+    i32 in_x0 = Clamp((i32)rect.x0, 0, out->width);
+    i32 in_y0 = Clamp((i32)rect.y0, 0, out->height);
+    i32 in_x1 = Clamp((i32)rect.x1, 0, out->width);
+    i32 in_y1 = Clamp((i32)rect.y1, 0, out->height);
+
+    // top
+    DrawRect(r2_from_f32(in_x0, in_y0, in_x1, in_y0+thickness), color);
+
+    // bottom
+    DrawRect(r2_from_f32(in_x0, in_y1, in_x1, in_y1-thickness), color);
+
+    // left
+    DrawRect(r2_from_f32(in_x0, in_y0, in_x0+thickness, in_y1), color);
+
+    // right
+    DrawRect(r2_from_f32(in_x1, in_y0, in_x1-thickness, in_y1), color);
 }
 
 void DrawCircle(Vector2 pos, f32 radius, Vector4 color)
@@ -724,74 +897,20 @@ void DrawImageExt(Image image, Rectangle2 rect, Vector4 color, Rectangle2 uv)
     }
 }
 
-void DrawImageMirroredX(Image image, Vector2 pos) {
-    DrawImageExt(image, r2(pos, pos + v2_from_v2i(image.size)), v4_white, r2_from_f32(1, 0, 0, 1));
-}
-
-#if 0
-void DrawSpriteExt(Image src, Vector2 in_src_position, Vector2 in_src_size, Vector2 in_dest_position, Vector4 color)
+void DrawImageMirrored(Image image, Vector2 pos, b32 flip_x, b32 flip_y)
 {
-    Vector2i src_position = v2i_from_v2(in_src_position);
-    Vector2i src_size = v2i_from_v2(in_src_size);
-    Vector2i dest_position = v2i_from_v2(in_dest_position);
-
-    if (src.size.width == 0 || src.size.height == 0) return;
-
-    src_size.x = Min(src_size.x, src.size.x);
-    src_size.y = Min(src_size.y, src.size.y);
-
-    assert(src_size.x + dest_position.x <= out->width);
-    assert(src_size.y + dest_position.y <= out->height);
-
-    if (src_size.x == 0 || src_size.y == 0) return;
-
-    u8 *in_data = (u8 *)src.pixels;
-    u32 in_pitch = sizeof(u32) * src.size.width;
-    u8 *in_line = in_data + (src_position.y * in_pitch) + (sizeof(u32) * src_position.x);
-
-    u8 *out_data = (u8 *)out->pixels;
-    u32 out_pitch = sizeof(u32) * out->width;
-    u8 *out_line = out_data + (dest_position.y * out_pitch) + (sizeof(u32) * dest_position.x);
-
-    u32 in_copy_size = sizeof(u32) * src_size.x;
-
-    b32 color_is_white = color.r == 1 && color.g == 1 && color.b == 1 && color.a == 1;
-
-    for (i32 y = 0; y < src_size.height; y += 1)
-    {
-        u32 *in_pixel = (u32 *)in_line;
-        u32 *out_pixel = (u32 *)out_line;
-
-        for (int x = 0; x < src_size.width; x += 1)
-        {
-            u32 sample_color = *in_pixel;
-            if ((sample_color & 0xff000000) != 0)
-            {
-                if (color_is_white)
-                {
-                    *out_pixel = sample_color;
-                }
-                else
-                {
-                    *out_pixel = u32_rgba_from_v4(v4_rgba_from_u32(sample_color) * color);
-                }
-            }
-
-            in_pixel += 1;
-            out_pixel += 1;
-        }
-
-        in_line += in_pitch;
-        out_line += out_pitch;
-    }
+    Rectangle2 dest = r2(pos, pos + v2_from_v2i(image.size));
+    Rectangle2 uv = r2_from_f32(0, 0, 1, 1);
+    if (flip_x) { uv.x0 = 1; uv.x1 = 0; }
+    if (flip_y) { uv.y0 = 1; uv.y1 = 0; }
+    DrawImageExt(image, dest, v4_white, uv);
 }
-#endif
 
 Font_Glyph FontGetGlyph(Font font, u32 character)
 {
     Font_Glyph result = font.glyphs[0];
 
-    for (i32 index = 1; index < font.glyph_count; index += 1)
+    for (int index = 1; index < font.glyph_count; index += 1)
     {
         Font_Glyph *it = &font.glyphs[index];
         if (it->character == character)
@@ -804,13 +923,41 @@ Font_Glyph FontGetGlyph(Font font, u32 character)
     return result;
 }
 
-void DrawTextExt(Font font, String text, Vector2 pos, Vector4 color)
-{
-    Vector2 cursor = pos;
 
-    for (i32 i = 0; i < text.count; i += 1)
+Vector2 MeasureText(Font font, String text)
+{
+    Vector2 result = {0};
+
+    f32 line_height = 0;
+
+    String32 unicode_text = string32_from_string(temp_arena(), text);
+    for (i32 i = 0; i < unicode_text.count; i += 1)
     {
-        u32 character = (u32)text.data[i];
+        u32 character = unicode_text.data[i];
+        Font_Glyph glyph = FontGetGlyph(font, character);
+
+        result.x += glyph.xadvance;
+        result.y = Max(result.y, glyph.size.y);
+    }
+
+    return result;
+}
+
+void DrawTextExt(Font font, String text, Vector2 pos, Vector4 color, Vector2 anchor, f32 scale)
+{
+    if (scale <= 0) scale = 1.0;
+    
+    Vector2 cursor = pos;
+    if (!v2_is_zero(anchor))
+    {
+        Vector2 size = MeasureText(font, text);
+        cursor -= size * anchor * scale;
+    }
+
+    String32 unicode_text = string32_from_string(temp_arena(), text);
+    for (i32 i = 0; i < unicode_text.count; i += 1)
+    {
+        u32 character = unicode_text.data[i];
         Font_Glyph glyph = FontGetGlyph(font, character);
 
         Rectangle2 uv = r2(
@@ -821,23 +968,27 @@ void DrawTextExt(Font font, String text, Vector2 pos, Vector4 color)
         if (color.a > 0)
         {
             Vector2 pos = cursor;
-            //pos += glyph.line_offset;
-            DrawImageExt(font.image, r2(pos, pos + v2_from_v2i(glyph.size)), color, uv);
+            pos += v2_from_v2i(glyph.line_offset) * scale;
+            DrawImageExt(font.image, r2(pos, pos + v2_from_v2i(glyph.size) * scale), color, uv);
         }
 
-        cursor.x += glyph.size.width;
-        //cursor.x += glyph.xadvance;
+        cursor.x += glyph.xadvance * scale;
     }
 }
 
 void DrawText(Font font, String text, Vector2 pos)
 {
-    DrawTextExt(font, text, pos, v4_white);
+    DrawTextExt(font, text, pos, v4_white, v2_zero, 1);
+}
+
+void DrawTextAlign(Font font, String text, Vector2 pos, Vector2 anchor)
+{
+    DrawTextExt(font, text, pos, v4_white, anchor, 1);
 }
 
 void DrawClear(Vector4 color)
 {
-    DrawRect( r2(v2(0, 0), v2(out->width, out->height)), color);
+    DrawRect(r2(v2(0, 0), v2(out->width, out->height)), color);
 }
 
 //

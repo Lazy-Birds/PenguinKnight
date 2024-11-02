@@ -661,7 +661,7 @@ static void stbiw__write_run_data(stbi__write_context *s, int length, unsigned c
    s->func(s->context, &databyte, 1);
 }
 
-static void stbiw__write_dump_data(stbi__write_context *s, int length, unsigned char *data)
+static void stbiw__write_Dump_data(stbi__write_context *s, int length, unsigned char *data)
 {
    unsigned char lengthbyte = STBIW_UCHAR(length);
    STBIW_ASSERT(length <= 128); // inconsistent with spec but consistent with official code
@@ -733,11 +733,11 @@ static void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int nco
             }
             if (r+2 >= width)
                r = width;
-            // dump up to first run
+            // Dump up to first run
             while (x < r) {
                int len = r-x;
                if (len > 128) len = 128;
-               stbiw__write_dump_data(s, len, &comp[x]);
+               stbiw__write_Dump_data(s, len, &comp[x]);
                x += len;
             }
             // if there's a run, output it

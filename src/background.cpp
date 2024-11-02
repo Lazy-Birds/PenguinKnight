@@ -1,13 +1,27 @@
-struct Snowflake {
+const i32 TYPESNOW = 0;
+
+struct Particle {
 	Image image;
 	Vector2 velocity;
 	Vector2 position;
 	bool is_alive;
 	f32 depth;
+	i32 direction;
+	f32 life_time;
+	i32 type;
+};
+
+struct Particle_Parameters {
+	Vector2 velocity;
+	Vector2 position;
+	Vector4 color;
+	f32 life_time;
+	Vector2 accel;
+	f32 friction;
 };
 
 i32 snow_count = 5000;
-Snowflake snow[5000] = {};
+Particle snow[5000] = {};
 
 i32 get_open_snowflake() {
 	for (int i = 0; i < snow_count; i++) {
@@ -45,6 +59,7 @@ void spawn_snowflakes(Game_Output *out, Game_Input *input) {
 			snow[snowflake].velocity = v2(40*input->dt, 40*input->dt);
 			snow[snowflake].image = LoadImage(S("snow_flake.png"));
 			snow[snowflake].depth = random_f32_between(.6, .8);
+			snow[snowflake].type = TYPESNOW;
 		}
 	}
 	

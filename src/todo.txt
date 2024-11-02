@@ -7,20 +7,27 @@ Notes:
 
 Todo:
 
+-Sound
+--Learn Reaper
+
 -general code
 --Camera Shake
 --Jump Vibes
---Sound37 mmu7778
+--Draw Bounding Boxes
+--Overfit screen
+--Dialogue box
 
 -attack code
 --Make other Weapons
+--Fix cleaver jump attack animation
 
 -enemies
---make a friggin boss
+--the king starts on the cliff and summons two henchies first before leaping off the cliff into the center of the arena
+--change penguin soldiers attack patterns
+--Fix penguin king occasionally one shotting player.
 
 -sprites
 --rapier
---Bosss!!!!
 --Background
 --Decorations
 
@@ -32,9 +39,13 @@ Completed Code:
 --charged attack code
 --jump
 --generic time code!!!!
+--make a friggin boss
+--particles as the king moves and jumps
+--penguin soldiers
 
 Completed Sprites:
 --cleaver
 --jump attacks
 --normal enemy
 --Research Parallax
+--Bosss!!!!

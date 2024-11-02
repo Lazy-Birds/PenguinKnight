@@ -27,6 +27,7 @@ void player_action(Game_Input *input) {
 	
 
 	state_time+=dt;
+	
 	if (invuln_time > 0){
 		invuln_time-=dt;
 	}
@@ -268,7 +269,7 @@ void player_action(Game_Input *input) {
 				}
 			} else 
 			{
-				dump("oops");
+				Dump("oops");
 			}
 
 			
@@ -298,16 +299,11 @@ void player_action(Game_Input *input) {
 			
 			if (state_time == 0)
 			{
-				if (player.current_health <= 20) {
-					player.current_health = 0;
-					player.alive = false;
-				}
-				player.current_health-=20;
-				player.velocity.y = -5000*dt;
-				player.velocity.x = -5000*dt;
+				player.velocity.y = -6000*dt;
+				player.velocity.x = -6000*dt;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.frame_hit, player.facing);
-				invuln_time = 80*dt;
+				invuln_time = 100*dt;
 
 			} else {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
@@ -374,7 +370,12 @@ void set_enemy_vuln() {
 	}
 }
 
-void player_hit() {
+void player_hit(i32 damage) {
+	if (player.current_health <= damage) {
+		player.current_health = 0;
+		player.alive = false;
+	}
+	player.current_health-=damage;
 	player_state = STATEHIT;
 }
 

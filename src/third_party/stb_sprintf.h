@@ -809,7 +809,7 @@ STBSP__PUBLICDEF int STB_SPRINTF_DECORATE(vsprintfcb)(STBSP_SPRINTFCB *callback,
          // trailing zeros
          tz = pr - (l - 1);
          pr = 0;
-         // dump expo
+         // Dump expo
          tail[1] = h[0xe];
          dp -= 1;
          if (dp < 0) {

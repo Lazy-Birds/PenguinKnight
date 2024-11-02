@@ -75,7 +75,7 @@ VERSION HISTORY
 #define Sign(x) (((x) > 0) - ((x) < 0))
 #define Abs(x) (((x) < 0) ? (0u - x) : (0u + x))
 
-#if !defined(__cplusplus)
+#if !defined(__cplusplus) && !defined(bool)
     #define bool int
     #define true 1
     #define false 0
@@ -1785,8 +1785,8 @@ function f32 r2_aspect_ratio(Rectangle2 r)
 
 function Rectangle2 r2_scale_to_fit(Rectangle2 r01, Rectangle2 dest) {
     Rectangle2 result = {0};
-    result.p0 = dest.p0 + r01.p0 * r2_size(dest);
-    result.p1 = dest.p0 + r01.p1 * r2_size(dest);
+    result.p0 = v2_add(dest.p0, v2_mul(r01.p0, r2_size(dest)));
+    result.p1 = v2_add(dest.p0, v2_mul(r01.p1, r2_size(dest)));
     return result;
 }
 
@@ -2424,7 +2424,7 @@ function Matrix4 matrix4_perspective_camera(f32 aspect_width_over_height, f32 fo
     return result;
 }
 
-function Matrix4 matrix4_perspective(f32 fov, f32 aspect_ratio, f32 near, f32 far)
+function Matrix4 matrix4_perspective(f32 fov, f32 aspect_ratio, f32 near_z, f32 far_z)
 {
     Matrix4 result = matrix4_identity();
 
@@ -2433,8 +2433,8 @@ function Matrix4 matrix4_perspective(f32 fov, f32 aspect_ratio, f32 near, f32 fa
     result.e[0][0] = 1.0f / TanThetaOver2;
     result.e[1][1] = aspect_ratio / TanThetaOver2;
     result.e[3][2] = -1.0f;
-    //result.e[2][2] = (near + far) / (near - far);
-    //result.e[2][3] = (2.0f * near * far) / (near - far);
+    result.e[2][2] = (near_z + far_z) / (near_z - far_z);
+    result.e[2][3] = (2.0f * near_z * far_z) / (near_z - far_z);
     result.e[3][3] = 0.0f;
 
     return result;
@@ -2461,14 +2461,14 @@ function Matrix4 matrix4_orthographic_camera(f32 aspect_width_over_height, f32 n
 }
 
 // NOTE(nick): typically near = -1.0f, far = 1.0f
-function Matrix4 matrix4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far) {
+function Matrix4 matrix4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near_z, f32 far_z) {
     Matrix4 result = matrix4_identity();
     result.e[0][0] = 2.0f / (right - left);
     result.e[1][1] = 2.0f / (top - bottom);
-//    result.e[2][2] = 2.0f / (near - far);
+    result.e[2][2] = 2.0f / (near_z - far_z);
     result.e[0][3] = (right + left) / (left - right);
     result.e[1][3] = (top + bottom) / (bottom - top);
-//    result.e[2][3] = (far + near) / (near - far);
+    result.e[2][3] = (far_z + near_z) / (near_z - far_z);
     return result;
 }
 
@@ -2805,7 +2805,25 @@ function Vector4 v4_rgba_from_u32(u32 hex)
     return result;
 }
 
+function Vector4 v4_rgba_from_u8(u8 r, u8 g, u8 b, u8 a)
+{
+    Vector4 result = {0};
+    result.r = (f32)(r) / 255.f;
+    result.g = (f32)(g) / 255.f;
+    result.b = (f32)(b) / 255.f;
+    result.a = (f32)(a) / 255.f;
+    return result;
+}
 
+function Vector4 v4_rgb_from_u8(u8 r, u8 g, u8 b)
+{
+    Vector4 result = {0};
+    result.r = (f32)(r) / 255.f;
+    result.g = (f32)(g) / 255.f;
+    result.b = (f32)(b) / 255.f;
+    result.a = 1;
+    return result;
+}
 
 function u32 u32_rgba_from_v4(Vector4 v)
 {

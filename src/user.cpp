@@ -13,12 +13,18 @@ struct Enemy {
     i32 damage;
     i32 type;
     Vector2 offset;
+    i32 id;
+
+    Vector2 weapon_size;
+    Vector2 weapon_offset;
 
     f32 enemy_time ;
     i32 enemy_state;
 
     f32 sleep_time;
     i32 guard;
+
+    Vector2 anchor_pos;
 };
 
 struct Entity
@@ -48,13 +54,21 @@ struct Entity
     i32 facing;
 
     i32 sprite_index;
+    f32 state_time;
     f32 animation_time;
 
     Weapon weapon;
 
     texture wall_type;
     Enemy enemy;
+
+    Image *image;
+    String *dialogue;
 };
+
+
+bool enemy_overlap(Entity *entity);
+Rectangle2 get_entity_rect(Entity *entity);
 
 f32 invuln_time = 0;
 
@@ -65,8 +79,9 @@ Vector2 camera_pos;
 Vector2 camera_pos_target;
 i32 camera_state = 0;
 
-void player_hit();
+void player_hit(i32 damage);
 
+#include "dialogue.cpp"
 #include "entity.cpp"
 
 
@@ -97,6 +112,27 @@ void set_camera_pos() {
 
 Rectangle2 get_entity_rect(Entity *entity) {
     return r2_bounds(entity->position, entity->size, v2_zero, v2_one);
+}
+
+bool enemy_overlap(Entity *entity) {
+    for (int i = 0; i < enemy_count; i++) {
+        if (entity->enemy.id == enemys[i].enemy.id) return false;
+
+        Rectangle2 rec1 = get_entity_rect(entity);
+        Rectangle2 rec2 = get_entity_rect(&enemys[i]);
+
+        if (r2_intersects(rec1, rec2)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void draw_bound_box(Entity *entity) {
+    Rectangle2 rec = get_entity_rect(entity);
+    rec = r2_shift(rec, v2(-camera_pos.x+out->width*.5, 0));
+
+    DrawRectOutline(rec, v4_red, 1);
 }
 
 
@@ -237,7 +273,7 @@ i32 get_dmg_attr() {
     } else if (string_equals(player.weapon.damage_attribute, S("Mental"))) {
         return player.mental;
     } else {
-        dump(S("We have a problem"));
+        Dump(S("We have a problem"));
         return NULL;
     }
 }
@@ -257,7 +293,7 @@ void GameUpdate(Game_Input *input, Game_Output *out)
         if (!charged_attack)
         {   
             if (input->mouse.right) {
-                dump(S("Right Click!"));
+                Dump(S("Right Click!"));
             }
             if ((input->mouse.right) && player.current_stamina > 40 && !swing_weapon && !on_cooldown)
             {
@@ -301,7 +337,6 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     if (player.alive) {
         DrawClear(v4(0.2, 0.2, 0.2, 1));
 
-
         GameUpdate(input, out);
         GameRender(input, out);
 
@@ -315,14 +350,12 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         player_action(input);
         player_move(input);
 
+
+
         set_camera_pos();
 
-        spawn_snowflakes(out, input);
-        update_snowflakes(out, camera_pos.x);
-
         for (int i = 0; i < enemy_count; i++) {
-            if (!enemys[i].alive || enemys[i].enemy.type == 3) {continue;}
-            seal_action(&enemys[i], input, &player);
+            if (enemys[i].enemy.type == 1 && enemys[i].alive) seal_action(&enemys[i], input, &player);
         }
 
         f32 dt = input->dt;
@@ -350,17 +383,25 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
                 if (enemys[i].enemy.type == 1) {
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y), v2(enemys[i].max_health, 8), v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y), v2(enemys[i].current_health, 8), v2_zero, v2_one), v4_red);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
+                     v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
+                     8), v2_zero, v2_one), v4_red);
                     if (enemys[i].facing > 0) 
                     {
-                        DrawImageMirroredX(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y));
+                        DrawImageMirrored(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
+                           enemys[i].position.y+enemys[i].enemy.offset.y), true, false);
                     } else 
                     {
                         DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
                            enemys[i].position.y+enemys[i].enemy.offset.y));
                     }
+                } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800) {
+                    p_soldier_action(&enemys[i], input->dt, &player, invuln_time);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
+                     v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
+                     8), v2_zero, v2_one), v4_red);
                 } else if (enemys[i].enemy.type == 3 && abs_f32(player.position.x - enemys[i].position.x) < 700) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(89*48, out->height);
@@ -368,10 +409,48 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                     DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50), v2(604, 12), v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(out->width*.5-300, out->height-48), v2((enemys[i].current_health/enemys[i].max_health)*600, 8), v2_zero, v2_one), v4_red);
 
-                    penguin_king_action(&enemys[i], &player, input->dt);
+                    penguin_king_action(&enemys[i], &player, input->dt, out);
                 }
 
             }
+
+            for (int i = 0; i < npc_count; i++) {
+                npc[npc_count].animation_time+=input->dt;
+                npc[npc_count].state_time+=input->dt;
+
+                if (i32(npc[npc_count].animation_time*60)%30 < 15) {
+                    DrawImage(npc[i].image[0], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y));
+                } else {
+                    DrawImage(npc[i].image[1], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y));
+                }
+
+                if (abs_i32(npc[i].position.x-player.position.x) < 100) {
+                    String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
+                    Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
+
+
+                    DrawTextExt(font_hellomyoldfriend, npc[i].dialogue[0], v2(npc[i].position.x - 30 -camera_pos.x+out->width*.5, npc[i].position.y), v4_white, v2_zero, 1.4);
+                }
+            }
+
+            static b32 draw_bounding_boxes = false;
+            Controller CC = input->controllers[0];
+
+
+            if (CC.pause) draw_bounding_boxes = true;
+
+            if (draw_bounding_boxes) {
+                for (int i = 0; i < enemy_count; i++) {
+
+                    draw_bound_box(&enemys[i]);
+                }
+                draw_bound_box(&player);
+
+            }
+
+            particle_update(input->dt);
+
+
         }
     } else {
         DrawClear(v4(0.2, 0.2, 0.2, 1));
@@ -380,5 +459,5 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         DrawImage(you_died, v2(out->width/2-196, out->height/2-48));
     }
-    
+
 }

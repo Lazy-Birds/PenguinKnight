@@ -1,5 +1,37 @@
 #pragma once
 
+const Vector2 TextAlign_Center      = v2(0.5, 0.5);
+
+const Vector2 TextAlign_TopLeft     = v2(0, 0);
+const Vector2 TextAlign_BottomLeft  = v2(0, 1);
+const Vector2 TextAlign_CenterLeft  = v2(0, 0.5);
+
+const Vector2 TextAlign_TopRight    = v2(1, 0);
+const Vector2 TextAlign_BottomRight = v2(1, 1);
+const Vector2 TextAlign_CenterRight = v2(1, 0.5);
+
+typedef u32 Controller_Button;
+enum {
+    Button_Up = 0,
+    Button_Down,
+    Button_Left,
+    Button_Right,
+
+    Button_A,
+    Button_B,
+    Button_Start,
+    Button_Back,
+
+    Button_COUNT,
+};
+
+typedef u32 Mouse_Button;
+enum {
+    Mouse_Left = 0,
+    Mouse_Right = 1,
+    Mouse_COUNT,
+};
+
 struct Controller
 {
     b32 up;
@@ -84,7 +116,7 @@ struct Font
 {
     Image image;
 
-    Font_Glyph glyphs[128];
+    Font_Glyph *glyphs;
     u32 glyph_count;
 };
 
@@ -93,8 +125,21 @@ struct Font
 //
 
 void GameInit();
-void GameSetState(Game_Input *input, Game_Output *out);
+void GameSetState(Game_Input *input, Game_Output *out, Game_Input *prev_input);
 void GameUpdateAndRender(Game_Input *input, Game_Output *out);
+
+//
+// Controller API
+//
+
+b32 ControllerPressed(int controller_index, Controller_Button button);
+b32 ControllerDown(int index, Controller_Button button);
+b32 ControllerReleased(int index, Controller_Button button);
+
+Vector2 MousePosition();
+b32 MousePressed(Mouse_Button button);
+b32 MouseReleased(Mouse_Button button);
+b32 MouseDown(Mouse_Button button);
 
 //
 // Drawing API
@@ -105,6 +150,7 @@ u32 DrawGetPixel(Vector2 pos);
 
 void DrawRect(Rectangle2 rect, Vector4 color);
 void DrawRectExt(Rectangle2 rect, Vector4 c0, Vector4 c1, Vector4 c2, Vector4 c3);
+void DrawRectOutline(Rectangle2 rect, Vector4 color, int thickness);
 
 void DrawCircle(Vector2 pos, f32 radius, Vector4 color);
 
@@ -115,11 +161,12 @@ void DrawLine(Vector2 p0, Vector2 p1, Vector4 color);
 
 void DrawImage(Image image, Vector2 pos);
 void DrawImageExt(Image image, Rectangle2 rect, Rectangle2 uv);
+void DrawImageMirrored(Image image, Vector2 pos, b32 flip_x, b32 flip_y);
 
-void DrawSpriteExt(Image src, Vector2i src_position, Vector2i src_size, Vector2i dest_position);
-
+Vector2 MeasureText(Font font, String text);
 void DrawText(Font font, String text, Vector2 pos);
-void DrawTextExt(Font font, String text, Vector2 pos, Vector4 color);
+void DrawTextAlign(Font font, String text, Vector2 pos, Vector2 anchor);
+void DrawTextExt(Font font, String text, Vector2 pos, Vector4 color, Vector2 anchor, f32 scale);
 
 void DrawClear(Vector4 color);
 
@@ -143,6 +190,5 @@ f32 SoundGetTime(Sound sound);
 
 Image LoadImage(String path);
 Sound LoadSound(String path);
-Font LoadFont(String path);
-
-Font FontMake(Image image, String alphabet, Vector2i monospaced_letter_size);
+Font LoadFont(String path, String alphabet, Vector2i monospaced_letter_size);
+Font LoadFontExt(String path, Font_Glyph *glyphs, u64 glyph_count);
