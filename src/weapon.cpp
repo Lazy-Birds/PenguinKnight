@@ -1,6 +1,7 @@
 struct Weapon {
     Image *image;
     String name;
+    Image icon;
 
     Vector2 position;
     Vector2 size;
@@ -22,6 +23,7 @@ struct Weapon {
 
     Vector2 jump_frame;
     Vector2 dash_frame;
+    Vector2 jump;
     i32 frame_hit;
 };
 
@@ -71,7 +73,11 @@ void load_weapon() {
         LoadImage(S("cleaver18.png")),
         LoadImage(S("cleaver19.png")),
         LoadImage(S("cleaver20.png")),
+        LoadImage(S("cleaver21.png")),
+        LoadImage(S("cleaver22.png")),
     };
+
+    static Image icon = LoadImage(S("cleaver_icon.png"));
 
     cleaver.image = cleaver_image;
     cleaver.size = v2(139, 87), v2(149, 92);
@@ -87,7 +93,9 @@ void load_weapon() {
     cleaver.damage_attribute = S("Strength");
     cleaver.damage_multiplier = 1.5;
     cleaver.charge_time = 9;
-    cleaver.jump_frame = v2(14,15);
+    cleaver.jump_frame = v2(14, 15);
     cleaver.frame_hit = 2;
     cleaver.dash_frame = v2(16, 19);
+    cleaver.icon = icon;
+    cleaver.jump = v2(20,21);
 }
