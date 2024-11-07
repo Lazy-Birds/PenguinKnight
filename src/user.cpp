@@ -227,9 +227,9 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.position = v2(out->width, out->height*.5);
+    player.position = v2(624, out->height - 244);
     player.anchor = v2(0.5, 0.5);
-    player.facing = 1;
+    player.facing = -1;
     player.max_health = 10*player.constitution;
     player.current_health = player.max_health;
     player.min_health = 0;
@@ -274,7 +274,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     charging_weapon = false;
     charged_attack = false;
 
-    make_world();
+    make_world(720);
+    make_world(0);
 
     for (int i = 0; i < 800; i++) {
         spawn_snowflakes(out, input);
@@ -371,6 +372,12 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     if (player.alive) {
         DrawClear(v4(0.2, 0.2, 0.2, 1));
 
+        int layer = 0;
+
+        if (player.position.y < 0) {
+            layer = 720;
+        }
+
         draw_background();
 
         GameUpdate(input, out);
@@ -379,13 +386,18 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         spawn_snowflakes(out, input);
         update_snowflakes(out, camera_pos.x);
 
-        for (int i = 0; i < plant_count; i++) {
-            DrawImage(plants[i].image, v2(plants[i].position.x-camera_pos.x+out->width*.5, plants[i].position.y));
+        for (int i = 0; i < bgnd_count; i++) {
+            DrawImage(bgnd[i].image, v2(bgnd[i].position.x-camera_pos.x+out->width*.5, bgnd[i].position.y+layer));
         }
 
         for (int i = 0; i < wall_count; i++) {
-            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
+            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y+layer));
         }
+
+        if (abs_i32(fire.position.x - player.position.x) < 1200) {
+            draw_fire(input->dt);
+        }
+        
 
         player_action(input);
         player_move(input);
@@ -413,18 +425,18 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
                 if (enemys[i].enemy.type == 1) {
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12-layer), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12-layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
                     if (enemys[i].facing > 0) 
                     {
                         DrawImageMirrored(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y), true, false);
+                           enemys[i].position.y+enemys[i].enemy.offset.y+layer), true, false);
                     } else 
                     {
                         DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y));
+                           enemys[i].position.y+enemys[i].enemy.offset.y+layer));
                     }
                 } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800) {
                     p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input);
@@ -445,20 +457,33 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             for (int i = 0; i < npc_count; i++) {
                 npc[i].animation_time+=input->dt;
                 npc[i].state_time+=input->dt;
-                npc[i].dialogue_time+=dt;
+                npc[i].dialogue_time+=input->dt;
 
-                if (i32(npc[i].animation_time*60)%90 < 45) {
-                    DrawImage(npc[i].image[0], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y));
+                if (i32(npc[i].animation_time*30)%90 < 45) {
+                    DrawImage(npc[i].image[0], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y-layer));
                 } else {
-                    DrawImage(npc[i].image[1], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y));
+                    DrawImage(npc[i].image[1], v2(npc[i].position.x-camera_pos.x+out->width*.5, npc[i].position.y-layer));
                 }
 
 
 
                 if (abs_i32(npc[i].position.x-player.position.x) < 100) {
-                    draw_dialogue_box(npc[i].dialogue[0], out, npc[i].portrait, 2, npc[i].dialogue_time*60);
+                    if (npc[i].state_time*30.0 < 400) {
+                        draw_dialogue_box(npc[i].dialogue[0], out, npc[i].portrait, 2, npc[i].dialogue_time*30.0);
+                    }
+
+                    if (npc[i].state_time*30.0 > 400 && npc[i].state_time*30.0 < 402 ) {
+                        npc[i].dialogue_time = 0;
+                    }
+
+
+                    if (npc[i].state_time*30.0 > 400 && npc[i].state_time*30.0 < 800) {
+                        draw_dialogue_box(npc[i].dialogue[1], out, npc[i].portrait, 2, npc[i].dialogue_time*30.0);
+                    }
+                    
                 } else {
-                    npc[i].dialogue_time=0;
+                    npc[i].dialogue_time = 0;
+                    npc[i].state_time = 0;
                 }
             }
 

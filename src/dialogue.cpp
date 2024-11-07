@@ -23,7 +23,7 @@ void draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames,
 
     Vector2 size = MeasureText(font_hellomyoldfriend, words);
 
-    String words2 = string_slice(words, 0, dialogue_time/5);
+    String words2 = string_slice(words, 0, dialogue_time/8);
 
     Rectangle2 box1 = r2_bounds(v2(96, out->height-96), v2(out->width-96, 96), v2_zero, v2_one);
     Rectangle2 box2 = r2_bounds(v2(96+4, out->height-96+4), v2(out->width-96-8, 96-8), v2_zero, v2_one);
@@ -38,7 +38,7 @@ void draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames,
 
     DrawTextExt(font_hellomyoldfriend, words2, v2(96+12, out->height-96+12), v4_white, v2_zero, 2.0);
 
-    if (i32(dialogue_time)%60 < 30) {
+    if (i32(dialogue_time)%90 < 45) {
     	DrawImage(image[0], v2(1, out->height-96));
     } else {
     	DrawImage(image[1], v2(1, out->height-96));

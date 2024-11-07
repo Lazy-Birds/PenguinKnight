@@ -11,15 +11,25 @@ void draw_pengu(Entity *pengu_king, i32 frame);
 void draw_clouds(Entity *pengu, f32 dt);
 void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image);
 
-struct Plants {
+struct Background {
     Vector2 position;
     Vector2 size;
     Image image;
     i32 frames;
 };
 
-Plants plants[1000] = {};
-i32 plant_count = 0;
+struct Fire {
+    Vector2 position;
+    Vector2 size;
+    Image *image;
+    i32 frames;
+    f32 state_time;
+};
+
+Fire fire = {};
+
+Background bgnd[1000] = {};
+i32 bgnd_count = 0;
 
 
 u32 image_get_pixel(Image image, int x, int y) {
@@ -196,11 +206,19 @@ void make_npcs(Vector2 pos, i32 type) {
 }
 
 void draw_player(Weapon weapon, Vector2 position, i32 frame, i32 facing) {
+    int layer = 0;
+
+    if (position.y+48 < 0) {
+        layer = 720;
+    } else {
+        layer = 0;
+    }
+
     if (sign_i32(facing) < 0) {
-        DrawImageMirrored(weapon.image[frame], v2(position.x + weapon.offset_left.x, position.y+weapon.offset_left.y), true, false);
+        DrawImageMirrored(weapon.image[frame], v2(position.x + weapon.offset_left.x, position.y+weapon.offset_left.y+layer), true, false);
         //DrawImage(weapon.image[i32(frame + weapon.weapon_frames.y+1)], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y));
     } else {
-        DrawImage(weapon.image[frame], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y));
+        DrawImage(weapon.image[frame], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y+layer));
     }
 }
 
@@ -213,7 +231,7 @@ void make_wall(Vector2 pos, u32 pixel, String image) {
     wall_count++;
 }
 
-void make_world() {
+void make_world(i32 offset) {
     /*wall[0].position.y = out->height-32;
     wall[0].position.x = 32;
     wall[0].size = v2(32, 32);
@@ -229,7 +247,21 @@ void make_world() {
     wall[2].size = v2(32, 32);
     wall[2].color = v4_yellow;*/
 
-    Image world = LoadImage(S("TestWorld.png"));
+    Image world = {};
+
+    i32 layer = 0;
+
+    if (offset == 0) {
+        layer = 1;
+    } else {
+        layer = -1;
+    }
+
+    if (offset == 0) {
+        world = LoadImage(S("TestWorld.png"));
+    } else {
+        world = LoadImage(S("TestWorld2.png"));
+    }
 
 
     for (int i = 0; i < world.size.x; i++) {
@@ -244,80 +276,103 @@ void make_world() {
                 {
                 case -1405996289: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 0);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 0);
                         enemy_count++;
                     } break;
                 case -1060381441: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 1);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 1);
                         enemy_count++;
                     } break;
                 case -18390529:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 2);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 2);
                         enemy_count++;
                     } break;
                 case 1516865791:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 3);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 3);
                         enemy_count++;
                     } break;
                 case -1562516993:
                     {
-                        make_npcs(v2(i*48, k*48), 0);
+                        make_npcs(v2(i*48, k*48-offset), 0);
                         load_fairy_dialogue(&npc[npc_count]);
                         npc_count++;
                     } break;
                 case 753464831: 
                     {
-                        plants[plant_count].position = v2(i*48, k*48);
-                        plants[plant_count].size = v2(48, 48);
-                        plants[plant_count].image = LoadImage(S("ice_grass1.png"));
-                        plant_count++;
+                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].size = v2(48, 48);
+                        bgnd[bgnd_count].image = LoadImage(S("ice_grass1.png"));
+                        bgnd_count++;
                     } break;
                 case 423378687: 
                     {
-                        plants[plant_count].position = v2(i*48, k*48);
-                        plants[plant_count].size = v2(48, 96);
-                        plants[plant_count].image = LoadImage(S("pointed_fir.png"));
-                        plant_count++;
+                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = LoadImage(S("pointed_fir.png"));
+                        bgnd_count++;
+                    } break;
+                case -465877761:
+                {
+                    static Image image[5] = {
+                        LoadImage(S("fire1.png")),
+                        LoadImage(S("fire2.png")),
+                        LoadImage(S("fire3.png")),
+                        LoadImage(S("fire4.png")),
+                        LoadImage(S("fire5.png")),
+                    };
+                    fire.position = v2(i*48, k*48-offset);
+                    fire.size = v2(48, 48);
+                    fire.image = image;
+                    fire.frames = 4;
+                    fire.state_time = 0;
+                } break;
+                case 403973631:
+                    {
+                        static Image image = LoadImage(S("cave_wall.png"));
+                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = image;
+                        bgnd_count++;
                     } break;
                 case 842807807: 
                     {
-                        make_wall(v2(i, k), pixel, S("grass_bot.png"));
+                        make_wall(v2(i, k*layer), pixel, S("grass_bot.png"));
                     } break;
                 case -1713024769:
                     {
-                        make_wall(v2(i, k), pixel, S("grass_top.png"));
+                        make_wall(v2(i, k*layer), pixel, S("grass_top.png"));
                     } break;
                 case 1437261311: 
                     {
-                        make_wall(v2(i, k), pixel, S("dirt_covered_snow.png"));
+                        make_wall(v2(i, k*layer), pixel, S("dirt_covered_snow.png"));
                     } break;
                 case 1715024383:
                     {
-                        make_wall(v2(i, k), pixel, S("dirt.png"));
+                        make_wall(v2(i, k*layer), pixel, S("dirt.png"));
                     } break;
                 case -521737985:
                     {
-                        make_wall(v2(i, k), pixel, S("ice_brick.png"));
+                        make_wall(v2(i, k*layer), pixel, S("ice_brick.png"));
                     } break;
                 case 7903743:
                     {
-                        make_wall(v2(i, k), pixel, S("rocks.png"));
+                        make_wall(v2(i, k*layer), pixel, S("rocks.png"));
                     } break;
                 case 629118975:
                     {
-                        make_wall(v2(i, k), pixel, S("stone_brick.png"));
+                        make_wall(v2(i, k*layer), pixel, S("stone_brick.png"));
                     } break;
                 case 530563839:
                     {
-                        make_wall(v2(i, k), pixel, S("rocks_crack.png"));
+                        make_wall(v2(i, k*layer), pixel, S("rocks_crack.png"));
                     } break;
                 default:
                     {
                         Dump(pixel);
-                        make_wall(v2(i, k), pixel, S("penguin_idle.png"));
+                        make_wall(v2(i, k*layer), pixel, S("penguin_idle.png"));
                     } break;
                 }; 
                 
@@ -797,17 +852,18 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
     case KINGCOMMAND:
         {
             draw_pengu(pengu_king, 0);
-            if (king_time*60 < 200) {
-                draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2, 60*pengu_king->dialogue_time);
+
+            if (king_time*60 < 220) {
+                draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
             } 
 
-            if (king_time*60 > 200 && king_time*60 < 202) {
+            if (king_time*60 > 220 && king_time*60 < 222) {
                 pengu_king->dialogue_time = 0;
             }
 
-            if (king_time*60 > 200 && king_time*60 < 400) {
-                draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2, 60*pengu_king->dialogue_time);
-            } else if (king_time*60 > 400) {
+            if (king_time*60 > 220 && king_time*60 < 440) {
+                draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
+            } else if (king_time*60 > 440) {
                 make_guards(stage_size);
                 king_state = KINGWAIT;
             }
@@ -1042,6 +1098,47 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
                 soldier->state = MOVE;
             }
         } break;
+    }
+}
+
+void draw_fire(f32 dt) {
+    fire.state_time+=dt;
+
+    if (i32(fire.state_time*60)%50 < 10) {
+        DrawImage(fire.image[0], v2(fire.position.x-camera_pos.x+out->width*.5, fire.position.y));
+    } else if (i32(fire.state_time*60)%50 < 20) {
+        DrawImage(fire.image[1], v2(fire.position.x-camera_pos.x+out->width*.5, fire.position.y));
+    } else if (i32(fire.state_time*60)%50 < 30) {
+        DrawImage(fire.image[2], v2(fire.position.x-camera_pos.x+out->width*.5, fire.position.y));
+    } else if (i32(fire.state_time*60)%50 < 40) {
+        DrawImage(fire.image[3], v2(fire.position.x-camera_pos.x+out->width*.5, fire.position.y));
+    } else {
+        DrawImage(fire.image[4], v2(fire.position.x-camera_pos.x+out->width*.5, fire.position.y));
+    }
+
+    Particle_Parameters min = {};
+    Particle_Parameters max = {};
+
+    min.position.x = fire.position.x+12;
+    max.position.x = fire.position.x + 36;
+
+    min.position.y = fire.position.y;
+    max.position.y = fire.position.y + 18;
+
+    min.velocity.x = 0;
+    max.velocity.x = 0;
+
+    min.velocity.y = -1200*dt;
+    max.velocity.y = -1700*dt;
+
+    min.life_time = 100.0*dt;
+    max.life_time = 200.0*dt;
+
+    static Image smoke = LoadImage(S("smoke.png"));
+
+
+    if (random_f32_between(0, 1) < .1) {
+        particle_emit(min, max, smoke);
     }
 }
 

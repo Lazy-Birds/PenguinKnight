@@ -86,7 +86,7 @@ void player_action(Game_Input *input) {
 				if (c0.b) {
 					player.velocity.x = move_f32(player.velocity.x, max_speed, max_speed * dt);
 				} else {
-					player.velocity.x = move_f32(player.velocity.x, 300, 300 * dt);
+					player.velocity.x = move_f32(player.velocity.x, 350, 350 * dt);
 				}
 
 				if (player.facing < 0) {
@@ -109,7 +109,7 @@ void player_action(Game_Input *input) {
 				if (c0.b) {
 					player.velocity.x = move_f32(player.velocity.x, -max_speed, max_speed * dt);
 				} else {
-					player.velocity.x = move_f32(player.velocity.x, -300, 300 * dt);
+					player.velocity.x = move_f32(player.velocity.x, -350, 350 * dt);
 				}
 				if (player.facing > 0) {
 					player.facing = -1;
@@ -155,14 +155,14 @@ void player_action(Game_Input *input) {
 		} break;
 	case JUMP:
 		{
-			if (c0.up && player.current_stamina > 8) {
-				if (state_time*60 < 30) {
+			if (c0.up && player.current_stamina > 20) {
+				if (state_time*60 < 15) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.jump.x, player.facing);
-				} else if (state_time*60 > 16 && entity_on_wall(&player)) {
+				} else if (state_time*60 > 14 && entity_on_wall(&player)) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.jump.y, player.facing);
-					player.velocity.y=-200;
+					player.velocity.y=-240;
 					player.current_stamina-=20;
 				} else if (player.velocity.y < 0) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
