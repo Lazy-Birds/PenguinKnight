@@ -13,18 +13,17 @@ Todo:
 -general code
 --Camera Shake
 --Jump Vibes
---Draw Bounding Boxes
+--Character Menu
+
 --Overfit screen
---Dialogue box
+
 
 -attack code
 --Make other Weapons
 --Fix cleaver jump attack animation
 
 -enemies
---the king starts on the cliff and summons two henchies first before leaping off the cliff into the center of the arena
---change penguin soldiers attack patterns
---Fix penguin king occasionally one shotting player.
+
 
 -sprites
 --rapier
@@ -42,6 +41,11 @@ Completed Code:
 --make a friggin boss
 --particles as the king moves and jumps
 --penguin soldiers
+--Draw Bounding Boxes
+--Dialogue box
+--the king starts on the cliff and summons two henchies first before leaping off the cliff into the center of the arena
+--change penguin soldiers attack patterns
+--Fix penguin king occasionally one shotting player.
 
 Completed Sprites:
 --cleaver

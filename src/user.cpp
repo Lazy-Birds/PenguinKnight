@@ -16,6 +16,7 @@ Image background;
 
 #include "background.cpp"
 
+
 struct texture {
     u32 pixel;
     Image image;
@@ -41,6 +42,7 @@ struct Enemy {
     i32 guard;
 
     Vector2 anchor_pos;
+    i32 exp_dropped;
 };
 
 struct Entity
@@ -86,6 +88,10 @@ struct Entity
 
     String *dialogue;
     f32 dialogue_time;
+
+    i32 exp_gained;
+    i32 exp_to_level;
+    i32 level;
 };
 
 
@@ -105,6 +111,7 @@ void player_hit(i32 damage, Game_Input *input);
 
 #include "dialogue.cpp"
 #include "entity.cpp"
+#include "menu.cpp"
 
 
 
@@ -188,6 +195,7 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
                         enemys[i].alive = false;
+                        player.exp_gained += enemys[i].enemy.exp_dropped;
                     } else {
                         enemys[i].current_health-=damage;
                         enemys[i].invuln = true;
@@ -199,6 +207,7 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
                         enemys[i].alive = false;
+                        player.exp_gained += enemys[i].enemy.exp_dropped;
                     } else {
                         enemys[i].current_health-=damage;
                         enemys[i].invuln = true;
@@ -240,6 +249,9 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.weapon = cleaver;
     player.weapon.position = player.position;
     player.size = v2(40, 52);
+    player.exp_gained = 40;
+    player.exp_to_level = 100;
+    player.level = 1;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -346,13 +358,15 @@ void GameUpdate(Game_Input *input, Game_Output *out)
     }
 }
 
-void draw_background()
+void draw_background(i32 layer)
 {
-   i32 new_pos = -camera_pos.x*.02;
+   i32 new_pos_x = -camera_pos.x*.02;
+   i32 new_pos_y = layer - 200;
 
-   Clamp(new_pos, 0, 280);
+   new_pos_x = Clamp(new_pos_x, -280, 0);
+   new_pos_y = Clamp(new_pos_y, -200, 0);
 
-   DrawImage(background, v2(new_pos, 0));
+   DrawImage(background, v2(new_pos_x, new_pos_y));
 }
 
 void GameRender(Game_Input *input, Game_Output *out)
@@ -374,11 +388,11 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         int layer = 0;
 
-        if (player.position.y < 0) {
+        if (player.position.y < -48) {
             layer = 720;
         }
 
-        draw_background();
+        draw_background(layer);
 
         GameUpdate(input, out);
         GameRender(input, out);
@@ -425,9 +439,9 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
                 if (enemys[i].enemy.type == 1) {
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12-layer), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12+layer), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12-layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12+layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
                     if (enemys[i].facing > 0) 
                     {
@@ -439,16 +453,16 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                            enemys[i].position.y+enemys[i].enemy.offset.y+layer));
                     }
                 } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800) {
-                    p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
+                    p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input, layer);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12 + layer), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12 + layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
                 } else if (enemys[i].enemy.type == 3 && player.position.x > 8640 && player.position.x < 9504) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(9072, out->height);
 
-                    penguin_king_action(&enemys[i], &player, input->dt, out);
+                    penguin_king_action(&enemys[i], &player, input->dt, out, layer);
 
                 }
 
@@ -487,11 +501,22 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                 }
             }
 
-            static b32 draw_bounding_boxes = false;
+
+
+            static b32 menu_open = false;
             Controller CC = input->controllers[0];
 
+            if (ControllerReleased(0, Button_Start)) {
+                if (menu_open) {
+                    menu_open = false;
+                } else {
+                    menu_open = true;
+                }
+            }
+            
 
-            if (CC.pause) draw_bounding_boxes = true;
+
+            /*if (CC.pause) draw_bounding_boxes = true;
 
             if (draw_bounding_boxes) {
                 for (int i = 0; i < enemy_count; i++) {
@@ -500,11 +525,13 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                 }
                 draw_bound_box(&player);
 
-            }
+            }*/
 
             particle_update(input->dt);
 
-
+            if (menu_open) {
+                draw_menu(out, &player);
+            }
         }
     } else {
         String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
