@@ -132,6 +132,19 @@ Asset_Info *GetAssetByIndex(void *array, u64 size, u64 count, i64 index)
     return result;
 }
 
+Image MakeScreenImage(Game_Output *out) {
+
+    Image screen = {};
+    screen.size.x = out->width;
+    screen.size.y = out->height;
+
+    u32 *image = out->pixels;
+
+    screen.pixels = image;
+
+    return screen;
+}
+
 Image LoadImage(String path)
 {
     u64 hash = fnv64a(path.data, path.count);

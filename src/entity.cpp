@@ -1,4 +1,4 @@
-Entity wall[1000] = {};
+Entity wall[10000] = {};
 int wall_count = 0;
 Entity enemys[1000] = {};
 int enemy_count = 0;
@@ -18,6 +18,14 @@ struct Background {
     i32 frames;
 };
 
+struct Housing {
+    Vector2 position;
+    Vector2 size;
+    Image *image;
+    i32 frames;
+    f32 state_time;
+};
+
 struct Fire {
     Vector2 position;
     Vector2 size;
@@ -28,9 +36,11 @@ struct Fire {
 
 Fire fire = {};
 
-Background bgnd[1000] = {};
+Background bgnd[10000] = {};
 i32 bgnd_count = 0;
 
+Housing housing[100] = {};
+i32 house_count = 0;
 
 u32 image_get_pixel(Image image, int x, int y) {
     return image.pixels[y*image.size.width+x];
@@ -83,6 +93,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             enemy_seal.enemy.enemy_time = 0;
             enemy_seal.enemy.exp_dropped = 50;
             enemy_seal.enemy.damage = 10;
+            enemy_seal.has_hit = true;
 
             return enemy_seal;
         } break;
@@ -126,6 +137,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             big_papa.enemy.damage = 30;
             big_papa.portrait = portrait;
             big_papa.enemy.exp_dropped = 2000;
+            big_papa.has_hit = false;
 
             load_penguin_king_dialogue(&big_papa);
 
@@ -140,6 +152,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
                 LoadImage(S("penguin_soldier3.png")),
                 LoadImage(S("penguin_soldier4.png")),
             };
+
 
             Entity penguin_soldier = {};
             penguin_soldier.max_health = 80;
@@ -158,13 +171,49 @@ Entity load_enemy(Vector2 pos, i32 type) {
             penguin_soldier.enemy.weapon_size = v2(56, 8);
             penguin_soldier.enemy.weapon_offset = v2(-27, 33);
             penguin_soldier.enemy.damage = 30;
-            penguin_soldier.enemy.id = wall_count;
+            penguin_soldier.enemy.id = enemy_count;
             penguin_soldier.state = NEUTRAL;
             penguin_soldier.state_prev = NEUTRAL;
             penguin_soldier.enemy.exp_dropped = 75;
+            penguin_soldier.has_hit = true;
 
             return penguin_soldier;
-        }
+        } break;
+    case 4:
+        {
+            static Image image[9] = {
+                LoadImage(S("robo_pup1.png")),
+                LoadImage(S("robo_pup2.png")),
+                LoadImage(S("robo_pup3.png")),
+                LoadImage(S("robo_pup4.png")),
+                LoadImage(S("robo_pup5.png")),
+                LoadImage(S("robo_pup6.png")),
+                LoadImage(S("robo_pup7.png")),
+                LoadImage(S("robo_pup8.png")),
+                LoadImage(S("robo_pup9.png")),
+            };
+
+            Entity pup = {};
+            pup.max_health = 120;
+            pup.current_health = pup.current_health;
+            pup.min_health = 0;
+            pup.enemy.offset = v2(0, 0);
+            pup.position = pos;
+            pup.size = v2(39, 96);
+            pup.invuln = false;
+            pup.alive = true;
+            pup.facing = 1;
+            pup.image = image;
+            pup.type = 5;
+            pup.enemy.anchor_pos = pos;
+            pup.enemy.damage = 40;
+            pup.enemy.id = enemy_count;
+            pup.state = NEUTRAL;
+            pup.enemy.exp_dropped = 100;
+            pup.has_hit = true;
+
+            return pup;
+        } break;
     default:
         {
             static Image image[1] = {LoadImage(S("penguin_idle.png"))};
@@ -188,6 +237,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
 }
 
 const i32 fairy = 0;
+const i32 lil_pengu = 1;
 
 void make_npcs(Vector2 pos, i32 type) {
     switch (type)
@@ -204,9 +254,25 @@ void make_npcs(Vector2 pos, i32 type) {
             npc[npc_count].animation_time = 0;
             npc[npc_count].dialogue_time = 0;
             npc[npc_count].portrait = portrait;
+            npc[npc_count].type = fairy;
 
         } break;
-    }
+    case lil_pengu:
+        {
+            static Image image[3] = {LoadImage(S("lil_pengu1.png")),
+            LoadImage(S("lil_pengu2.png")),
+            LoadImage(S("lil_pengu3.png")),
+        };
+
+        npc[npc_count].position = pos;
+        npc[npc_count].image = image;
+        npc[npc_count].alive = true;
+        npc[npc_count].state_time = 0;
+        npc[npc_count].animation_time = 0;
+        npc[npc_count].dialogue_time = 0;
+        npc[npc_count].type = lil_pengu;
+    } break;
+}
 }
 
 void draw_player(Weapon weapon, Vector2 position, i32 frame, i32 facing) {
@@ -288,28 +354,38 @@ void make_world(i32 offset) {
                 {
                 case -1405996289: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 0);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 0);
                         enemy_count++;
                     } break;
                 case -1060381441: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 1);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 1);
                         enemy_count++;
                     } break;
                 case -18390529:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 2);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 2);
                         enemy_count++;
                     } break;
                 case 1516865791:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48-offset), 3);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 3);
+                        enemy_count++;
+                    } break;
+                case 1821034495:
+                    {
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 4);
                         enemy_count++;
                     } break;
                 case -1562516993:
                     {
-                        make_npcs(v2(i*48, k*48-offset), 0);
+                        make_npcs(v2(i*48, k*48*layer), fairy);
                         load_fairy_dialogue(&npc[npc_count]);
+                        npc_count++;
+                    } break;
+                case 1969959423:
+                    {
+                        make_npcs(v2(i*48, k*48*layer), lil_pengu);
                         npc_count++;
                     } break;
                 case 753464831: 
@@ -326,24 +402,44 @@ void make_world(i32 offset) {
                         bgnd[bgnd_count].image = LoadImage(S("pointed_fir.png"));
                         bgnd_count++;
                     } break;
+                case 1059599103:
+                    {
+                        static Image image[3] = {
+                            LoadImage(S("peasant_hovel1.png")),
+                            LoadImage(S("peasant_hovel2.png")),
+                            LoadImage(S("peasant_hovel3.png")),
+                        };
+                        housing[house_count].position = v2(i*48, k*48-offset);
+                        housing[house_count].size = v2(192, 202);
+                        housing[house_count].image = image;
+                        house_count++;
+                    } break;
                 case -465877761:
-                {
-                    static Image image[5] = {
-                        LoadImage(S("fire1.png")),
-                        LoadImage(S("fire2.png")),
-                        LoadImage(S("fire3.png")),
-                        LoadImage(S("fire4.png")),
-                        LoadImage(S("fire5.png")),
-                    };
-                    fire.position = v2(i*48, k*48-offset);
-                    fire.size = v2(48, 48);
-                    fire.image = image;
-                    fire.frames = 4;
-                    fire.state_time = 0;
-                } break;
+                    {
+                        static Image image[5] = {
+                            LoadImage(S("fire1.png")),
+                            LoadImage(S("fire2.png")),
+                            LoadImage(S("fire3.png")),
+                            LoadImage(S("fire4.png")),
+                            LoadImage(S("fire5.png")),
+                        };
+                        fire.position = v2(i*48, k*48-offset);
+                        fire.size = v2(48, 48);
+                        fire.image = image;
+                        fire.frames = 4;
+                        fire.state_time = 0;
+                    } break;
                 case 403973631:
                     {
                         static Image image = LoadImage(S("cave_wall.png"));
+                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = image;
+                        bgnd_count++;
+                    } break;
+                case 2139260671:
+                    {
+                        static Image image = LoadImage(S("cloud_brick_background.png"));
                         bgnd[bgnd_count].position = v2(i*48, k*48-offset);
                         bgnd[bgnd_count].size = v2(48, 96);
                         bgnd[bgnd_count].image = image;
@@ -384,6 +480,46 @@ void make_world(i32 offset) {
                 case -2003194113:
                     {
                         make_wall(v2(i, k*layer), pixel, S("cloud_brick.png"));
+                    } break;
+                case -513925889:
+                    {
+                        //e15e1c
+                        make_wall(v2(i, k*layer), pixel, S("pipe6.png"));
+                    } break;
+                case -663337729:
+                    {
+                        //d87644
+                        make_wall(v2(i, k*layer), pixel, S("pipe1.png"));
+                    } break;
+                case -595899905:
+                    {
+                        //dc7b49
+                        make_wall(v2(i, k*layer), pixel, S("pipe5.png"));
+                    } break;
+                case -227990785:
+                    {
+                        //f26922
+                        make_wall(v2(i, k*layer), pixel, S("pipe4.png"));
+                    } break;
+                case -814463489:
+                    {
+                        //f26922
+                        make_wall(v2(i, k*layer), pixel, S("pipe2.png"));
+                    } break;
+                case -1102434305:
+                    {
+                        //f26922
+                        make_wall(v2(i, k*layer), pixel, S("pipe7.png"));
+                    } break;
+                case -1824115457:
+                    {
+                        //f26922
+                        make_wall(v2(i, k*layer), pixel, S("pipe8.png"));
+                    } break;
+                case -661491969:
+                    {
+                        //d8926e
+                        make_wall(v2(i, k*layer), pixel, S("pipe9.png"));
                     } break;
                 default:
                     {
@@ -444,482 +580,6 @@ bool entity_in_air(Entity *entity_one) {
 return true;
 }
 
-const i32 SEALNEUTRAL = 0;
-const i32 SEALMOVING = 1;
-const i32 SEALATTACKING = 2;
-
-void seal_action(Entity *seal, Game_Input *input, Entity *player) {
-    if (seal->enemy.enemy_state == SEALNEUTRAL) {
-        if (seal->alive) {
-            seal->enemy.enemy_state = SEALMOVING;
-        }
-    }
-
-    seal->enemy.enemy_time++;
-
-    if (seal->enemy.sleep_time > 0) {
-        seal->enemy.sleep_time-=input->dt;
-        return;
-    }
-
-    if (wall_ahead(seal)) {
-        if (seal->facing > 0) {
-            seal->facing = -1;
-        } else {
-            seal->facing = 1;
-        }
-    }
-
-    switch (seal->enemy.enemy_state) 
-    {
-    case SEALNEUTRAL:
-        {
-        } break;
-    case SEALMOVING:
-        {
-            if (seal->facing > 0) {
-                seal->velocity.x = 200;
-            } else {
-                seal->velocity.x = -200;
-            }
-
-            seal->velocity.y += 496*input->dt;
-
-            f32 dy = seal->velocity.y*input->dt;
-            f32 dx = seal->velocity.x*input->dt;
-
-            for (int i = 0; i < abs_f32(dy); i++) {
-                seal->position.y+=sign_f32(dy);
-                if (wall_intersects(seal)) {
-                    seal->position.y-=sign_f32(dy);
-                    seal->velocity.y=0;
-                }
-            }
-
-
-            for (int i = 0; i < abs_f32(dx); i++) {
-                seal->position.x+=sign_f32(dx);
-                if (wall_intersects(seal)) {
-                    seal->position.x-=sign_f32(dx);
-                    seal->velocity.x=0;
-                }
-            }
-
-            if (invuln_time <= 0){
-                if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(seal->position, seal->size, v2_zero, v2_one)))
-                {
-                    player_hit(seal->enemy.damage, input);
-                }
-            }
-        }
-    } 
-}
-
-void make_guards(Vector2 positions) {
-    enemys[enemy_count] = load_enemy(v2(positions.x, 0), 3);
-    enemy_count++;
-
-    enemys[enemy_count] = load_enemy(v2(positions.y, 0), 3);
-    enemy_count++;
-}
-
-const i32 KINGNEUTRAL = 0;
-const i32 KINGSTOMPING = 1;
-const i32 KINGJUMPING = 2;
-const i32 KINGLEAPING = 3;
-const i32 KINGLANDING = 4;
-const i32 KINGGUARDBREAK = 5;
-const i32 KINGCOMMAND = 6;
-const i32 KINGWAIT = 7;
-const i32 KINGCHALLENGE = 8;
-
-i32 king_state = KINGNEUTRAL;
-i32 king_state_prev = KINGNEUTRAL;
-f32 king_time = 0;
-
-
-const i32 PHASEONE = 0;
-const i32 PHASETWO = 1;
-
-i32 king_phase = PHASEONE;
-
-
-Vector2 stage_size = v2(8640, 9504);
-
-void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output *out, i32 layer) {
-
-
-    king_time+=dt;
-    pengu_king->dialogue_time+=dt;
-
-    if (king_state != king_state_prev) {
-        king_state_prev = king_state;
-        king_time = 0;
-    }
-
-    if (king_state == KINGNEUTRAL){
-        if (!wall_ahead(pengu_king)) {
-            king_time = 0;
-            king_state = KINGSTOMPING;
-            king_state_prev = king_state;
-        } else if(wall_ahead(pengu_king)) {
-            king_time = 0;
-            king_state = KINGJUMPING;
-            king_state_prev = king_state;
-        } else if (pengu_king->enemy.guard <=0) {
-            king_time = 0;
-            king_state = KINGGUARDBREAK;
-            king_state_prev = king_state;
-        }
-    }
-
-    if (wall_ahead(pengu_king) && king_time == 0) {
-        if (pengu_king->facing < 0) {
-            pengu_king->facing = 1;
-        } else {
-            pengu_king->facing = -1;
-        }
-    }
-
-    if (king_phase == PHASEONE) {
-        if (king_state != KINGCOMMAND && king_state != KINGWAIT) {
-            king_state = KINGCOMMAND;
-            king_time = 0;
-            king_state_prev = king_state;
-        }
-    } else {
-        DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50 + layer), v2(604, 12), v2_zero, v2_one), v4_black);
-        DrawRect(r2_bounds(v2(out->width*.5-300, out->height-48 + layer), v2((pengu_king->current_health/pengu_king->max_health)*600, 8), v2_zero, v2_one), v4_red);
-    }
-
-
-    switch (king_state)
-    {
-    case KINGNEUTRAL:
-        {
-            if (pengu_king->facing > 0)
-            {
-                DrawImageMirrored(pengu_king->enemy.image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
-                   pengu_king->position.y+pengu_king->enemy.offset.y), true, false);
-            } else 
-            {
-                DrawImage(pengu_king->enemy.image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
-                    pengu_king->position.y+pengu_king->enemy.offset.y));
-            }
-
-        } break;
-    case KINGSTOMPING:
-        {
-            if (king_time*60 < 5) {
-                draw_pengu(pengu_king, 2, layer);
-                
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 10) {
-                draw_pengu(pengu_king, 3, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 15) {
-                draw_pengu(pengu_king, 4, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 20) {
-                draw_pengu(pengu_king, 5, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 25) {
-                draw_pengu(pengu_king, 6, layer);
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 30) {
-                draw_pengu(pengu_king, 7, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 35) {
-                draw_pengu(pengu_king, 4, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else {
-                draw_pengu(pengu_king, 2, layer);
-
-                pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-                king_state = KINGNEUTRAL;
-            }
-            for (int i = 0; i < 3; i++) {
-                Particle_Parameters param1 = {};
-                Particle_Parameters param2 = {};
-
-                if (pengu_king->facing < 0) {
-                    param1.position.x = pengu_king->position.x-5;
-                    param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                    param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                    param2.position.y = pengu_king->position.y + pengu_king->size.y;
-                } else {
-                    param1.position.x = pengu_king->position.x-5;
-                    param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                    param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                    param2.position.y = pengu_king->position.y + pengu_king->size.y;
-
-                }
-
-                param1.velocity.x = 300*dt*sign_f32(pengu_king->facing);
-                param2.velocity.x = 600*dt*sign_f32(pengu_king->facing);
-
-                param1.velocity.y = -600*dt;
-                param2.velocity.y = -100*dt;
-
-                param1.life_time = 60*dt;
-                param2.life_time = 120*dt;
-
-                Image image = LoadImage(S("snow_flake_chunky.png"));
-
-                particle_emit(param1, param2, image);
-            }
-        } break;
-    case KINGJUMPING:
-        {
-            if (pengu_king->facing > 0) {
-                if (pengu_king->position.x < stage_size.y-65) {
-                    if (entity_on_wall(pengu_king)) {
-                        pengu_king->velocity.y = -15000*dt;
-                        for (int i = 0; i < 80; i++) {
-                            Particle_Parameters param1 = {};
-                            Particle_Parameters param2 = {};
-
-                            if (pengu_king->facing < 0) {
-                                param1.position.x = pengu_king->position.x;
-                                param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                                param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                                param2.position.y = pengu_king->position.y + pengu_king->size.y;
-                            } else {
-                                param1.position.x = pengu_king->position.x-5;
-                                param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                                param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                                param2.position.y = pengu_king->position.y + pengu_king->size.y;
-
-                            }
-                            if (i%2 == 0) {
-                                param1.velocity.x = 800*dt;
-                                param2.velocity.x = 1600*dt;
-                            } else {
-                                param1.velocity.x = -800*dt;
-                                param2.velocity.x = -1600*dt;
-                            }
-                            
-
-                            param1.velocity.y = -1600*dt;
-                            param2.velocity.y = -600*dt;
-
-                            param1.life_time = 60*dt;
-                            param2.life_time = 120*dt;
-                            
-                            Image image = LoadImage(S("snow_flake_chunky.png"));
-
-                            particle_emit(param1, param2, image);
-                        }
-
-                    }
-                    pengu_king->velocity.x = 6000*dt;
-
-                    draw_pengu(pengu_king, 0, layer);
-                } else {
-                    king_state = KINGLEAPING;
-                    draw_pengu(pengu_king, 0, layer);
-                }
-            } else {
-                if (pengu_king->position.x > stage_size.x) {
-                    if (entity_on_wall(pengu_king)) {
-                        pengu_king->velocity.y = -15000*dt;
-                        for (int i = 0; i < 80; i++) {
-                            Particle_Parameters param1 = {};
-                            Particle_Parameters param2 = {};
-
-                            if (pengu_king->facing < 0) {
-                                param1.position.x = pengu_king->position.x;
-                                param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                                param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                                param2.position.y = pengu_king->position.y + pengu_king->size.y;
-                            } else {
-                                param1.position.x = pengu_king->position.x-5;
-                                param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                                param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                                param2.position.y = pengu_king->position.y + pengu_king->size.y;
-
-                            }
-                            if (i%2 == 0) {
-                                param1.velocity.x = 800*dt;
-                                param2.velocity.x = 1600*dt;
-                            } else {
-                                param1.velocity.x = -800*dt;
-                                param2.velocity.x = -1600*dt;
-                            }
-                            
-
-                            param1.velocity.y = -1600*dt;
-                            param2.velocity.y = -600*dt;
-
-                            param1.life_time = 60*dt;
-                            param2.life_time = 120*dt;
-                            
-                            Image image = LoadImage(S("snow_flake_chunky.png"));
-
-                            particle_emit(param1, param2, image);
-                        }
-                    }
-                    pengu_king->velocity.x = -6000*dt;
-
-                    draw_pengu(pengu_king, 0, layer);
-                } else {
-                    king_state = KINGLEAPING;
-                    draw_pengu(pengu_king, 0, layer);
-                }
-            }   
-        } break;
-    case KINGLEAPING:
-        {
-            Rectangle2 land_aoe = r2_bounds(v2(pengu_king->position.x-50, i32(pengu_king->position.y+pengu_king->size.y/2)), v2(pengu_king->size.x+100, i32(pengu_king->size.y/2)), v2_one, v2_zero);
-
-            if (entity_on_wall(pengu_king) && king_time*60 < 10) {
-                draw_pengu(pengu_king, 8, layer);
-            } else if (pengu_king->position.y > -pengu_king->size.y && king_time*60 < 180) {
-                pengu_king->velocity.x = 0;
-                draw_pengu(pengu_king, 9, layer);
-                pengu_king->velocity.y = -45000*dt;
-            } else if (king_time*60 < 180) {
-                pengu_king->velocity.y = 0;
-                pengu_king->position = v2(player->position.x, -300);
-                pengu_king->facing = player->facing;
-            } else if (!entity_on_wall(pengu_king)) {
-                if (pengu_king->position.x > stage_size.y-49) pengu_king->position = v2(stage_size.y-49, pengu_king->position.y);
-                if (pengu_king->position.x < stage_size.x) pengu_king->position = v2(stage_size.x, pengu_king->position.y);
-                draw_pengu(pengu_king, 8, layer);
-                pengu_king->velocity.y += 2000*dt;
-            } else {
-                for (int i = 0; i < 80; i++) {
-                    Particle_Parameters param1 = {};
-                    Particle_Parameters param2 = {};
-
-                    if (pengu_king->facing < 0) {
-                        param1.position.x = pengu_king->position.x;
-                        param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                        param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                        param2.position.y = pengu_king->position.y + pengu_king->size.y;
-                    } else {
-                        param1.position.x = pengu_king->position.x-5;
-                        param2.position.x = pengu_king->position.x+pengu_king->size.x;
-
-                        param1.position.y = pengu_king->position.y + pengu_king->size.y-8;
-                        param2.position.y = pengu_king->position.y + pengu_king->size.y;
-
-                    }
-                    if (i%2 == 0) {
-                        param1.velocity.x = 1200*dt;
-                        param2.velocity.x = 3600*dt;
-                    } else {
-                        param1.velocity.x = -1200*dt;
-                        param2.velocity.x = -3600*dt;
-                    }
-
-
-                    param1.velocity.y = -2200*dt;
-                    param2.velocity.y = -1000*dt;
-
-                    param1.life_time = 80*dt;
-                    param2.life_time = 160*dt;
-
-                    Image image = LoadImage(S("snow_flake_chunky.png"));
-
-                    particle_emit(param1, param2, image);
-                }
-                Rectangle2 land_aoe = r2_bounds(v2(pengu_king->position.x-50, i32(pengu_king->position.y+pengu_king->size.y/2)), v2(pengu_king->size.x+100, i32(pengu_king->size.y/2)), v2_one, v2_zero);
-
-                if (r2_intersects(land_aoe, get_entity_rect(player))) {
-                    player_hit(200, input);
-                }
-
-                
-
-                king_state = KINGLANDING;
-                draw_pengu(pengu_king, 10, layer);
-            }
-
-            land_aoe = r2_shift(land_aoe, v2(-camera_pos.x+out->width*.5, 0));
-
-            DrawRectOutline(land_aoe, v4_red, 1);
-        } break;
-    case KINGLANDING:
-        {
-            if (king_time*60 < 180) {
-                if (i32(king_time*60)%20< 10) {
-                    draw_pengu(pengu_king, 10, layer);
-                } else {
-                    draw_pengu(pengu_king, 11, layer);
-                }
-            } else {
-                king_state = KINGNEUTRAL;
-                draw_pengu(pengu_king, 0, layer);
-            }
-        } break;
-    case KINGCOMMAND:
-        {
-            draw_pengu(pengu_king, 0, layer);
-
-            if (king_time*60 < 220) {
-                draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
-            } 
-
-            if (king_time*60 > 220 && king_time*60 < 222) {
-                pengu_king->dialogue_time = 0;
-            }
-
-            if (king_time*60 > 220 && king_time*60 < 440) {
-                draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
-            } else if (king_time*60 > 440) {
-                make_guards(stage_size);
-                king_state = KINGWAIT;
-            }
-            
-        } break;
-    case KINGWAIT:
-        {
-            if (enemys[enemy_count-1].alive || enemys[enemy_count-2].alive) {
-                draw_pengu(pengu_king, 0, layer);
-            } else {
-                draw_pengu(pengu_king, 0, layer);
-                king_state = KINGCHALLENGE;
-                pengu_king->dialogue_time = 0;
-
-                king_phase = PHASETWO;
-            }
-        } break;
-    case KINGCHALLENGE:
-        {
-            if (king_time*60 < 200) {
-                draw_pengu(pengu_king, 0, layer);
-                draw_dialogue_box(pengu_king->dialogue[2], out, pengu_king->portrait, 2, 60*pengu_king->dialogue_time);
-            } else {
-                draw_pengu(pengu_king, 0, layer);
-                king_state = KINGLEAPING;
-            }
-        } break;
-    }
-
-    if (invuln_time <= 0) {
-        if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(pengu_king->position, pengu_king->size, v2_zero, v2_one)))
-        {
-            player_hit(pengu_king->enemy.damage, input);
-        }
-    }
-
-    move_pengu(pengu_king, dt);
-    
-}
-
 const i32 particle_count = 10000;
 i32 living_particles = 0;
 
@@ -977,145 +637,8 @@ void particle_update(f32 dt) {
     }
 }
 
-void draw_pengu(Entity *pengu, i32 frame, i32 layer) {
-    if (pengu->facing > 0) {
-        DrawImageMirrored(pengu->enemy.image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5,
-            pengu->position.y + pengu->enemy.offset.y+layer), true, false);
-    } else {
-        DrawImage(pengu->enemy.image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5 + pengu->enemy.offset.x,
-            pengu->position.y+pengu->enemy.offset.y+layer));
-    }
-}
-
-void move_pengu(Entity *pengu, f32 dt) {
-    pengu->velocity.y+=496*input->dt;
-
-    f32 dy = pengu->velocity.y*dt;
-    f32 dx = pengu->velocity.x*dt;
-
-    for (int i = 0; i < abs_f32(dy); i++) {
-        pengu->position.y+=sign_f32(dy);
-        if (wall_intersects(pengu) || enemy_overlap(pengu)) {
-            pengu->position.y-=sign_f32(dy);
-            pengu->velocity.y=0;
-        }
-    }
-
-
-    for (int i = 0; i < abs_f32(dx); i++) {
-        pengu->position.x+=sign_f32(dx);
-        if (wall_intersects(pengu) || enemy_overlap(pengu)) {
-            pengu->position.x-=sign_f32(dx);
-            pengu->velocity.x=0;
-        }
-    }
-}
-
-void pengu_attack(Entity *pengu, Entity *player, f32 invuln_time, Game_Input *input) {
-    if (invuln_time > 0) return;
-
-    Rectangle2 weapon = r2_bounds(v2(pengu->position.x+pengu->enemy.weapon_offset.x, pengu->position.y+pengu->enemy.weapon_offset.y), pengu->enemy.weapon_size, v2_zero, v2_one);
-    Rectangle2 rec_player = get_entity_rect(player);
-
-    if (pengu->facing > 0) {
-        weapon = r2_shift(weapon, v2(42, 0));
-    }
-
-    if (r2_intersects(weapon, rec_player)) {
-        player_hit(pengu->enemy.damage, input);
-    }
-}
-
-void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, Game_Input *input, i32 layer) {
-    soldier->state_time+=dt;
-
-    if (player->position.x < soldier->position.x) {
-        soldier->facing = -1;
-    } else {
-        soldier->facing = 1;
-    }
-
-    if (soldier->state_prev != soldier->state) {
-        soldier->state_prev = soldier->state;
-        soldier->state_time = 0;
-    }
-
-    if (soldier->state == NEUTRAL) {
-        if (abs_i32(soldier->position.x - player->position.x) < 800 && abs_i32(soldier->position.x - player->position.x) > 200)
-        {
-            soldier->state = MOVE;
-            soldier->state_prev = soldier->state;
-            soldier->state_time = 0;
-        } else if (abs_i32(soldier->position.x - player->position.x) < 200)
-        {
-            soldier->state = ATTACK;
-            soldier->state_prev = soldier->state;
-            soldier->state_time = 0;
-        }
-    }
-
-    if (r2_intersects(get_entity_rect(soldier), get_entity_rect(player))) {
-        soldier->state = ATTACK;
-
-        if (soldier->state != soldier->state_prev) {
-            soldier->state_time = 0;
-            soldier->state_prev = ATTACK;
-        }
-    }
-
-
-    switch (soldier->state)
-    {
-    case MOVE:
-        {
-            soldier->velocity.x = 120*sign_f32(soldier->facing);
-
-            move_pengu(soldier, dt);
-            if (soldier->facing > 0) {
-                if (abs_i32(soldier->position.x - player->position.x) > 5) {
-                    if (i32(soldier->state_time*60) < 60) {
-                        draw_pengu(soldier, 0, layer);
-                    } else {
-                        draw_pengu(soldier, 1, layer);
-                    }
-                } else {
-                    draw_pengu(soldier, 0, layer);
-                    soldier->state = ATTACK;
-                } 
-            } else {
-                if (abs_i32(soldier->position.x - player->position.x) > player->size.x+5) {
-                    if (i32(soldier->state_time*60) < 60) {
-                        draw_pengu(soldier, 0, layer);
-                    } else {
-                        draw_pengu(soldier, 1, layer);
-                    }
-                } else {
-                    draw_pengu(soldier, 0, layer);
-                    soldier->state = ATTACK;
-                } 
-            }
-        } break;
-    case ATTACK:
-        {
-
-            if (i32(soldier->state_time*60) < 30)
-            {
-                draw_pengu(soldier, 2, layer);
-            } else if (i32(soldier->state_time*60) < 60)
-            {
-                draw_pengu(soldier, 3, layer);
-
-                if (invuln_time <= 0)
-                {
-                    pengu_attack(soldier, player, invuln_time, input);
-                }
-            } else {
-                draw_pengu(soldier, 0, layer);
-                soldier->state = MOVE;
-            }
-        } break;
-    }
-}
+#include "enemy_pengus.cpp"
+#include "seals.cpp"
 
 void draw_fire(f32 dt) {
     fire.state_time+=dt;
@@ -1158,59 +681,65 @@ void draw_fire(f32 dt) {
     }
 }
 
+void draw_house(Housing *house) {
+    if (house->state_time*60 < 60) {
+        DrawImage(house->image[0], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+    } else if (house->state_time*60 < 120) {
+        DrawImage(house->image[1], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+    } else {
+        DrawImage(house->image[2], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+    }
+}
 
-/*void seal_walk(Entity *entity, Game_Input *input) {
-    for (int i = 0; i < enemy_count; i++) {
-        if (!enemys[i].alive) {continue;}
-        if (enemys[i].enemy.type == 1) {
-            if (wall_ahead(&enemys[i], enemys[i].facing))
-            {
-                if (enemys[i].facing < 0) {
-                    enemys[i].facing = 1;
-                    enemys[i].velocity.x = 0;
-                } else if (enemys[i].facing > 0) {
-                    enemys[i].facing = -1;
-                    enemys[i].velocity.x = 0;
-                }
+void npc_action(Entity *npc, i32 layer, Entity player) {
+    npc->animation_time+=input->dt;
+    npc->state_time+=input->dt;
+    npc->dialogue_time+=input->dt;
+    
+    if (npc->type == fairy) {
+        if (i32(npc->animation_time*60)%60 < 30) {
+            DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y-layer));
+        } else {
+            DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y-layer));
+        }
+
+        if (abs_i32(npc->position.x-player.position.x) < 200 && abs_i32(npc->position.y-player.position.y) < 300) {
+            if (npc->state_time*60.0 < 400) {
+                draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2, npc->dialogue_time*60.0);
             }
 
-            enemys[i].velocity.y+=496*input->dt;
-
-            if (enemys[i].facing < 0) {
-                enemys[i].velocity.x = -300;
-            } else {
-                enemys[i].velocity.x = 300;
-            }
-
-            f32 dy = enemys[i].velocity.y*input->dt;
-            f32 dx = enemys[i].velocity.x*input->dt;
-
-            Dump(i);
-            Dump(dx);
-
-            for (int i = 0; i < abs_f32(dy); i++) {
-                enemys[i].position.y+=sign_f32(dy);
-                if (wall_intersects(&enemys[i])) {
-                    enemys[i].position.y-=sign_f32(dy);
-                    enemys[i].velocity.y=0;
-                }
+            if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 402 ) {
+                npc->dialogue_time = 0;
             }
 
 
-            for (int i = 0; i < abs_f32(dx); i++) {
-                enemys[i].position.x+=sign_f32(dx);
-                if (wall_intersects(&enemys[i])) {
-                    enemys[i].position.x-=sign_f32(dx);
-                    enemys[i].velocity.x=0;
-                }
+            if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 800) {
+                draw_dialogue_box(npc->dialogue[1], out, npc->portrait, 2, npc->dialogue_time*60.0);
             }
 
-            if (invuln_time <= 0){
-                if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(enemys[i].position, enemys[i].size, v2_zero, v2_one)))
-                {
-                    player_hit();
-                }
+            if (npc->state_time*60.0 > 800 && npc->state_time*60.0 < 802 ) {
+                npc->dialogue_time = 0;
             }
+
+
+            if (npc->state_time*60.0 > 800) {
+                draw_dialogue_box(npc->dialogue[2], out, npc->portrait, 2, npc->dialogue_time*60.0);
+            } 
+        } else {
+            npc->dialogue_time = 0;
+            npc->state_time = 0;
+        } 
+    } else if (npc->type == lil_pengu) {
+        if (npc->state_time*60 < 60) {
+            DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+        } else if (npc->state_time*60 < 120) {
+            DrawImage(npc->image[1], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+        } else {
+            DrawImage(npc->image[2], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+        }
+
+        if (npc->state_time*60 > 180) {
+            npc->state_time = 0;
         }
     }
-}*/
+}

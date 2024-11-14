@@ -14,6 +14,8 @@ Todo:
 --Camera Shake
 --Jump Vibes
 --Character Menu
+--rewrite pixel code
+
 
 --Overfit screen
 
@@ -22,13 +24,17 @@ Todo:
 --Make other Weapons
 --Fix cleaver jump attack animation
 
+
 -enemies
+--fix pengu_king
+
 
 
 -sprites
 --rapier
 --Background
 --Decorations
+--die animation
 
 Completed Code:
 --normal attack code
@@ -46,6 +52,8 @@ Completed Code:
 --the king starts on the cliff and summons two henchies first before leaping off the cliff into the center of the arena
 --change penguin soldiers attack patterns
 --Fix penguin king occasionally one shotting player.
+--add enemy stagger
+--Make character menu pause
 
 Completed Sprites:
 --cleaver
