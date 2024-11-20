@@ -138,6 +138,9 @@ Entity load_enemy(Vector2 pos, i32 type) {
             big_papa.portrait = portrait;
             big_papa.enemy.exp_dropped = 2000;
             big_papa.has_hit = false;
+            big_papa.state = NEUTRAL;
+            big_papa.state_prev = NEUTRAL;
+            big_papa.talking = false;
 
             load_penguin_king_dialogue(&big_papa);
 
@@ -145,12 +148,16 @@ Entity load_enemy(Vector2 pos, i32 type) {
         } break;
     case 3:
         {
-            static Image image[4] =
+            static Image image[7] =
             {
                 LoadImage(S("penguin_soldier1.png")),
                 LoadImage(S("penguin_soldier2.png")),
                 LoadImage(S("penguin_soldier3.png")),
                 LoadImage(S("penguin_soldier4.png")),
+                LoadImage(S("penguin_soldier5.png")),
+                LoadImage(S("penguin_soldier6.png")),
+                LoadImage(S("penguin_soldier7.png")),
+
             };
 
 
@@ -255,6 +262,7 @@ void make_npcs(Vector2 pos, i32 type) {
             npc[npc_count].dialogue_time = 0;
             npc[npc_count].portrait = portrait;
             npc[npc_count].type = fairy;
+            npc[npc_count].talking = false;
 
         } break;
     case lil_pengu:
@@ -521,6 +529,96 @@ void make_world(i32 offset) {
                         //d8926e
                         make_wall(v2(i, k*layer), pixel, S("pipe9.png"));
                     } break;
+                case 1937938943:
+                    {
+                        //738299
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls1.png"));
+                    } break;
+                case 1028485119:
+                    {
+                        //3d4d6f
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls2.png"));
+                    } break;
+                case 1519048191:
+                    {
+                        //5a8ad5
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls3.png"));
+                    } break;
+                case 811442943:
+                    {
+                        //305da2
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls4.png"));
+                    } break;
+                case 658863359:
+                    {
+                        //274574
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls5.png"));
+                    } break;
+                case 1315674623:
+                    {
+                        //4e6b99
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls6.png"));
+                    } break;
+                case 574383871:
+                    {
+                        //223c66d
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls7.png"));
+                    } break;
+                case 557010943:
+                    {
+                        //21334f
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls8.png"));
+                    } break;
+                case 523457535:
+                    {
+                        //1f3353
+                        make_wall(v2(i, k*layer), pixel, S("factory_walls9.png"));
+                    } break;
+                case -1128283137:
+                    {
+                        //bcbfc3
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates1.png"));
+                    } break;
+                case -1448432385:
+                    {
+                        //a9aaac
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates2.png"));
+                    } break;
+                case -1734697217:
+                    {
+                        //989a9e
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates3.png"));
+                    } break;
+                case -2037871617:
+                    {
+                        //86888b
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates4.png"));
+                    } break;
+                case 2088930303:
+                    {
+                        //7c828b
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates5.png"));
+                    } break;
+                case -1902730497:
+                    {
+                        //8e96a2
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates6.png"));
+                    } break;
+                case -1987408897:
+                    {
+                        //898a8b
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates7.png"));
+                    } break;
+                case -2121954305:
+                    {
+                        //81858b
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates8.png"));
+                    } break;
+                case 2021624831:
+                    {
+                        //787f8b
+                        make_wall(v2(i, k*layer), pixel, S("bolted_plates9.png"));
+                    } break;
                 default:
                     {
                         Dump(pixel);
@@ -704,7 +802,11 @@ void npc_action(Entity *npc, i32 layer, Entity player) {
         }
 
         if (abs_i32(npc->position.x-player.position.x) < 200 && abs_i32(npc->position.y-player.position.y) < 300) {
-            if (npc->state_time*60.0 < 400) {
+            if (!npc->talking) {
+                npc->talking = draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2);
+            }
+
+            /*if (npc->state_time*60.0 < 400) {
                 draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2, npc->dialogue_time*60.0);
             }
 
@@ -724,11 +826,18 @@ void npc_action(Entity *npc, i32 layer, Entity player) {
 
             if (npc->state_time*60.0 > 800) {
                 draw_dialogue_box(npc->dialogue[2], out, npc->portrait, 2, npc->dialogue_time*60.0);
-            } 
+            }*/
         } else {
             npc->dialogue_time = 0;
             npc->state_time = 0;
-        } 
+            npc->talking = false;
+            for (int i = 0; i < line_count; i++) {
+                lines_to_speak[i] = {};
+            }
+            line_count = 0;
+            box_count = 0;
+            lines_generated = false;
+        }
     } else if (npc->type == lil_pengu) {
         if (npc->state_time*60 < 60) {
             DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));

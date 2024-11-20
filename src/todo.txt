@@ -5,6 +5,8 @@ Notes:
 
 80-97 = 3840, 4656
 
+Dialogue box can write 35 char.
+
 Todo:
 
 -Sound
@@ -15,7 +17,8 @@ Todo:
 --Jump Vibes
 --Character Menu
 --rewrite pixel code
-
+--Dodge code
+--Change layers to levels, each level should have a distinct x,y axis.
 
 --Overfit screen
 
@@ -26,15 +29,18 @@ Todo:
 
 
 -enemies
---fix pengu_king
+--Put pengu kings title above health bar
+--
+
 
 
 
 -sprites
 --rapier
---Background
+--Background(ongoing)
 --Decorations
---die animation
+--die animation(all)
+--dodge sprite
 
 Completed Code:
 --normal attack code
@@ -54,6 +60,7 @@ Completed Code:
 --Fix penguin king occasionally one shotting player.
 --add enemy stagger
 --Make character menu pause
+--fix pengu_king
 
 Completed Sprites:
 --cleaver

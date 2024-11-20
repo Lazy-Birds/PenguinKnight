@@ -56,6 +56,10 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
             seal->enemy.sleep_time = 25*input->dt;
 
         } break;
+    case DEAD:
+        {
+            seal->alive = false;
+        } break;
     }
 
     if (invuln_time <= 0){

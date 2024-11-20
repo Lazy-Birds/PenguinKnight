@@ -16,11 +16,6 @@ const i32 KINGCOMMAND = 6;
 const i32 KINGWAIT = 7;
 const i32 KINGCHALLENGE = 8;
 
-i32 king_state = KINGNEUTRAL;
-i32 king_state_prev = KINGNEUTRAL;
-f32 king_time = 0;
-
-
 const i32 PHASEONE = 0;
 const i32 PHASETWO = 1;
 
@@ -32,31 +27,31 @@ Vector2 stage_size = v2(8640, 9504);
 void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output *out, i32 layer) {
 
 
-    king_time+=dt;
+    pengu_king->state_time+=dt;
     pengu_king->dialogue_time+=dt;
 
-    if (king_state != king_state_prev) {
-        king_state_prev = king_state;
-        king_time = 0;
+    if (pengu_king->state != pengu_king->state_prev) {
+        pengu_king->state_prev = pengu_king->state;
+        pengu_king->state_time = 0;
     }
 
-    if (king_state == KINGNEUTRAL){
+    if (pengu_king->state == KINGNEUTRAL){
         if (!wall_ahead(pengu_king)) {
-            king_time = 0;
-            king_state = KINGSTOMPING;
-            king_state_prev = king_state;
+            pengu_king->state_time = 0;
+            pengu_king->state = KINGSTOMPING;
+            pengu_king->state_prev = pengu_king->state;
         } else if(wall_ahead(pengu_king)) {
-            king_time = 0;
-            king_state = KINGJUMPING;
-            king_state_prev = king_state;
+            pengu_king->state_time = 0;
+            pengu_king->state = KINGJUMPING;
+            pengu_king->state_prev = pengu_king->state;
         } else if (pengu_king->enemy.guard <=0) {
-            king_time = 0;
-            king_state = KINGGUARDBREAK;
-            king_state_prev = king_state;
+            pengu_king->state_time = 0;
+            pengu_king->state = KINGGUARDBREAK;
+            pengu_king->state_prev = pengu_king->state;
         }
     }
 
-    if (wall_ahead(pengu_king) && king_time == 0) {
+    if (wall_ahead(pengu_king) && pengu_king->state_time == 0) {
         if (pengu_king->facing < 0) {
             pengu_king->facing = 1;
         } else {
@@ -65,10 +60,10 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
     }
 
     if (king_phase == PHASEONE) {
-        if (king_state != KINGCOMMAND && king_state != KINGWAIT) {
-            king_state = KINGCOMMAND;
-            king_time = 0;
-            king_state_prev = king_state;
+        if (pengu_king->state != KINGCOMMAND && pengu_king->state != KINGWAIT) {
+            pengu_king->state = KINGCOMMAND;
+            pengu_king->state_time = 0;
+            pengu_king->state_prev = pengu_king->state;
         }
     } else {
         DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50 + layer), v2(604, 12), v2_zero, v2_one), v4_black);
@@ -76,7 +71,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
     }
 
 
-    switch (king_state)
+    switch (pengu_king->state)
     {
     case KINGNEUTRAL:
         {
@@ -93,30 +88,30 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case KINGSTOMPING:
         {
-            if (king_time*60 < 5) {
+            if (pengu_king->state_time*60 < 5) {
                 draw_pengu(pengu_king, 2, layer);
                 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 10) {
+            } else if (pengu_king->state_time*60 < 10) {
                 draw_pengu(pengu_king, 3, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 15) {
+            } else if (pengu_king->state_time*60 < 15) {
                 draw_pengu(pengu_king, 4, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 20) {
+            } else if (pengu_king->state_time*60 < 20) {
                 draw_pengu(pengu_king, 5, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 25) {
+            } else if (pengu_king->state_time*60 < 25) {
                 draw_pengu(pengu_king, 6, layer);
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 30) {
+            } else if (pengu_king->state_time*60 < 30) {
                 draw_pengu(pengu_king, 7, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-            } else if (king_time*60 < 35) {
+            } else if (pengu_king->state_time*60 < 35) {
                 draw_pengu(pengu_king, 4, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
@@ -124,7 +119,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
                 draw_pengu(pengu_king, 2, layer);
 
                 pengu_king->velocity.x = 4000*dt*sign_f32(pengu_king->facing);
-                king_state = KINGNEUTRAL;
+                pengu_king->state = KINGNEUTRAL;
             }
             for (int i = 0; i < 3; i++) {
                 Particle_Parameters param1 = {};
@@ -208,7 +203,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
                     draw_pengu(pengu_king, 0, layer);
                 } else {
-                    king_state = KINGLEAPING;
+                    pengu_king->state = KINGLEAPING;
                     draw_pengu(pengu_king, 0, layer);
                 }
             } else {
@@ -257,7 +252,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
                     draw_pengu(pengu_king, 0, layer);
                 } else {
-                    king_state = KINGLEAPING;
+                    pengu_king->state = KINGLEAPING;
                     draw_pengu(pengu_king, 0, layer);
                 }
             }   
@@ -266,13 +261,13 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         {
             Rectangle2 land_aoe = r2_bounds(v2(pengu_king->position.x-50, i32(pengu_king->position.y+pengu_king->size.y/2)), v2(pengu_king->size.x+100, i32(pengu_king->size.y/2)), v2_one, v2_zero);
 
-            if (entity_on_wall(pengu_king) && king_time*60 < 10) {
+            if (entity_on_wall(pengu_king) && pengu_king->state_time*60 < 10) {
                 draw_pengu(pengu_king, 8, layer);
-            } else if (pengu_king->position.y > -pengu_king->size.y && king_time*60 < 180) {
+            } else if (pengu_king->position.y > -pengu_king->size.y && pengu_king->state_time*60 < 180) {
                 pengu_king->velocity.x = 0;
                 draw_pengu(pengu_king, 9, layer);
                 pengu_king->velocity.y = -45000*dt;
-            } else if (king_time*60 < 180) {
+            } else if (pengu_king->state_time*60 < 180) {
                 pengu_king->velocity.y = 0;
                 pengu_king->position = v2(player->position.x, -300);
                 pengu_king->facing = player->facing;
@@ -327,7 +322,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
                 
 
-                king_state = KINGLANDING;
+                pengu_king->state = KINGLANDING;
                 draw_pengu(pengu_king, 10, layer);
             }
 
@@ -337,14 +332,14 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case KINGLANDING:
         {
-            if (king_time*60 < 180) {
-                if (i32(king_time*60)%20< 10) {
+            if (pengu_king->state_time*60 < 180) {
+                if (i32(pengu_king->state_time*60)%20< 10) {
                     draw_pengu(pengu_king, 10, layer);
                 } else {
                     draw_pengu(pengu_king, 11, layer);
                 }
             } else {
-                king_state = KINGNEUTRAL;
+                pengu_king->state = KINGNEUTRAL;
                 draw_pengu(pengu_king, 0, layer);
             }
         } break;
@@ -352,20 +347,30 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         {
             draw_pengu(pengu_king, 0, layer);
 
-            if (king_time*60 < 220) {
-                draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
+            if (!pengu_king->talking) {
+                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2);
+            }
+
+            /*if (pengu_king->state_time*60 < 220) {
+                draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2);
             } 
 
-            if (king_time*60 > 220 && king_time*60 < 222) {
+            if (pengu_king->state_time*60 > 220 && pengu_king->state_time*60 < 222) {
                 pengu_king->dialogue_time = 0;
+            }*/
+
+            if (pengu_king->talking) {
+                pengu_king->state = KINGWAIT;
+                make_guards(stage_size);
+                pengu_king->talking = false;
             }
 
-            if (king_time*60 > 220 && king_time*60 < 440) {
-                draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2, 120*pengu_king->dialogue_time);
-            } else if (king_time*60 > 440) {
+            /*if (pengu_king->state_time*60 > 220 && pengu_king->state_time*60 < 440) {
+                draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2);
+            } else if (pengu_king->state_time*60 > 440) {
                 make_guards(stage_size);
-                king_state = KINGWAIT;
-            }
+                pengu_king->state = KINGWAIT;
+            }*/
             
         } break;
     case KINGWAIT:
@@ -374,25 +379,40 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
                 draw_pengu(pengu_king, 0, layer);
             } else {
                 draw_pengu(pengu_king, 0, layer);
-                king_state = KINGCHALLENGE;
+                pengu_king->state = KINGCHALLENGE;
                 pengu_king->dialogue_time = 0;
 
                 king_phase = PHASETWO;
             }
         } break;
     case KINGCHALLENGE:
-        {
-            if (king_time*60 < 200) {
+        {   
+            draw_pengu(pengu_king, 0, layer);
+
+            if (!pengu_king->talking) {
+                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2);
+            }
+
+            if (pengu_king->talking) {
+                pengu_king->talking = false;
+                pengu_king->state = KINGLEAPING;
+            }
+
+            /*if (pengu_king->state_time*60 < 200) {
                 draw_pengu(pengu_king, 0, layer);
-                draw_dialogue_box(pengu_king->dialogue[2], out, pengu_king->portrait, 2, 60*pengu_king->dialogue_time);
+                draw_dialogue_box(pengu_king->dialogue[2], out, pengu_king->portrait, 2);
             } else {
                 draw_pengu(pengu_king, 0, layer);
-                king_state = KINGLEAPING;
-            }
+                pengu_king->state = KINGLEAPING;
+            }*/
         } break;
+    case DEAD:
+        {
+            pengu_king->alive = false;
+        }
     }
 
-    if (invuln_time <= 0 && king_state == KINGSTOMPING) {
+    if (invuln_time <= 0 && pengu_king->state == KINGSTOMPING) {
         Rectangle2 peng_rec;
         if (pengu_king->facing < 0)
         {
@@ -437,6 +457,7 @@ void move_pengu(Entity *pengu, f32 dt) {
         if (wall_intersects(pengu) || enemy_overlap(pengu)) {
             pengu->position.y-=sign_f32(dy);
             pengu->velocity.y=0;
+            break;
         }
     }
 
@@ -446,6 +467,7 @@ void move_pengu(Entity *pengu, f32 dt) {
         if (wall_intersects(pengu) || enemy_overlap(pengu)) {
             pengu->position.x-=sign_f32(dx);
             pengu->velocity.x=0;
+            break;
         }
     }
 }
@@ -575,8 +597,18 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
             soldier->enemy.sleep_time=25*input->dt;
 
             soldier->state = MOVE;
-
-
+        } break;
+    case DEAD:
+        {
+            if (i32(soldier->state_time*60) < 2) {
+                draw_pengu(soldier, 4, layer);
+            } else if (i32(soldier->state_time*60) < 4) {
+                draw_pengu(soldier, 5, layer);
+            } else if (i32(soldier->state_time*60) < 6) {
+                draw_pengu(soldier, 6, layer);
+            } else {
+                soldier->alive = false;
+            }
         } break;
     }
 }

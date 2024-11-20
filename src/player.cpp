@@ -14,6 +14,13 @@ void player_action(Game_Input *input) {
 	
 
 	state_time+=dt;
+	if (player.mp_cooldown > 0) {
+		player.mp_cooldown-=dt;
+	}
+
+	if (player.shield_hit > 0) {
+		player.shield_hit-=dt;
+	}
 	
 	if (invuln_time > 0){
 		invuln_time-=dt;
@@ -51,6 +58,9 @@ void player_action(Game_Input *input) {
 			state_time = 0;
 		} else if (c0.b) {
 			player.state = STATEDASH;
+			state_time = 0;
+		} else if (c0.a) {
+			player.state = GUARD;
 			state_time = 0;
 		}
 		state_change = player.state;
@@ -94,10 +104,10 @@ void player_action(Game_Input *input) {
 
 				if (i32(state_time*60)%30 < 15) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					0, player.facing);	
+						0, player.facing);	
 				} else {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					1, player.facing);
+						1, player.facing);
 				}
 				
 			}
@@ -114,10 +124,10 @@ void player_action(Game_Input *input) {
 
 				if (i32(state_time*60)%30 < 15) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					0, player.facing);	
+						0, player.facing);	
 				} else {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					1, player.facing);
+						1, player.facing);
 				}
 			}
 
@@ -144,6 +154,9 @@ void player_action(Game_Input *input) {
 
 				player.state = NEUTRAL;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 0, player.facing);
+			} else if (c0.a) {
+				player.state = GUARD;
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 0, player.facing);
 			}
 			
 
@@ -153,7 +166,7 @@ void player_action(Game_Input *input) {
 			if (c0.up && player.current_stamina > 20) {
 				if (c0.right)
 				{
-					player.velocity.x = move_f32(player.velocity.x, 350, 350 * dt);
+					player.velocity.x = move_f32(player.velocity.x, 250, 250 * dt);
 
 					if (player.facing < 0)
 					{
@@ -164,7 +177,7 @@ void player_action(Game_Input *input) {
 					}
 				} else if (c0.left)
 				{
-					player.velocity.x = move_f32(player.velocity.x, -350, 350 * dt);
+					player.velocity.x = move_f32(player.velocity.x, -250, 250 * dt);
 					
 					if (player.facing > 0)
 					{
@@ -176,18 +189,18 @@ void player_action(Game_Input *input) {
 				}
 				if (state_time*60 < 15) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					player.weapon.jump.x, player.facing);
+						player.weapon.jump.x, player.facing);
 				} else if (state_time*60 > 14 && entity_on_wall(&player)) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					player.weapon.jump.y, player.facing);
+						player.weapon.jump.y, player.facing);
 					player.velocity.y=-240;
 					player.current_stamina-=20;
 				} else if (player.velocity.y < 0) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					player.weapon.jump.y, player.facing);
+						player.weapon.jump.y, player.facing);
 				} else {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					0, player.facing);
+						0, player.facing);
 					player.state = NEUTRAL;
 				}
 			} else {
@@ -362,7 +375,7 @@ void player_action(Game_Input *input) {
 		} break;
 	case STATEDASH:
 		{
-			if (player.current_stamina < 10) {
+			if (player.current_stamina < 1) {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					0, player.facing);
 				player.state = NEUTRAL;
@@ -383,15 +396,86 @@ void player_action(Game_Input *input) {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.dash_frame.x+2, player.facing);
 				player.velocity.x+=600*dt*sign_f32(player.facing);
-			} else if (state_time*60 < 22) {
-				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
-					player.weapon.dash_frame.x+3, player.facing);
-				player.velocity.x+=6000*dt*sign_f32(player.facing);
-			} else if (state_time*60 < 26) {
+			} else if (c0.b) {
+				if (i32(state_time*60)%20 < 10) {
+					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+						player.weapon.dash_frame.x+3, player.facing);
+				} else {
+					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+						player.weapon.dash_frame.x+2, player.facing);
+				}
+
+				if (player.facing > 0) {
+					player.velocity.x += 6000*dt;
+					player.velocity.x = clamp_f32(player.velocity.x, 0, 30000*dt);
+				} else {
+					player.velocity.x += -6000*dt;
+					player.velocity.x = clamp_bot_f32(player.velocity.x, -30000*dt);
+				}
+				
+				player.current_stamina-= 30*dt;
+
+
+				Particle_Parameters min = {};
+				Particle_Parameters max = {};
+
+				if (player.facing < 0) {
+					min.velocity.x = 500*dt;
+					min.velocity.y = -1000*dt;
+
+					max.velocity.x = 1000*dt;
+					max.velocity.y = -500*dt;
+				} else {
+					min.velocity.x = -500*dt;
+					min.velocity.y = -1000*dt;
+
+					max.velocity.x = -1000*dt;
+					max.velocity.y = -500*dt;
+				}
+
+				min.position.x = player.position.x;
+				min.position.y = player.position.y + 40;
+
+				max.position.x = player.position.x+30;
+				max.position.y = player.position.y+51;
+
+				min.life_time = 30*dt;
+				max.life_time = 60*dt;
+
+				Image image = LoadImage(S("snow_flake.png"));
+
+				particle_emit(min, max , image);
+
+				if (c0.up) {
+					player.state = JUMP;
+				}
+
+			} else if (state_time*60 < 28) {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.dash_frame.x+1, player.facing);
-				player.velocity.x-=8000*dt*sign_f32(player.facing);
+				//player.velocity.x-=8000*dt*sign_f32(player.facing);
 			} else {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+					0, player.facing);
+				player.state = NEUTRAL;
+			}
+		} break;
+	case GUARD:
+		{
+			player.velocity.x = 0;
+
+			if (state_time*60 < 15) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+					player.weapon.guard.x, player.facing);
+			} else if (c0.a && player.current_mp > 0 && player.shield_hit > 0) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+					player.weapon.guard.y, player.facing);
+				player.current_mp-=30*dt;
+			} else if (c0.a && player.current_mp > 0) {
+				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
+					player.weapon.guard.y-1, player.facing);
+				player.current_mp-=30*dt;
+			}  else {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					0, player.facing);
 				player.state = NEUTRAL;
@@ -414,6 +498,13 @@ void set_enemy_vuln() {
 }
 
 void player_hit(i32 damage, Game_Input *input) {
+	if (player.state == GUARD && player.current_mp > 10) {
+		player.current_mp-=10;
+		invuln_time = 60*input->dt;
+		player.shield_hit = 60*input->dt;
+		return;
+	}
+
 	if (player.current_health <= damage) {
 		player.current_health = 0;
 		player.alive = false;
@@ -435,6 +526,7 @@ void player_move(Game_Input *input) {
 		if (wall_intersects(&player)) {
 			player.position.y-=sign_f32(dy);
 			player.velocity.y=0;
+			break;
 		}
 	}
 
@@ -444,6 +536,7 @@ void player_move(Game_Input *input) {
 		if (wall_intersects(&player)) {
 			player.position.x-=sign_f32(dx);
 			player.velocity.x=0;
+			break;
 		}
 	}
 }

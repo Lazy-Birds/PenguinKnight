@@ -10,7 +10,8 @@ const i32 HIT = 8;
 const i32 STATEDASH = 9;
 const i32 TALKING = 10;
 const i32 JUMP = 11;
-const i32 DEAD = 12;
+const i32 GUARD = 12;
+const i32 DEAD = 13;
 
 bool in_menu = false;
 
@@ -66,6 +67,11 @@ struct Entity
     f32 max_stamina;
     f32 current_stamina;
 
+    f32 max_mp;
+    f32 current_mp;
+    f32 mp_cooldown;
+    f32 shield_hit;
+
     Vector2 position;
     Vector2 velocity;
 
@@ -92,6 +98,7 @@ struct Entity
 
     String *dialogue;
     f32 dialogue_time;
+    b32 talking;
 
     i32 exp_gained;
     i32 exp_to_level;
@@ -181,11 +188,11 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
         } break;
     case 1: 
         {
-            damage = 1.25*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
+            damage = 1.4*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
         } break;
     case 2: 
         {
-            damage = 1.5*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
+            damage = 2.5*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
         } break;
     }  
 
@@ -195,24 +202,35 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
         {
             if (facing > 0) {
                 if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&enemys[i]))) {
-                    
+                    get_entity_rect(&enemys[i])) && enemys[i].alive) {
+
                     if (enemys[i].has_hit) {
                         enemys[i].state = HIT;
                     }
                     
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
-                        enemys[i].alive = false;
+                        enemys[i].state = DEAD;
                         player.exp_gained += enemys[i].enemy.exp_dropped;
+                        if (player.mp_cooldown <= 0) {
+                            player.current_mp+=10;
+                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                            player.mp_cooldown+=.5;
+                        }
+                        
                     } else {
                         enemys[i].current_health-=damage;
                         enemys[i].invuln = true;
+                        if (player.mp_cooldown <= 0) {
+                            player.current_mp+=10;
+                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                            player.mp_cooldown+=.5;
+                        }
                     } 
                 }
             } else {
                 if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&enemys[i]))) {
+                    get_entity_rect(&enemys[i])) && enemys[i].alive) {
 
                     if (enemys[i].has_hit) {
                         enemys[i].state = HIT;
@@ -220,7 +238,7 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
 
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
-                        enemys[i].alive = false;
+                        enemys[i].state = DEAD;
                         player.exp_gained += enemys[i].enemy.exp_dropped;
                     } else {
                         enemys[i].current_health-=damage;
@@ -258,13 +276,17 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.min_health = 0;
     player.max_stamina = 10*player.rigour;
     player.current_stamina = player.max_stamina;
+    player.max_mp = 10*player.mental;
+    player.current_mp = player.max_mp;
+    player.mp_cooldown = 0;
+    player.shield_hit = 0;
     player.invuln = false;
     player.alive = true;
     player.weapon = cleaver;
     player.weapon.position = player.position;
     player.size = v2(40, 52);
     player.exp_gained = 0;
-    player.exp_to_level = 100;
+    player.exp_to_level = 600;
     player.level = 1;
 
     static Image img[] = {
@@ -404,13 +426,13 @@ void GameUpdate(Game_Input *input, Game_Output *out)
 
 void draw_background(i32 layer)
 {
-   i32 new_pos_x = -camera_pos.x*.02;
-   i32 new_pos_y = layer - 200;
+ i32 new_pos_x = -camera_pos.x*.02;
+ i32 new_pos_y = layer - 200;
 
-   new_pos_x = Clamp(new_pos_x, -280, 0);
-   new_pos_y = Clamp(new_pos_y, -200, 0);
+ new_pos_x = Clamp(new_pos_x, -280, 0);
+ new_pos_y = Clamp(new_pos_y, -200, 0);
 
-   DrawImage(background, v2(new_pos_x, new_pos_y));
+ DrawImage(background, v2(new_pos_x, new_pos_y));
 }
 
 void GameRender(Game_Input *input, Game_Output *out)
@@ -506,35 +528,38 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawImage(icon, v2(16, 16));
         DrawImage(player.weapon.icon, v2(25, 25));
 
-        DrawRect(r2_bounds(v2(72, 24), v2(16+player.max_health, 8), v2_zero, v2_one), v4_black);
-        DrawRect(r2_bounds(v2(72, 24), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
+        DrawRect(r2_bounds(v2(70, 20), v2(20+player.max_health, 12), v2_zero, v2_one), v4_black);
+        DrawRect(r2_bounds(v2(72, 22), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
 
-        DrawRect(r2_bounds(v2(71, 36), v2(16+player.max_stamina, 8), v2_zero, v2_one), v4_black);
-        DrawRect(r2_bounds(v2(71, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
+        DrawRect(r2_bounds(v2(70, 34), v2(20+player.max_stamina, 12), v2_zero, v2_one), v4_black);
+        DrawRect(r2_bounds(v2(72, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
+
+        DrawRect(r2_bounds(v2(70, 48), v2(20+player.max_mp, 12), v2_zero, v2_one), v4_black);
+        DrawRect(r2_bounds(v2(72, 50), v2(16+player.current_mp, 8), v2_zero, v2_one), v4_blue);
 
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
 
                 if (enemys[i].enemy.type == 1) {
                     DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12+layer), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
-                     v2_zero, v2_one), v4_black);
+                       v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12+layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
-                     8), v2_zero, v2_one), v4_red);
+                       8), v2_zero, v2_one), v4_red);
                     if (enemys[i].facing > 0) 
                     {
                         DrawImageMirrored(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y+layer), true, false);
+                         enemys[i].position.y+enemys[i].enemy.offset.y+layer), true, false);
                     } else 
                     {
                         DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y+layer));
+                         enemys[i].position.y+enemys[i].enemy.offset.y+layer));
                     }
                 } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800 && abs_i32(player.position.y - enemys[i].position.y) < 600) {
                     p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input, layer);
                     DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12 + layer), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
-                     v2_zero, v2_one), v4_black);
+                       v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12 + layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
-                     8), v2_zero, v2_one), v4_red);
+                       8), v2_zero, v2_one), v4_red);
                 } else if (enemys[i].enemy.type == 3 && player.position.x > 8640 && player.position.x < 9504 && layer == 0) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(9072, out->height);
