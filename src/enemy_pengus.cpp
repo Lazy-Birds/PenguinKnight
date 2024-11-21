@@ -317,7 +317,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
                 Rectangle2 land_aoe = r2_bounds(v2(pengu_king->position.x-50, i32(pengu_king->position.y+pengu_king->size.y/2)), v2(pengu_king->size.x+100, i32(pengu_king->size.y/2)), v2_one, v2_zero);
 
                 if (r2_intersects(land_aoe, get_entity_rect(player))) {
-                    player_hit(200, input);
+                    player_hit(pengu_king, input);
                 }
 
                 
@@ -423,12 +423,12 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         }
 
         if (r2_intersects(peng_rec, get_entity_rect(player))) {
-            player_hit(pengu_king->enemy.damage, input);
+            player_hit(pengu_king, input);
         }
     } else if (invuln_time <= 0) {
         if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(pengu_king->position, pengu_king->size, v2_zero, v2_one)))
         {
-            player_hit(pengu_king->enemy.damage, input);
+            player_hit(pengu_king, input);
         }
     }
 
@@ -483,7 +483,7 @@ void pengu_attack(Entity *pengu, Entity *player, f32 invuln_time, Game_Input *in
     }
 
     if (r2_intersects(weapon, rec_player)) {
-        player_hit(pengu->enemy.damage, input);
+        player_hit(pengu, input);
     }
 }
 

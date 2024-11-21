@@ -65,7 +65,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
     if (invuln_time <= 0){
         if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(seal->position, seal->size, v2_zero, v2_one)))
         {
-            player_hit(seal->enemy.damage, input);
+            player_hit(seal, input);
         }
     }
 

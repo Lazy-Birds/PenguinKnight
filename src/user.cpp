@@ -118,7 +118,7 @@ Vector2 camera_pos;
 Vector2 camera_pos_target;
 i32 camera_state = 0;
 
-void player_hit(i32 damage, Game_Input *input);
+void player_hit(Entity *entity, Game_Input *input);
 
 #include "dialogue.cpp"
 #include "entity.cpp"
@@ -326,6 +326,8 @@ void GameStart(Game_Input *input, Game_Output *out)
 void reset_vars() {
     player.position = v2(624, out->height - 244);
     player.current_health = player.max_health;
+    player.current_stamina = player.max_stamina;
+    player.current_mp = player.max_mp;
     player.alive = true;
     player.exp_gained = 0;
     player.velocity = v2(0, 0);

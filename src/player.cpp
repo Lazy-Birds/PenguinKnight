@@ -462,11 +462,10 @@ void player_action(Game_Input *input) {
 		} break;
 	case GUARD:
 		{
-			player.velocity.x = 0;
-
 			if (state_time*60 < 15) {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.guard.x, player.facing);
+				player.velocity.x = 0;
 			} else if (c0.a && player.current_mp > 0 && player.shield_hit > 0) {
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 					player.weapon.guard.y, player.facing);
@@ -497,19 +496,26 @@ void set_enemy_vuln() {
 	}
 }
 
-void player_hit(i32 damage, Game_Input *input) {
+void player_hit(Entity *entity, Game_Input *input) {
 	if (player.state == GUARD && player.current_mp > 10) {
 		player.current_mp-=10;
 		invuln_time = 60*input->dt;
 		player.shield_hit = 60*input->dt;
+
+		if (player.position.x < entity->position.x && r2_intersects(get_entity_rect(&player), get_entity_rect(entity))) {
+			player.velocity.x-=6000*input->dt;
+		} else if (player.position.x > entity->position.x && r2_intersects(get_entity_rect(&player), get_entity_rect(entity))) {
+			player.velocity.x+=6000*input->dt;
+		}
+
 		return;
 	}
 
-	if (player.current_health <= damage) {
+	if (player.current_health <= entity->enemy.damage) {
 		player.current_health = 0;
 		player.alive = false;
 	}
-	player.current_health-=damage;
+	player.current_health-=entity->enemy.damage;
 	player.state = HIT;
 	
 	invuln_time = 80*input->dt;
