@@ -46,14 +46,14 @@ void player_action(Game_Input *input) {
 			player.state = JUMP;
 			state_time = 0;
 
-		} else if (input->mouse.left && entity_in_air(&player)) {
+		} else if (c0.bumper && entity_in_air(&player)) {
 			player.state = STATEJUMPATTACK;
 			state_time = 0;
 		}
-		else if (input->mouse.left) {
+		else if (c0.bumper) {
 			player.state = ATTACK;
 			state_time = 0;
-		} else if (input->mouse.right) {
+		} else if (c0.trigger) {
 			player.state = CHARGING;
 			state_time = 0;
 		} else if (c0.b) {
@@ -131,15 +131,15 @@ void player_action(Game_Input *input) {
 				}
 			}
 
-			if (input->mouse.left && entity_in_air(&player)) {
+			if (c0.bumper && entity_in_air(&player)) {
 				state_time = 0;
 				player.state = STATEJUMPATTACK;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 0, player.facing);
-			} else if (input->mouse.left) {
+			} else if (c0.bumper) {
 				state_time = 0;
 				player.state = ATTACK;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 0, player.facing);
-			} else if (input->mouse.right) {
+			} else if (c0.trigger) {
 				state_time = 0;
 				player.state = CHARGING;
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 0, player.facing);
@@ -163,7 +163,7 @@ void player_action(Game_Input *input) {
 		} break;
 	case JUMP:
 		{
-			if (c0.up && player.current_stamina > 20) {
+			if (player.current_stamina > 20) {
 				if (c0.right)
 				{
 					player.velocity.x = move_f32(player.velocity.x, 250, 250 * dt);
@@ -187,13 +187,13 @@ void player_action(Game_Input *input) {
 						player.facing--;
 					}
 				}
-				if (state_time*60 < 15) {
+				if (state_time*60 < 7) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 						player.weapon.jump.x, player.facing);
-				} else if (state_time*60 > 14 && entity_on_wall(&player)) {
+				} else if (state_time*60 < 14 && entity_on_wall(&player)) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
 						player.weapon.jump.y, player.facing);
-					player.velocity.y=-240;
+					player.velocity.y-=240;
 					player.current_stamina-=20;
 				} else if (player.velocity.y < 0) {
 					draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y), 
@@ -243,14 +243,14 @@ void player_action(Game_Input *input) {
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 			
-			if (input->mouse.right && state_time*9 < player.weapon.charge_time && player.current_stamina > 1)
+			if (c0.trigger && state_time*9 < player.weapon.charge_time && player.current_stamina > 1)
 			{
 				//DrawImage(charge_meter[i32(state_time*9)], v2(player.position.x-player.position.x+out->width*.5-16, player.position.y-16));
 				draw_charging(i32(state_time*9));
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y),
 					player.weapon.charged_frames.x, player.facing);
 
-			} else if (input->mouse.right && state_time*9 > player.weapon.charge_time) 
+			} else if (c0.trigger && state_time*9 > player.weapon.charge_time) 
 			{
 				draw_player(player.weapon, v2(player.position.x-player.position.x+out->width*.5-offset, player.position.y),
 					player.weapon.charged_frames.x, player.facing);

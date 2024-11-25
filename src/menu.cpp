@@ -120,6 +120,9 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
 	Rectangle2 level_bar = r2_bounds(v2(44, 258), v2(240, 18), v2_zero, v2_one);
 	Rectangle2 level_act = r2_bounds(v2(44, 258), v2(xp, 18), v2_zero, v2_one);
 
+	String exp = string_concat(sprint("%d", player->exp_gained), S("/"));
+	exp = string_concat(exp, sprint("%d", player->exp_to_level));
+
 	static Image image = LoadImage(S("menu_sprite.png"));
 
 	String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
@@ -132,7 +135,8 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
     String mental = S("Mental");
 
     String player_lvl = sprint("%d", player->level);
-    Image level_up[3] = {
+    
+    Image level_up[] = {
     	LoadImage(S("level_up1.png")),
     	LoadImage(S("level_up2.png")),
     	LoadImage(S("level_up3.png")),
@@ -154,6 +158,8 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
 	DrawTextExt(font_hellomyoldfriend, player_lvl, v2(44, 234), v4_white, v2_zero, 2.0);
 	DrawRect(level_bar, v4_white);
 	DrawRect(level_act, v4_green);
+
+	DrawTextExt(font_hellomyoldfriend, exp, v2(46, 258), v4_red, v2_zero, 1.2);
 
 	DrawTextExt(font_hellomyoldfriend, constitution, v2(40, 284), v4_white, v2_zero, 1.5);
 	DrawTextExt(font_hellomyoldfriend, rigour, v2(40, 356), v4_white, v2_zero, 1.5);

@@ -46,6 +46,9 @@ struct Controller
 
     f32 stick_x;
     f32 stick_y;
+
+    b32 trigger;
+    b32 bumper;
 };
 
 struct Mouse

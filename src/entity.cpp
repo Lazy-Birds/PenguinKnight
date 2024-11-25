@@ -99,7 +99,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
         } break;
     case 2:
         {
-            static Image image[12] = 
+            static Image image[] = 
             {
                 LoadImage(S("big_papa1.png")),
                 LoadImage(S("big_papa2.png")),
@@ -113,6 +113,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
                 LoadImage(S("big_papa10.png")),
                 LoadImage(S("big_papa11.png")),
                 LoadImage(S("big_papa12.png")),
+                LoadImage(S("big_papa13.png")),
 
             };
 
@@ -137,7 +138,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             big_papa.enemy.damage = 30;
             big_papa.portrait = portrait;
             big_papa.enemy.exp_dropped = 2000;
-            big_papa.has_hit = false;
+            big_papa.has_hit = true;
             big_papa.state = NEUTRAL;
             big_papa.state_prev = NEUTRAL;
             big_papa.talking = false;
@@ -148,7 +149,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
         } break;
     case 3:
         {
-            static Image image[7] =
+            static Image image[] =
             {
                 LoadImage(S("penguin_soldier1.png")),
                 LoadImage(S("penguin_soldier2.png")),
@@ -157,6 +158,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
                 LoadImage(S("penguin_soldier5.png")),
                 LoadImage(S("penguin_soldier6.png")),
                 LoadImage(S("penguin_soldier7.png")),
+                LoadImage(S("penguin_soldier8.png")),
 
             };
 
@@ -726,8 +728,8 @@ void particle_update(f32 dt) {
 
         if (particles[i].is_alive) {
             if (particles[i].magnet != NULL && particles[i].magnet->type == 0) {
-                particles[i].velocity.x=8000*dt*sign_f32(particles[i].magnet->anchor.x-particles[i].position.x);
-                particles[i].velocity.y=8000*dt*sign_f32(particles[i].magnet->anchor.y-particles[i].position.y);
+                particles[i].velocity.x=8000*dt*sign_f32(particles[i].magnet->anchor.x-particles[i].position.x)+random_f32_between(-2000, 4000)*dt;
+                particles[i].velocity.y=1000*dt*sign_f32(particles[i].magnet->anchor.y-particles[i].position.y)+random_f32_between(-1200, 2000)*dt;
             }
 
             particles_checked++;
@@ -737,6 +739,12 @@ void particle_update(f32 dt) {
             DrawImage(particles[i].image, v2(particles[i].position.x-camera_pos.x+out->width*.5, particles[i].position.y));
             if (particles[i].life_time <= 0) {
                 particles[i].is_alive = false;
+                particles[i].magnet = NULL;
+                living_particles--;
+            } else if (particles[i].magnet != NULL && abs_f32(particles[i].magnet->anchor.x - particles[i].position.x) < 4
+             && abs_f32(particles[i].magnet->anchor.y - particles[i].position.y) < 4 ) {
+                particles[i].is_alive = false;
+                particles[i].life_time = 0;
                 particles[i].magnet = NULL;
                 living_particles--;
             }

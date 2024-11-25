@@ -662,18 +662,21 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
                 player0->down  |= (GetKeyState(VK_DOWN) & (1 << 15)) == (1 << 15);
                 player0->left  |= (GetKeyState(VK_LEFT) & (1 << 15)) == (1 << 15);
                 player0->right |= (GetKeyState(VK_RIGHT) & (1 << 15)) == (1 << 15);
-                player0->a     |= (GetKeyState('Q') & (1 << 15)) == (1 << 15);
-                player0->b     |= (GetKeyState('E') & (1 << 15)) == (1 << 15);
+                player0->a     |= (GetKeyState('J') & (1 << 15)) == (1 << 15);
+                player0->b     |= (GetKeyState('K') & (1 << 15)) == (1 << 15);
 
                 player0->up    |= (GetKeyState('W') & (1 << 15)) == (1 << 15);
                 player0->down  |= (GetKeyState('S') & (1 << 15)) == (1 << 15);
                 player0->left  |= (GetKeyState('A') & (1 << 15)) == (1 << 15);
                 player0->right |= (GetKeyState('D') & (1 << 15)) == (1 << 15);
-                player0->a     |= (GetKeyState('Q') & (1 << 15)) == (1 << 15);
-                player0->b     |= (GetKeyState('E') & (1 << 15)) == (1 << 15);
+                player0->a     |= (GetKeyState('I') & (1 << 15)) == (1 << 15);
+                player0->b     |= (GetKeyState('L') & (1 << 15)) == (1 << 15);
 
                 player0->start |= (GetKeyState(VK_ESCAPE) & (1 << 15)) == (1 << 15);
                 player0->pause |= (GetKeyState('P') & (1 << 15)) == (1 << 15);
+
+                player0->trigger |= (GetKeyState('J') & (1 << 15)) == (1 << 15);
+                player0->bumper |= (GetKeyState('K') & (1 << 15)) == (1 << 15);
             }
         }
 

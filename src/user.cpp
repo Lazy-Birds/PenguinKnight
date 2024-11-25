@@ -204,6 +204,8 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                 if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
                     get_entity_rect(&enemys[i])) && enemys[i].alive) {
 
+                    enemys[i].invuln = true;
+
                     if (enemys[i].has_hit) {
                         enemys[i].state = HIT;
                     }
@@ -211,6 +213,7 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
                         enemys[i].state = DYING;
+                        enemys[i].state_time = 0;
                         player.exp_gained += enemys[i].enemy.exp_dropped;
                         if (player.mp_cooldown <= 0) {
                             player.current_mp+=10;
@@ -232,17 +235,31 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                 if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
                     get_entity_rect(&enemys[i])) && enemys[i].alive) {
 
+                    enemys[i].invuln = true;
+
                     if (enemys[i].has_hit) {
                         enemys[i].state = HIT;
                     }
-
+                    
                     if (enemys[i].current_health <= damage) {
                         enemys[i].current_health = 0;
                         enemys[i].state = DYING;
+                        enemys[i].state_time = 0;
                         player.exp_gained += enemys[i].enemy.exp_dropped;
+                        if (player.mp_cooldown <= 0) {
+                            player.current_mp+=10;
+                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                            player.mp_cooldown+=.5;
+                        }
+                        
                     } else {
                         enemys[i].current_health-=damage;
                         enemys[i].invuln = true;
+                        if (player.mp_cooldown <= 0) {
+                            player.current_mp+=10;
+                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                            player.mp_cooldown+=.5;
+                        }
                     } 
                 }
             }
@@ -285,7 +302,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.weapon = cleaver;
     player.weapon.position = player.position;
     player.size = v2(40, 52);
-    player.exp_gained = 3000;
+    player.exp_gained = 0;
     player.exp_to_level = 600;
     player.level = 1;
     player.type = 0;

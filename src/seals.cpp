@@ -58,7 +58,33 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
         } break;
     case DYING:
         {
-            seal->alive = false;
+            Particle_Parameters min = {};
+            Particle_Parameters max = {};
+
+            min.velocity.x = 400*input->dt;
+            min.velocity.y = 400*input->dt;
+
+            max.velocity.x = 400*input->dt;
+            max.velocity.y = 400*input->dt;
+
+            min.position.x = seal->position.x;
+            min.position.y = seal->position.y;
+
+            max.position.x = seal->position.x + seal->size.x;
+            max.position.y = seal->position.y + seal->size.y;
+
+            min.life_time = 90*input->dt;
+            max.life_time = 60*input->dt;
+
+            min.magnet = player;
+
+            Image image = LoadImage(S("exp.png"));
+
+            for (int i = 0; i < i32(seal->enemy.exp_dropped/10); i++) {
+                particle_emit(min, max, image);
+            }
+
+            seal->state = DEAD;
         } break;
     case DEAD:
         {

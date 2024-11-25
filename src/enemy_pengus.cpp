@@ -14,7 +14,7 @@ const i32 KINGLANDING = 4;
 const i32 KINGGUARDBREAK = 5;
 const i32 KINGCOMMAND = 6;
 const i32 KINGWAIT = 7;
-const i32 KINGCHALLENGE = 8;
+const i32 KINGCHALLENGE = 20;
 
 const i32 PHASEONE = 0;
 const i32 PHASETWO = 1;
@@ -30,7 +30,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
     pengu_king->state_time+=dt;
     pengu_king->dialogue_time+=dt;
 
-    if (pengu_king->state != pengu_king->state_prev) {
+    if (pengu_king->state != HIT && pengu_king->state != pengu_king->state_prev) {
         pengu_king->state_prev = pengu_king->state;
         pengu_king->state_time = 0;
     }
@@ -406,9 +406,44 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
                 pengu_king->state = KINGLEAPING;
             }*/
         } break;
+    case HIT:
+        {
+            if (pengu_king->state_time*60 < 4) {
+                draw_pengu(pengu_king, 12, layer);
+            } else {
+                draw_pengu(pengu_king, 12, layer);
+                pengu_king->state = pengu_king->state_prev;
+            }
+        } break;
     case DYING:
         {
-            pengu_king->alive = false;
+            Particle_Parameters min = {};
+            Particle_Parameters max = {};
+
+            min.velocity.x = 400*dt;
+            min.velocity.y = 400*dt;
+
+            max.velocity.x = 400*dt;
+            max.velocity.y = 400*dt;
+
+            min.position.x = pengu_king->position.x;
+            min.position.y = pengu_king->position.y;
+
+            max.position.x = pengu_king->position.x + pengu_king->size.x;
+            max.position.y = pengu_king->position.y+pengu_king->size.y;
+
+            min.life_time = 90*dt;
+            max.life_time = 60*dt;
+
+            min.magnet = player;
+
+            Image image = LoadImage(S("exp.png"));
+
+            for (int i = 0; i < i32(pengu_king->enemy.exp_dropped/10); i++) {
+                particle_emit(min, max, image);
+            }
+
+            pengu_king->state = DEAD;
         } break;
     case DEAD:
         {
@@ -497,7 +532,12 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
     if (soldier->enemy.sleep_time > 0) {
         move_pengu(soldier, input->dt);
         soldier->enemy.sleep_time-=input->dt;
-        draw_pengu(soldier, 0, layer);
+        if (soldier->state_time*60 <= 3) {
+            draw_pengu(soldier, 7, layer);
+        } else {
+            draw_pengu(soldier, 0, layer);
+        }
+        
         return;
     }
 
@@ -588,6 +628,10 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
         } break;
     case HIT:
         {
+            if (soldier->state_time*60 <= 2) {
+                draw_pengu(soldier, 7, layer);
+            }
+
             if (soldier->position.x > player->position.x)
             {
                 soldier->velocity.x = 8000*dt;
@@ -626,7 +670,7 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
 
             Image image = LoadImage(S("exp.png"));
 
-            for (int i = 0; i < 7; i++) {
+            for (int i = 0; i < i32(soldier->enemy.exp_dropped/10); i++) {
                 particle_emit(min, max, image);
             }
 
