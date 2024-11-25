@@ -484,7 +484,9 @@ void player_action(Game_Input *input) {
 		{
 
 		} break;
-	} 
+	}
+
+	player.anchor = v2(player.position.x+15, player.position.y+25);
 }
 
 void set_enemy_vuln() {

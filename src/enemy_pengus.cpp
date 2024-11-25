@@ -406,10 +406,14 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
                 pengu_king->state = KINGLEAPING;
             }*/
         } break;
+    case DYING:
+        {
+            pengu_king->alive = false;
+        } break;
     case DEAD:
         {
             pengu_king->alive = false;
-        }
+        } break;
     }
 
     if (invuln_time <= 0 && pengu_king->state == KINGSTOMPING) {
@@ -598,9 +602,37 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
 
             soldier->state = MOVE;
         } break;
-    case DEAD:
+    case DYING:
         {
-            if (i32(soldier->state_time*60) < 2) {
+            Particle_Parameters min = {};
+            Particle_Parameters max = {};
+
+            min.velocity.x = 400*dt;
+            min.velocity.y = 400*dt;
+
+            max.velocity.x = 400*dt;
+            max.velocity.y = 400*dt;
+
+            min.position.x = soldier->position.x;
+            min.position.y = soldier->position.y;
+
+            max.position.x = soldier->position.x + soldier->size.x;
+            max.position.y = soldier->position.y+soldier->size.y;
+
+            min.life_time = 90*dt;
+            max.life_time = 60*dt;
+
+            min.magnet = player;
+
+            Image image = LoadImage(S("exp.png"));
+
+            for (int i = 0; i < 7; i++) {
+                particle_emit(min, max, image);
+            }
+
+            soldier->state = DEAD;
+
+            /*if (i32(soldier->state_time*60) < 2) {
                 draw_pengu(soldier, 4, layer);
             } else if (i32(soldier->state_time*60) < 4) {
                 draw_pengu(soldier, 5, layer);
@@ -608,7 +640,11 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
                 draw_pengu(soldier, 6, layer);
             } else {
                 soldier->alive = false;
-            }
+            }*/
         } break;
+    case DEAD:
+        {
+            soldier->alive = false;
+        }
     }
 }

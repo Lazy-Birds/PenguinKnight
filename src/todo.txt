@@ -19,6 +19,11 @@ Todo:
 --rewrite pixel code
 --Dodge code
 --Change layers to levels, each level should have a distinct x,y axis.
+--Sprint()
+--button mapping
+--More intuitive shield
+--dynamic attacking/movement?
+
 
 --Overfit screen
 
@@ -32,6 +37,11 @@ Todo:
 --Put pengu kings title above health bar
 --
 
+-Peoples todo:
+--Nick: NPC's flash white when hit
+--Abbie: Collectables/freds pengu figurines
+--Steve: The Well Traveled Frog
+
 
 
 
@@ -41,6 +51,7 @@ Todo:
 --Decorations
 --die animation(all)
 --dodge sprite
+--Lighter exp bubbles
 
 Completed Code:
 --normal attack code

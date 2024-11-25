@@ -9,6 +9,8 @@ struct Particle {
 	i32 direction;
 	f32 life_time;
 	i32 type;
+	Entity *magnet;
+	f32 sleep_time;
 };
 
 struct Particle_Parameters {
@@ -18,6 +20,7 @@ struct Particle_Parameters {
 	f32 life_time;
 	Vector2 accel;
 	f32 friction;
+	Entity *magnet;
 };
 
 i32 snow_count = 5000;

@@ -707,6 +707,10 @@ void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image
             particles[i].velocity.y = random_f32_between(min.velocity.y, max.velocity.y);
             particles[i].life_time = random_f32_between(min.life_time, max.life_time);
             particles[i].image = image;
+            if (min.magnet != NULL && min.magnet->type == 0) {
+                particles[i].magnet = min.magnet;
+                particles[i].sleep_time = .5;
+            }
             living_particles++;
             break;
         }
@@ -719,7 +723,13 @@ void particle_update(f32 dt) {
     i32 particles_checked = 0;
 
     for (int i = 0; i < particle_count; i++) {
+
         if (particles[i].is_alive) {
+            if (particles[i].magnet != NULL && particles[i].magnet->type == 0) {
+                particles[i].velocity.x=8000*dt*sign_f32(particles[i].magnet->anchor.x-particles[i].position.x);
+                particles[i].velocity.y=8000*dt*sign_f32(particles[i].magnet->anchor.y-particles[i].position.y);
+            }
+
             particles_checked++;
             particles[i].position.x += particles[i].velocity.x*dt;
             particles[i].position.y += particles[i].velocity.y*dt;
@@ -727,6 +737,7 @@ void particle_update(f32 dt) {
             DrawImage(particles[i].image, v2(particles[i].position.x-camera_pos.x+out->width*.5, particles[i].position.y));
             if (particles[i].life_time <= 0) {
                 particles[i].is_alive = false;
+                particles[i].magnet = NULL;
                 living_particles--;
             }
 

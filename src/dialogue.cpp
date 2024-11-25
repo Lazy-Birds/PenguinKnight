@@ -5,10 +5,10 @@ b32 lines_generated = false;
 
 void load_fairy_dialogue(Entity *fairy) {
 	static String dialogue[4] = {
-		S(" I haven't seen you around here lately penguin knight. You finally gonna fight the Pengu King?"),
-		S(" Hey Penguin Knight Listen!"),
-		S(" The Penguin King seeks the great"),
-		S(" power, and only you can stop him!"),
+		S("I haven't seen you around here lately penguin knight. You finally gonna fight the Pengu King?"),
+		S("Hey Penguin Knight Listen!"),
+		S("The Penguin King seeks the great"),
+		S("power, and only you can stop him!"),
 	};
 
 	fairy->dialogue = dialogue;
@@ -25,66 +25,39 @@ void load_penguin_king_dialogue(Entity *pengu) {
 
 void clip_strings(String words) {
 	i32 char_at[10] = {};
-	i32 lines = 1;
+	i32 lines = 0;
 
 	i32 count = 0;
 
 
 	if (words.count <=35) {
 		lines_to_speak[0] = words;
-		line_count = 1;
+		line_count = 0;
 	} else {
 		for (int i = 0; i < words.count; i++) {
 			if (words.data[i] == ' ') {
-				if (i > lines*35) {
+				if (i > lines*35+35) {
 					lines++;
 				}
 
-				if (lines > 1 && words.count-char_at[lines-2] < 35) break;
+				if (lines >= 1 && words.count-char_at[lines-1] < 35) 
+				{
+					char_at[lines] = words.count;
+					break;
+				}
 
-				char_at[lines-1] = i;
+				char_at[lines] = i;
 			}
 		}
 
-		for (int i = 0; i < 10; i++) {
-			i32 size = 0;
-			i32 start = 0;
-
-			if (char_at[i] == 0) {
-				start = char_at[i-1];
-				size = words.count-start-1;
-
-				u8* wordly = (u8*)malloc((size-1)*sizeof(u8));
-
-				for (int k = 1; k < size+1; k++) {
-					wordly[k-1] = words.data[start+k];
-				}
-
-				String result = string_make(wordly, size);
-
-				lines_to_speak[line_count] = result;
-				line_count++;
-
-				break;
-			}
-			
+		for (int i = 0; i , 10; i++) {
+			if (char_at[i] == 0) break;
 			if (i == 0) {
-				size = char_at[i];
+				lines_to_speak[i] = string_slice(words, 0, char_at[i]);
 			} else {
-				size = char_at[i] - char_at[i-1]-1;
-				start = char_at[i-1];
+				lines_to_speak[i] = string_slice(words, char_at[i-1] + 1, char_at[i]);
 			}
-			
-			u8* wordly = (u8*)malloc((size-1)*sizeof(u8));
-
-			for (int k = 1; k < size+1; k++) {
-				wordly[k-1] = words.data[start+k];
-			}
-
-			String result = string_make(wordly, size);
-
-			lines_to_speak[line_count] = result;
-			line_count++;
+			line_count = i;
 		}
 	}
 	lines_generated = true;
@@ -114,8 +87,6 @@ b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) 
     DrawRect(box3, v4_white);
     DrawRect(box4, v4_black);
 
-
-
  	if (box_count%3 == 0) {
     	String words2 = string_slice(lines_to_speak[box_count], 0, letter_time/3);
     	DrawTextExt(font_hellomyoldfriend, words2, v2(96+12, out->height-96+12), v4_white, v2_zero, 2.0);
@@ -134,7 +105,7 @@ b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) 
     if (letter_time >= 180) {
     	letter_time = 0;
     	box_count++;
-    } else if (letter_time >= 105 && box_count+1 != line_count && box_count%3 != 2) {
+    } else if (letter_time >= 105 && box_count+1 < line_count && box_count%3 != 2) {
     	letter_time = 0;
     	box_count++;
     }
@@ -145,7 +116,7 @@ b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) 
     	DrawImage(image[1], v2(1, out->height-96));
     }
 
-    if (box_count >= line_count) {
+    if (box_count > line_count) {
 		for (int i = 0; i < line_count; i++) {
 			lines_to_speak[i] = {};
 		}

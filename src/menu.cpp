@@ -108,6 +108,7 @@ const Rectangle2 inc_dex = r2_bounds(v2(217, 550), v2(49, 18), v2_zero, v2_one);
 const Rectangle2 inc_men = r2_bounds(v2(217, 622), v2(49, 18), v2_zero, v2_one);
 
 void draw_menu(Game_Output *out, Entity *player, Image screen) {
+	TimeFunction;
 	Rectangle2 outline = r2_bounds(v2(16, 16), v2(264, out->height-32), v2_zero, v2_one);
 	Rectangle2 pengu = r2_bounds(v2(20, 20), v2(256, 256), v2_zero, v2_one);
 	Rectangle2 middle = r2_bounds(v2(20, 276), v2(256, 4), v2_zero, v2_one);
@@ -130,7 +131,7 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
     String dexterity = S("Dexterity");
     String mental = S("Mental");
 
-    String player_lvl = S("LV.1");
+    String player_lvl = sprint("%d", player->level);
     Image level_up[3] = {
     	LoadImage(S("level_up1.png")),
     	LoadImage(S("level_up2.png")),
@@ -150,7 +151,7 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
 	//DrawRect(stats_block, v4_black);
 
 	DrawImage(image, v2(44, 28));
-	DrawTextExt(font_hellomyoldfriend, player_lvl, v2(48, 234), v4_white, v2_zero, 2.0);
+	DrawTextExt(font_hellomyoldfriend, player_lvl, v2(44, 234), v4_white, v2_zero, 2.0);
 	DrawRect(level_bar, v4_white);
 	DrawRect(level_act, v4_green);
 
