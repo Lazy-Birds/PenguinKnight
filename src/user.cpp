@@ -14,7 +14,10 @@ const i32 GUARD = 12;
 const i32 DYING = 13;
 const i32 DEAD = 14;
 
+#include "levels.cpp"
+
 bool in_menu = false;
+bool bosses_killed[48] = {};
 
 Image background;
 
@@ -101,6 +104,8 @@ struct Entity
     i32 exp_gained;
     i32 exp_to_level;
     i32 level;
+
+    i32 world_level;
 };
 
 #include "background.cpp"
@@ -142,11 +147,11 @@ i32 weapon_cooldown = 0;
 
 void set_camera_pos() {
     if (camera_state == CAMERAFOLLOW) {
-        camera_pos = player.position;
+        camera_pos = lerp_v2(camera_pos, player.position, 0.08);
     } else if (camera_state == CAMERALOCKED) {
         camera_pos = lerp_v2(camera_pos, camera_pos_target, 0.08);
     } else {
-        camera_pos = player.position;
+        camera_pos = lerp_v2(camera_pos, player.position, 0.08);
     }
 }
 
@@ -206,65 +211,65 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
 
                     enemys[i].invuln = true;
 
-                    if (enemys[i].has_hit) {
-                        enemys[i].state = HIT;
+                if (enemys[i].has_hit) {
+                    enemys[i].state = HIT;
+                }
+                
+                if (enemys[i].current_health <= damage) {
+                    enemys[i].current_health = 0;
+                    enemys[i].state = DYING;
+                    enemys[i].state_time = 0;
+                    player.exp_gained += enemys[i].enemy.exp_dropped;
+                    if (player.mp_cooldown <= 0) {
+                        player.current_mp+=10;
+                        player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                        player.mp_cooldown+=.5;
                     }
                     
-                    if (enemys[i].current_health <= damage) {
-                        enemys[i].current_health = 0;
-                        enemys[i].state = DYING;
-                        enemys[i].state_time = 0;
-                        player.exp_gained += enemys[i].enemy.exp_dropped;
-                        if (player.mp_cooldown <= 0) {
-                            player.current_mp+=10;
-                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                            player.mp_cooldown+=.5;
-                        }
-                        
-                    } else {
-                        enemys[i].current_health-=damage;
-                        enemys[i].invuln = true;
-                        if (player.mp_cooldown <= 0) {
-                            player.current_mp+=10;
-                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                            player.mp_cooldown+=.5;
-                        }
-                    } 
-                }
-            } else {
-                if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&enemys[i])) && enemys[i].alive) {
-
+                } else {
+                    enemys[i].current_health-=damage;
                     enemys[i].invuln = true;
-
-                    if (enemys[i].has_hit) {
-                        enemys[i].state = HIT;
+                    if (player.mp_cooldown <= 0) {
+                        player.current_mp+=10;
+                        player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                        player.mp_cooldown+=.5;
                     }
-                    
-                    if (enemys[i].current_health <= damage) {
-                        enemys[i].current_health = 0;
-                        enemys[i].state = DYING;
-                        enemys[i].state_time = 0;
-                        player.exp_gained += enemys[i].enemy.exp_dropped;
-                        if (player.mp_cooldown <= 0) {
-                            player.current_mp+=10;
-                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                            player.mp_cooldown+=.5;
-                        }
-                        
-                    } else {
-                        enemys[i].current_health-=damage;
-                        enemys[i].invuln = true;
-                        if (player.mp_cooldown <= 0) {
-                            player.current_mp+=10;
-                            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                            player.mp_cooldown+=.5;
-                        }
-                    } 
-                }
+                } 
             }
+        } else {
+            if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
+                get_entity_rect(&enemys[i])) && enemys[i].alive) {
+
+                enemys[i].invuln = true;
+
+            if (enemys[i].has_hit) {
+                enemys[i].state = HIT;
+            }
+            
+            if (enemys[i].current_health <= damage) {
+                enemys[i].current_health = 0;
+                enemys[i].state = DYING;
+                enemys[i].state_time = 0;
+                player.exp_gained += enemys[i].enemy.exp_dropped;
+                if (player.mp_cooldown <= 0) {
+                    player.current_mp+=10;
+                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                    player.mp_cooldown+=.5;
+                }
+                
+            } else {
+                enemys[i].current_health-=damage;
+                enemys[i].invuln = true;
+                if (player.mp_cooldown <= 0) {
+                    player.current_mp+=10;
+                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+                    player.mp_cooldown+=.5;
+                }
+            } 
         }
     }
+}
+}
 }
 
 void draw_charging(i32 frame) {
@@ -272,6 +277,12 @@ void draw_charging(i32 frame) {
         DrawImage(charge_meter[frame], v2(player.position.x-camera_pos.x+out->width*.5-16, player.position.y-16));
     } else {
         DrawImage(charge_meter[frame], v2(camera_pos.x-player.position.x+out->width*.5-16, player.position.y-16));
+    }
+}
+
+void bosses_alive() {
+    for (int i = 0; i < 48; i++) {
+        bosses_killed[i] = false;
     }
 }
 
@@ -285,7 +296,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.position = v2(624, out->height - 244);
+    player.position = /*v2(9456, 476);*/v2(624, out->height - 244);
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
     player.max_health = 10*player.constitution;
@@ -306,6 +317,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.exp_to_level = 600;
     player.level = 1;
     player.type = 0;
+    player.world_level = 0;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -339,9 +351,14 @@ void GameStart(Game_Input *input, Game_Output *out)
     swing_weapon = false;
     charging_weapon = false;
     charged_attack = false;
+
+    bosses_alive();
+
+    spawn_initial_snowflakes(out, input);
 }
 
 void reset_vars() {
+    TimeFunction;
     player.position = v2(624, out->height - 244);
     player.current_health = player.max_health;
     player.current_stamina = player.max_stamina;
@@ -352,10 +369,15 @@ void reset_vars() {
     player.facing = -1;
     player.state = NEUTRAL;
 
+    camera_pos = player.position;
+
+
+
     wall[10000] = {};
     wall_count = 0;
     enemys[1000] = {};
     enemy_count = 0;
+    boss_walls_active = false;
 
     npc[200] = {};
     npc_count = 0;
@@ -367,18 +389,29 @@ void reset_vars() {
     camera_state = CAMERAFOLLOW;
 }
 
-void set_world(b32 reset) {
-    if (reset) {
+void set_world(b32 reset, Level level) {
+    TimeFunction;
+    if (reset){
         reset_vars();
+    } else {
+        wall[10000] = {};
+        wall_count = 0;
+        enemys[1000] = {};
+        enemy_count = 0;
+
+        camera_pos = player.position;
+
+        npc[200] = {};
+        npc_count = 0;
+
+        fire = {};
+
+        bgnd[10000] = {};
+        bgnd_count = 0;
+        camera_state = CAMERAFOLLOW;
     }
 
-    make_world(720);
-    make_world(0);
-
-    for (int i = 0; i < 800; i++) {
-        spawn_snowflakes(out, input);
-        update_snowflakes(out, player.position.x);
-    }
+    make_world(level);
 }
 
 i32 get_frame_walk(f32 dt) {
@@ -444,10 +477,10 @@ void GameUpdate(Game_Input *input, Game_Output *out)
     }
 }
 
-void draw_background(i32 layer)
+void draw_background()
 {
    i32 new_pos_x = -camera_pos.x*.02;
-   i32 new_pos_y = layer - 200;
+   i32 new_pos_y = 0;
 
    new_pos_x = Clamp(new_pos_x, -280, 0);
    new_pos_y = Clamp(new_pos_y, -200, 0);
@@ -469,7 +502,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     if (!initted)
     {
         GameStart(input, out);
-        set_world(false);
+        create_levels();
+        set_world(false, village);
         initted = true;
     }
 
@@ -488,29 +522,28 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     } else if (player.alive) {
         //DrawClear(v4(0.2, 0.2, 0.2, 1));
 
-        int layer = 0;
-
-        if (player.position.y < -48) {
-            layer = 720;
-        }
-
-        draw_background(layer);
+        draw_background();
 
         GameUpdate(input, out);
         GameRender(input, out);
 
-        spawn_snowflakes(out, input);
-        update_snowflakes(out, camera_pos.x);
+        if (player.world_level == 0) {
+            spawn_snowflakes(out, input);
+            update_snowflakes(out, camera_pos.x);
+        }
+
+        check_level();
+        set_camera_pos();
 
         for (int i = 0; i < bgnd_count; i++) {
-            DrawImage(bgnd[i].image, v2(bgnd[i].position.x-camera_pos.x+out->width*.5, bgnd[i].position.y+layer));
+            DrawImage(bgnd[i].image, v2(bgnd[i].position.x-camera_pos.x+out->width*.5, bgnd[i].position.y));
         }
 
         for (int i = 0; i < wall_count; i++) {
-            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y+layer));
+            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
         }
 
-        if (abs_i32(fire.position.x - player.position.x) < 1200 && layer == 0) {
+        if (player.world_level == 0 && abs_i32(fire.position.x - player.position.x) < 1200) {
             draw_fire(input->dt);
         }
 
@@ -526,15 +559,9 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         for (int i = 0; i < npc_count; i++) {
             if (abs_i32(npc[i].position.x - player.position.x) < 1200) {
-                npc_action(&npc[i], layer, player);
+                npc_action(&npc[i], player);
             }
         }
-        
-
-        player_action(input);
-        player_move(input);
-
-        set_camera_pos();
 
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].enemy.type == 1 && enemys[i].alive) seal_action(&enemys[i], input, &player);
@@ -561,30 +588,52 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             if (enemys[i].alive) {
 
                 if (enemys[i].enemy.type == 1) {
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12+layer), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4+enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12+layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4+enemys[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
                     if (enemys[i].facing > 0) 
                     {
                         DrawImageMirrored(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y+layer), true, false);
+                           enemys[i].position.y+enemys[i].enemy.offset.y), true, false);
                     } else 
                     {
                         DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
-                           enemys[i].position.y+enemys[i].enemy.offset.y+layer));
+                           enemys[i].position.y+enemys[i].enemy.offset.y));
                     }
                 } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800 && abs_i32(player.position.y - enemys[i].position.y) < 600) {
-                    p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input, layer);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12 + layer), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
+                    p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12 + layer), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
-                } else if (enemys[i].enemy.type == 3 && player.position.x > 8640 && player.position.x < 9504 && layer == 0) {
+                } else if (!bosses_killed[0] && enemys[i].enemy.type == 3 && player.position.x > 8640 && player.position.x < 9504) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(9072, out->height);
 
-                    penguin_king_action(&enemys[i], &player, input->dt, out, layer);
+                    if (!boss_walls_active)
+                    {
+                        Vector2 boss_walls[] = {
+                            v2(8592, 480),
+                            v2(8592, 432),
+                            v2(8592, 384),
+                            v2(8592, 336),
+                            v2(8592, 288),
+                            v2(8592, 240),
+                            v2(8592, 192),
+                            v2(8592, 144),
+                            v2(9504, 480),
+                            v2(9504, 432),
+                        };
+
+                        make_boss_walls(boss_walls, 10);
+
+                        boss_walls_active = true;
+                    }
+
+                    
+
+                    penguin_king_action(&enemys[i], &player, input->dt, out);
 
                 }
 
@@ -592,6 +641,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         }
 
 
+        player_action(input);
+        player_move(input);
 
 
 
@@ -633,7 +684,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawTextExt(font_hellomyoldfriend, S("Press Q to Respawn"), v2(out->width/2 - 324, out->height/2+54), v4_red, v2_zero, 3.0);
 
         if (ControllerReleased(0, Button_A)) {
-            set_world(true);
+            set_world(true, village);
         }
 
         /*Image you_died = LoadImage(S("you_died.png"));

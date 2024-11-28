@@ -35,6 +35,22 @@ i32 get_open_snowflake() {
 	return 5001;
 }
 
+void spawn_initial_snowflakes(Game_Output *out, Game_Input *input) {
+	for (int i = 0; i < 1600; i++) {
+		f32 x = random_f32_between(0, 1)*(out->width+9000);
+		f32 y = random_f32_between(0, 1)*(out->height-200);
+		i32 snowflake = get_open_snowflake();
+		if (snowflake != 5001) {
+			snow[snowflake].is_alive = true;
+			snow[snowflake].position = v2(x, y);
+			snow[snowflake].velocity = v2(40*input->dt, 40*input->dt);
+			snow[snowflake].image = LoadImage(S("snow_flake.png"));
+			snow[snowflake].depth = random_f32_between(.6, .8);
+			snow[snowflake].type = TYPESNOW;
+		}
+	}
+}
+
 void spawn_snowflakes(Game_Output *out, Game_Input *input) {
 	
 	for (int i = 0; i < 2; i++) {

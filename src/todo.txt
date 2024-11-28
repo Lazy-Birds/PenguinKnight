@@ -7,6 +7,8 @@ Notes:
 
 Dialogue box can write 35 char.
 
+boss wall types is 2
+
 Todo:
 
 -Sound

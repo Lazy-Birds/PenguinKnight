@@ -1,5 +1,7 @@
 Entity wall[10000] = {};
 int wall_count = 0;
+bool boss_walls_active = false;
+
 Entity enemys[1000] = {};
 int enemy_count = 0;
 
@@ -7,7 +9,7 @@ Entity npc[200] = {};
 int npc_count = 0;
 
 void move_pengu(Entity *pengu_king, f32 dt);
-void draw_pengu(Entity *pengu_king, i32 frame, i32 layer);
+void draw_pengu(Entity *pengu_king, i32 frame);
 void draw_clouds(Entity *pengu, f32 dt);
 void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image);
 
@@ -286,19 +288,11 @@ void make_npcs(Vector2 pos, i32 type) {
 }
 
 void draw_player(Weapon weapon, Vector2 position, i32 frame, i32 facing) {
-    int layer = 0;
-
-    if (position.y+48 < 0) {
-        layer = 720;
-    } else {
-        layer = 0;
-    }
-
     if (sign_i32(facing) < 0) {
-        DrawImageMirrored(weapon.image[frame], v2(position.x + weapon.offset_left.x, position.y+weapon.offset_left.y+layer), true, false);
+        DrawImageMirrored(weapon.image[frame], v2(position.x + weapon.offset_left.x, position.y+weapon.offset_left.y), true, false);
         //DrawImage(weapon.image[i32(frame + weapon.weapon_frames.y+1)], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y));
     } else {
-        DrawImage(weapon.image[frame], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y+layer));
+        DrawImage(weapon.image[frame], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y));
     }
 }
 
@@ -319,7 +313,8 @@ void make_wall(Vector2 pos, u32 pixel, String image) {
     wall_count++;
 }
 
-void make_world(i32 offset) {
+void make_world(Level level) {
+    TimeFunction;
     /*wall[0].position.y = out->height-32;
     wall[0].position.x = 32;
     wall[0].size = v2(32, 32);
@@ -335,21 +330,7 @@ void make_world(i32 offset) {
     wall[2].size = v2(32, 32);
     wall[2].color = v4_yellow;*/
 
-    Image world = {};
-
-    i32 layer = 0;
-
-    if (offset == 0) {
-        layer = 1;
-    } else {
-        layer = -1;
-    }
-
-    if (offset == 0) {
-        world = LoadImage(S("TestWorld.png"));
-    } else {
-        world = LoadImage(S("TestWorld2.png"));
-    }
+    Image world = level.world;
 
 
     for (int i = 0; i < world.size.x; i++) {
@@ -364,50 +345,50 @@ void make_world(i32 offset) {
                 {
                 case -1405996289: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 0);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 0);
                         enemy_count++;
                     } break;
                 case -1060381441: 
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 1);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 1);
                         enemy_count++;
                     } break;
                 case -18390529:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 2);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 2);
                         enemy_count++;
                     } break;
                 case 1516865791:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 3);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 3);
                         enemy_count++;
                     } break;
                 case 1821034495:
                     {
-                        enemys[enemy_count] = load_enemy(v2(i*48, k*48*layer), 4);
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 4);
                         enemy_count++;
                     } break;
                 case -1562516993:
                     {
-                        make_npcs(v2(i*48, k*48*layer), fairy);
+                        make_npcs(v2(i*48, k*48), fairy);
                         load_fairy_dialogue(&npc[npc_count]);
                         npc_count++;
                     } break;
                 case 1969959423:
                     {
-                        make_npcs(v2(i*48, k*48*layer), lil_pengu);
+                        make_npcs(v2(i*48, k*48), lil_pengu);
                         npc_count++;
                     } break;
                 case 753464831: 
                     {
-                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
                         bgnd[bgnd_count].size = v2(48, 48);
                         bgnd[bgnd_count].image = LoadImage(S("ice_grass1.png"));
                         bgnd_count++;
                     } break;
                 case 423378687: 
                     {
-                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
                         bgnd[bgnd_count].size = v2(48, 96);
                         bgnd[bgnd_count].image = LoadImage(S("pointed_fir.png"));
                         bgnd_count++;
@@ -419,21 +400,21 @@ void make_world(i32 offset) {
                             LoadImage(S("peasant_hovel2.png")),
                             LoadImage(S("peasant_hovel3.png")),
                         };
-                        housing[house_count].position = v2(i*48, k*48-offset);
+                        housing[house_count].position = v2(i*48, k*48);
                         housing[house_count].size = v2(192, 202);
                         housing[house_count].image = image;
                         house_count++;
                     } break;
                 case -465877761:
                     {
-                        static Image image[5] = {
+                        static Image image[] = {
                             LoadImage(S("fire1.png")),
                             LoadImage(S("fire2.png")),
                             LoadImage(S("fire3.png")),
                             LoadImage(S("fire4.png")),
                             LoadImage(S("fire5.png")),
                         };
-                        fire.position = v2(i*48, k*48-offset);
+                        fire.position = v2(i*48, k*48);
                         fire.size = v2(48, 48);
                         fire.image = image;
                         fire.frames = 4;
@@ -442,7 +423,7 @@ void make_world(i32 offset) {
                 case 403973631:
                     {
                         static Image image = LoadImage(S("cave_wall.png"));
-                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
                         bgnd[bgnd_count].size = v2(48, 96);
                         bgnd[bgnd_count].image = image;
                         bgnd_count++;
@@ -450,181 +431,228 @@ void make_world(i32 offset) {
                 case 2139260671:
                     {
                         static Image image = LoadImage(S("cloud_brick_background.png"));
-                        bgnd[bgnd_count].position = v2(i*48, k*48-offset);
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = image;
+                        bgnd_count++;
+                    } break;
+                    case 640369919:
+                    {
+                        //262b44
+                        static Image image = LoadImage(S("bolted_plates14.png"));
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = image;
+                        bgnd_count++;
+                    } break;
+                case 572998143:
+                    {
+                        //222741
+                        static Image image = LoadImage(S("bolted_plates15.png"));
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
+                        bgnd[bgnd_count].size = v2(48, 96);
+                        bgnd[bgnd_count].image = image;
+                        bgnd_count++;
+                    } break;
+                case 741561343:
+                    {
+                        //2c3353
+                        static Image image = LoadImage(S("bolted_plates16.png"));
+                        bgnd[bgnd_count].position = v2(i*48, k*48);
                         bgnd[bgnd_count].size = v2(48, 96);
                         bgnd[bgnd_count].image = image;
                         bgnd_count++;
                     } break;
                 case 842807807: 
                     {
-                        make_wall(v2(i, k*layer), pixel, S("grass_bot.png"));
+                        make_wall(v2(i, k), pixel, S("grass_bot.png"));
                     } break;
                 case -1713024769:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("grass_top.png"));
+                        make_wall(v2(i, k), pixel, S("grass_top.png"));
                     } break;
                 case 1437261311: 
                     {
-                        make_wall(v2(i, k*layer), pixel, S("dirt_covered_snow.png"));
+                        make_wall(v2(i, k), pixel, S("dirt_covered_snow.png"));
                     } break;
                 case 1715024383:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("dirt.png"));
+                        make_wall(v2(i, k), pixel, S("dirt.png"));
                     } break;
                 case -521737985:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("ice_brick.png"));
+                        make_wall(v2(i, k), pixel, S("ice_brick.png"));
                     } break;
                 case 7903743:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("rocks.png"));
+                        make_wall(v2(i, k), pixel, S("rocks.png"));
                     } break;
                 case 629118975:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("stone_brick.png"));
+                        make_wall(v2(i, k), pixel, S("stone_brick.png"));
                     } break;
                 case 530563839:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("rocks_crack.png"));
+                        make_wall(v2(i, k), pixel, S("rocks_crack.png"));
                     } break;
                 case -2003194113:
                     {
-                        make_wall(v2(i, k*layer), pixel, S("cloud_brick.png"));
+                        make_wall(v2(i, k), pixel, S("cloud_brick.png"));
                     } break;
                 case -513925889:
                     {
                         //e15e1c
-                        make_wall(v2(i, k*layer), pixel, S("pipe6.png"));
+                        make_wall(v2(i, k), pixel, S("pipe6.png"));
                     } break;
                 case -663337729:
                     {
                         //d87644
-                        make_wall(v2(i, k*layer), pixel, S("pipe1.png"));
+                        make_wall(v2(i, k), pixel, S("pipe1.png"));
                     } break;
                 case -595899905:
                     {
                         //dc7b49
-                        make_wall(v2(i, k*layer), pixel, S("pipe5.png"));
+                        make_wall(v2(i, k), pixel, S("pipe5.png"));
                     } break;
                 case -227990785:
                     {
                         //f26922
-                        make_wall(v2(i, k*layer), pixel, S("pipe4.png"));
+                        make_wall(v2(i, k), pixel, S("pipe4.png"));
                     } break;
                 case -814463489:
                     {
                         //f26922
-                        make_wall(v2(i, k*layer), pixel, S("pipe2.png"));
+                        make_wall(v2(i, k), pixel, S("pipe2.png"));
                     } break;
                 case -1102434305:
                     {
                         //f26922
-                        make_wall(v2(i, k*layer), pixel, S("pipe7.png"));
+                        make_wall(v2(i, k), pixel, S("pipe7.png"));
                     } break;
                 case -1824115457:
                     {
                         //f26922
-                        make_wall(v2(i, k*layer), pixel, S("pipe8.png"));
+                        make_wall(v2(i, k), pixel, S("pipe8.png"));
                     } break;
                 case -661491969:
                     {
                         //d8926e
-                        make_wall(v2(i, k*layer), pixel, S("pipe9.png"));
+                        make_wall(v2(i, k), pixel, S("pipe9.png"));
                     } break;
                 case 1937938943:
                     {
                         //738299
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls1.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls1.png"));
                     } break;
                 case 1028485119:
                     {
                         //3d4d6f
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls2.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls2.png"));
                     } break;
                 case 1519048191:
                     {
                         //5a8ad5
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls3.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls3.png"));
                     } break;
                 case 811442943:
                     {
                         //305da2
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls4.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls4.png"));
                     } break;
                 case 658863359:
                     {
                         //274574
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls5.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls5.png"));
                     } break;
                 case 1315674623:
                     {
                         //4e6b99
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls6.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls6.png"));
                     } break;
                 case 574383871:
                     {
                         //223c66d
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls7.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls7.png"));
                     } break;
                 case 557010943:
                     {
                         //21334f
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls8.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls8.png"));
                     } break;
                 case 523457535:
                     {
                         //1f3353
-                        make_wall(v2(i, k*layer), pixel, S("factory_walls9.png"));
+                        make_wall(v2(i, k), pixel, S("factory_walls9.png"));
                     } break;
                 case -1128283137:
                     {
                         //bcbfc3
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates1.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates1.png"));
                     } break;
                 case -1448432385:
                     {
                         //a9aaac
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates2.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates2.png"));
                     } break;
                 case -1734697217:
                     {
                         //989a9e
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates3.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates3.png"));
                     } break;
                 case -2037871617:
                     {
                         //86888b
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates4.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates4.png"));
                     } break;
                 case 2088930303:
                     {
                         //7c828b
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates5.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates5.png"));
                     } break;
                 case -1902730497:
                     {
                         //8e96a2
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates6.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates6.png"));
                     } break;
                 case -1987408897:
                     {
                         //898a8b
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates7.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates7.png"));
                     } break;
                 case -2121954305:
                     {
                         //81858b
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates8.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates8.png"));
                     } break;
                 case 2021624831:
                     {
                         //787f8b
-                        make_wall(v2(i, k*layer), pixel, S("bolted_plates9.png"));
+                        make_wall(v2(i, k), pixel, S("bolted_plates9.png"));
+                    } break;
+                case 1718185983:
+                    {
+                        //66696f
+                        make_wall(v2(i, k), pixel, S("bolted_plates10.png"));
+                    } break;
+                case 1532978943:
+                    {
+                        //5b5f66
+                        make_wall(v2(i, k), pixel, S("bolted_plates11.png"));
+                    } break;
+                case 1448896255:
+                    {
+                        //565c66
+                        make_wall(v2(i, k), pixel, S("bolted_plates12.png"));
+                    } break;
+                case 1381259519:
+                    {
+                        //525458
+                        make_wall(v2(i, k), pixel, S("bolted_plates13.png"));
                     } break;
                 default:
                     {
                         Dump(pixel);
-                        make_wall(v2(i, k*layer), pixel, S("penguin_idle.png"));
+                        make_wall(v2(i, k), pixel, S("penguin_idle.png"));
                     } break;
                 }; 
                 
@@ -728,8 +756,11 @@ void particle_update(f32 dt) {
 
         if (particles[i].is_alive) {
             if (particles[i].magnet != NULL && particles[i].magnet->type == 0) {
-                particles[i].velocity.x=8000*dt*sign_f32(particles[i].magnet->anchor.x-particles[i].position.x)+random_f32_between(-2000, 4000)*dt;
-                particles[i].velocity.y=1000*dt*sign_f32(particles[i].magnet->anchor.y-particles[i].position.y)+random_f32_between(-1200, 2000)*dt;
+                particles[i].velocity.x+=300*dt*sign_f32(particles[i].magnet->anchor.x-particles[i].position.x)/*+random_f32_between(-2000, 4000)*dt*/;
+                particles[i].velocity.y+=300*dt*sign_f32(particles[i].magnet->anchor.y-particles[i].position.y)/*+random_f32_between(-1200, 2000)*dt*/;
+
+                particles[i].velocity.x = clamp_f32(particles[i].velocity.x, -150, 150);
+                particles[i].velocity.y = clamp_f32(particles[i].velocity.y, -150, 150);
             }
 
             particles_checked++;
@@ -750,6 +781,68 @@ void particle_update(f32 dt) {
             }
 
             if (particles_checked == living_particles) break;
+        }
+    }
+}
+
+void make_boss_walls(Vector2 *pos, i32 count) {
+    static Image boss_walls = LoadImage(S("wall_flowers_white.png"));
+
+    for (int i = 0; i < count; i++) {
+        wall[wall_count].position = pos[i];
+        wall[wall_count].size = v2(48, 48);
+        wall[wall_count].wall_type.image = boss_walls;
+        wall[wall_count].type = 2;
+
+        wall_count++;
+    }
+}
+
+void destroy_boss_walls() {
+    i32 walls_destroyed = 0;
+
+    for (int i = 0; i < wall_count; i++) {
+        if (wall[i].type == 2) {
+            wall[i] = {};
+            walls_destroyed++;
+        }
+    }
+
+    wall_count-=walls_destroyed;
+}
+
+void draw_enemy(Entity *nme, i32 frame) {
+    if (nme->facing > 0) {
+        DrawImageMirrored(nme->enemy.image[frame], v2(nme->position.x-camera_pos.x+out->width*.5,
+            nme->position.y + nme->enemy.offset.y), true, false);
+    } else {
+        DrawImage(nme->enemy.image[frame], v2(nme->position.x-camera_pos.x+out->width*.5 + nme->enemy.offset.x,
+            nme->position.y+nme->enemy.offset.y));
+    }
+}
+
+void move_enemy(Entity *nme, f32 dt) {
+    nme->velocity.y+=496*input->dt;
+
+    f32 dy = nme->velocity.y*dt;
+    f32 dx = nme->velocity.x*dt;
+
+    for (int i = 0; i < abs_f32(dy); i++) {
+        nme->position.y+=sign_f32(dy);
+        if (wall_intersects(nme) || enemy_overlap(nme)) {
+            nme->position.y-=sign_f32(dy);
+            nme->velocity.y=0;
+            break;
+        }
+    }
+
+
+    for (int i = 0; i < abs_f32(dx); i++) {
+        nme->position.x+=sign_f32(dx);
+        if (wall_intersects(nme) || enemy_overlap(nme)) {
+            nme->position.x-=sign_f32(dx);
+            nme->velocity.x=0;
+            break;
         }
     }
 }
@@ -808,16 +901,16 @@ void draw_house(Housing *house) {
     }
 }
 
-void npc_action(Entity *npc, i32 layer, Entity player) {
+void npc_action(Entity *npc, Entity player) {
     npc->animation_time+=input->dt;
     npc->state_time+=input->dt;
     npc->dialogue_time+=input->dt;
     
     if (npc->type == fairy) {
         if (i32(npc->animation_time*60)%60 < 30) {
-            DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y-layer));
+            DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
         } else {
-            DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y-layer));
+            DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
         }
 
         if (abs_i32(npc->position.x-player.position.x) < 200 && abs_i32(npc->position.y-player.position.y) < 300) {
@@ -859,11 +952,11 @@ void npc_action(Entity *npc, i32 layer, Entity player) {
         }
     } else if (npc->type == lil_pengu) {
         if (npc->state_time*60 < 60) {
-            DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+            DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
         } else if (npc->state_time*60 < 120) {
-            DrawImage(npc->image[1], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+            DrawImage(npc->image[1], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
         } else {
-            DrawImage(npc->image[2], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y-layer));
+            DrawImage(npc->image[2], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
         }
 
         if (npc->state_time*60 > 180) {

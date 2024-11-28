@@ -11,7 +11,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
 
     if (seal->enemy.sleep_time > 0) {
         seal->enemy.sleep_time-=input->dt;
-        seal_move(seal, input);
+        move_enemy(seal, input->dt);
         return;
     }
 
@@ -73,8 +73,8 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
             max.position.x = seal->position.x + seal->size.x;
             max.position.y = seal->position.y + seal->size.y;
 
-            min.life_time = 90*input->dt;
-            max.life_time = 60*input->dt;
+            min.life_time = 120*input->dt;
+            max.life_time = 90*input->dt;
 
             min.magnet = player;
 
@@ -99,7 +99,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
         }
     }
 
-    seal_move(seal, input);
+    move_enemy(seal, input->dt);
 }
 
 void seal_move(Entity *seal, Game_Input *input) {

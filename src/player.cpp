@@ -4,6 +4,7 @@ i32 state_change = 0;
 f32 state_time = 0;
 
 void set_enemy_vuln();
+void check_level();
 
 void player_action(Game_Input *input) {
 	f32 max_speed = 600.0;
@@ -487,6 +488,30 @@ void player_action(Game_Input *input) {
 	}
 
 	player.anchor = v2(player.position.x+15, player.position.y+25);
+}
+
+void check_level() {
+	switch (player.world_level)
+	{
+	case 0:
+		{
+			if (r2_intersects(get_entity_rect(&player), village.entry_points)) {
+				player.position = scram_sewers.landing_pos;
+				set_world(false, scram_sewers);
+				player.world_level = 1;
+			}
+		} break;
+	case 1:
+		{
+		if (r2_intersects(get_entity_rect(&player), scram_sewers.entry_points)) {
+				player.position = village.landing_pos;
+				set_world(false, village);
+				player.world_level = 0;
+			}
+		} break;
+	}
+
+	
 }
 
 void set_enemy_vuln() {
