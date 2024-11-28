@@ -73,6 +73,9 @@ struct Entity
     f32 mp_cooldown;
     f32 shield_hit;
 
+    i32 fairy_uses;
+    i32 current_fairy_uses;
+
     Vector2 position;
     Vector2 velocity;
 
@@ -282,7 +285,7 @@ void draw_charging(i32 frame) {
 
 void bosses_alive() {
     for (int i = 0; i < 48; i++) {
-        bosses_killed[i] = false;
+        bosses_killed[i] = true;
     }
 }
 
@@ -296,7 +299,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.position = /*v2(9456, 476);*/v2(624, out->height - 244);
+    player.position = v2(9456, 476);//v2(624, out->height - 244);
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
     player.max_health = 10*player.constitution;
@@ -308,6 +311,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_mp = player.max_mp;
     player.mp_cooldown = 0;
     player.shield_hit = 0;
+    player.fairy_uses = 0;
+    player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
     player.weapon = cleaver;
@@ -559,7 +564,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         for (int i = 0; i < npc_count; i++) {
             if (abs_i32(npc[i].position.x - player.position.x) < 1200) {
-                npc_action(&npc[i], player);
+                npc_action(&npc[i], &player);
             }
         }
 
@@ -571,9 +576,24 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         Image icon = LoadImage(S("icon.png"));
         Image weapon_icon = LoadImage(S("Excalibrrr_icon.png"));
+        Image fairy_icon[] = {LoadImage(S("fairy_icon1.png")), LoadImage(S("fairy_icon2.png"))};
 
         DrawImage(icon, v2(16, 16));
         DrawImage(player.weapon.icon, v2(25, 25));
+
+        if (player.fairy_uses > 0) {
+            DrawRect(r2_bounds(v2(70, 64), v2(30*player.fairy_uses+2, 12), v2_zero, v2_one), v4_black);
+            for (int i = 0; i < player.current_fairy_uses; i++) {
+                DrawRect(r2_bounds(v2(72+(14+16)*i, 66), v2(16+12, 8), v2_zero, v2_one), rgb(162, 221, 225));
+            }
+
+            if (i32(player.state_time*60)%60 < 30) {
+                DrawImage(fairy_icon[0], v2(24, 66));
+            } else {
+                DrawImage(fairy_icon[1], v2(24, 66));
+
+            }
+        }
 
         DrawRect(r2_bounds(v2(70, 20), v2(20+player.max_health, 12), v2_zero, v2_one), v4_black);
         DrawRect(r2_bounds(v2(72, 22), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
@@ -583,7 +603,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         DrawRect(r2_bounds(v2(70, 48), v2(20+player.max_mp, 12), v2_zero, v2_one), v4_black);
         DrawRect(r2_bounds(v2(72, 50), v2(16+player.current_mp, 8), v2_zero, v2_one), v4_blue);
-
+        
         for (int i = 0; i < enemy_count; i++) {
             if (enemys[i].alive) {
 
@@ -601,7 +621,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                         DrawImage(enemys[i].enemy.image[0], v2(enemys[i].position.x-camera_pos.x+out->width*.5 + enemys[i].enemy.offset.x,
                            enemys[i].position.y+enemys[i].enemy.offset.y));
                     }
-                } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 800 && abs_i32(player.position.y - enemys[i].position.y) < 600) {
+                } else if (enemys[i].enemy.type == 4 && abs_f32(player.position.x - enemys[i].position.x) < 900 && abs_i32(player.position.y - enemys[i].position.y) < 700) {
                     p_soldier_action(&enemys[i], input->dt, &player, invuln_time, input);
                     DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
@@ -635,6 +655,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
                     penguin_king_action(&enemys[i], &player, input->dt, out);
 
+                } else if (enemys[i].type == 6 && abs_i32(enemys[i].position.x - player.position.x) < 1200) {
+                    slime_action(&enemys[i], &player, input);
                 }
 
             }

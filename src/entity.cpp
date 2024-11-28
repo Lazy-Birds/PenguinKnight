@@ -225,6 +225,35 @@ Entity load_enemy(Vector2 pos, i32 type) {
 
             return pup;
         } break;
+    case 5:
+        {
+            static Image image[] {
+                LoadImage(S("slime1.png")),
+                LoadImage(S("slime2.png")),
+                LoadImage(S("slime3.png")),
+                LoadImage(S("slime4.png")),
+            };
+
+            Entity slim = {};
+            slim.max_health = 220;
+            slim.current_health = slim.max_health;
+            slim.enemy.offset = v2_zero;
+            slim.position = pos;
+            slim.size = v2(48, 37);
+            slim.invuln = false;
+            slim.facing = 1;
+            slim.enemy.image = image;
+            slim.type = 6;
+            slim.enemy.anchor_pos = pos;
+            slim.enemy.damage =  30;
+            slim.enemy.id = enemy_count;
+            slim.state = NEUTRAL;
+            slim.enemy.exp_dropped = 100;
+            slim.has_hit = true;
+            slim.alive = true;
+
+            return slim;
+        } break;
     default:
         {
             static Image image[1] = {LoadImage(S("penguin_idle.png"))};
@@ -366,6 +395,12 @@ void make_world(Level level) {
                 case 1821034495:
                     {
                         enemys[enemy_count] = load_enemy(v2(i*48, k*48), 4);
+                        enemy_count++;
+                    } break;
+                case 643580671:
+                    {
+                        //265c42
+                        enemys[enemy_count] = load_enemy(v2(i*48, k*48), 5);
                         enemy_count++;
                     } break;
                 case -1562516993:
@@ -849,6 +884,7 @@ void move_enemy(Entity *nme, f32 dt) {
 
 #include "enemy_pengus.cpp"
 #include "seals.cpp"
+#include "slime.cpp"
 
 void draw_fire(f32 dt) {
     fire.state_time+=dt;
@@ -901,21 +937,25 @@ void draw_house(Housing *house) {
     }
 }
 
-void npc_action(Entity *npc, Entity player) {
+void npc_action(Entity *npc, Entity *player) {
     npc->animation_time+=input->dt;
     npc->state_time+=input->dt;
     npc->dialogue_time+=input->dt;
     
-    if (npc->type == fairy) {
+    if (npc->type == fairy && player->fairy_uses == 0) {
         if (i32(npc->animation_time*60)%60 < 30) {
             DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
         } else {
             DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
         }
 
-        if (abs_i32(npc->position.x-player.position.x) < 200 && abs_i32(npc->position.y-player.position.y) < 300) {
+        if (abs_i32(npc->position.x-player->position.x) < 200 && abs_i32(npc->position.y-player->position.y) < 300) {
             if (!npc->talking) {
                 npc->talking = draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2);
+            } else {
+                player->fairy_uses = 3;
+                player->current_fairy_uses = player->fairy_uses;
+
             }
 
             /*if (npc->state_time*60.0 < 400) {

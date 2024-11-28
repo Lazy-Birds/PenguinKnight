@@ -2,6 +2,7 @@ f32 sleep = 0;
 i32 state_change = 0;
 
 f32 state_time = 0;
+f32 heal_cd = 0;
 
 void set_enemy_vuln();
 void check_level();
@@ -13,7 +14,7 @@ void player_action(Game_Input *input) {
 	f32 dt = input->dt;
 	i32 offset = camera_pos.x-player.position.x;
 	
-
+	player.state_time+=dt;
 	state_time+=dt;
 	if (player.mp_cooldown > 0) {
 		player.mp_cooldown-=dt;
@@ -25,6 +26,10 @@ void player_action(Game_Input *input) {
 	
 	if (invuln_time > 0){
 		invuln_time-=dt;
+	}
+
+	if (heal_cd > 0) {
+		heal_cd-=dt;
 	}
 	
 
@@ -65,6 +70,13 @@ void player_action(Game_Input *input) {
 			state_time = 0;
 		}
 		state_change = player.state;
+	}
+
+	if (c0.h && heal_cd <= 0 && player.current_fairy_uses > 0) {
+		player.current_health += 50;
+		player.current_health = clamp_i32(player.current_health, 0, player.max_health);
+		player.current_fairy_uses-=1;
+		heal_cd+=120*dt;
 	}
 
 	

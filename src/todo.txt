@@ -27,6 +27,7 @@ Todo:
 --dynamic attacking/movement?
 
 
+
 --Overfit screen
 
 
@@ -40,10 +41,14 @@ Todo:
 --
 
 -Peoples todo:
---Nick: NPC's flash white when hit
+--Nick: attack combos
 --Abbie: Collectables/freds pengu figurines
 --Steve: The Well Traveled Frog
 
+-Boss Ideas:
+--Piranna plant
+---Spits poison
+---sends out root 
 
 
 
@@ -52,8 +57,7 @@ Todo:
 --Background(ongoing)
 --Decorations
 --die animation(all)
---dodge sprite
---Lighter exp bubbles
+--more intuitive shield animation
 
 Completed Code:
 --normal attack code
@@ -74,6 +78,7 @@ Completed Code:
 --add enemy stagger
 --Make character menu pause
 --fix pengu_king
+--fairy healing
 
 Completed Sprites:
 --cleaver
@@ -81,3 +86,4 @@ Completed Sprites:
 --normal enemy
 --Research Parallax
 --Bosss!!!!
+--Lighter exp bubbles

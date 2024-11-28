@@ -22,6 +22,11 @@ enum {
     Button_Start,
     Button_Back,
 
+    Button_Trigger,
+    Button_Bumper,
+
+    Button_H,
+
     Button_COUNT,
 };
 
@@ -44,11 +49,13 @@ struct Controller
     b32 start;
     b32 pause;
 
-    f32 stick_x;
-    f32 stick_y;
-
     b32 trigger;
     b32 bumper;
+
+    b32 h;
+
+    f32 stick_x;
+    f32 stick_y;
 };
 
 struct Mouse
