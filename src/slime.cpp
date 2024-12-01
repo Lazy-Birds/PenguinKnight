@@ -6,12 +6,15 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
         slime->enemy.sleep_time-=input->dt;
         if (slime->state_time*60 <= 20) {
             draw_enemy(slime, 0);
+            if (slime->state_time*60 >= 10) slime->velocity.x = 0;
         } else if (slime->state_time*60 <= 40) {
             draw_enemy(slime, 1);
         } else {
         	draw_enemy(slime, 2);
         }
         
+        if (slime->enemy.sleep_time*60 <= 1) slime->state_time = 0;
+
         return;
     }
 
@@ -55,21 +58,66 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
     			draw_enemy(slime, 1);
     		} else if (slime->state_time*60 < 62)
     		{
-    			slime->velocity.x+=2000*input->dt*sign_f32(slime->position.x-player->position.x);
-    			slime->velocity.y-=4000*input->dt;
+                if (slime->velocity_prev.x == 0) {
+                    slime->velocity_prev.x = random_i32_between(1500, 2500)*input->dt*sign_f32(player->position.x-slime->position.x);
+                    slime->velocity_prev.y = random_i32_between(6000, 10000)*input->dt;
+
+                }
+    			slime->velocity.x+=slime->velocity_prev.x;
+    			slime->velocity.y-=slime->velocity_prev.y;
     			draw_enemy(slime, 2);
     		} else if (slime->velocity.y < 0)
     		{
     			draw_enemy(slime, 2);
-    		} else if (!entity_on_wall(slime))
+    		} else if (!entity_on_wall(slime) && !enemy_on_enemy(slime))
     		{
     			draw_enemy(slime, 1);
     		} else 
     		{
     			draw_enemy(slime, 0);
     			slime->enemy.sleep_time+=60*input->dt;
+                slime->velocity.x = 0;
+                slime->state_time = 0;
+
+                slime->velocity_prev = v2_zero;
+
+                if (random_f32_between(0, 1) < .25) {
+                    slime->state = SHOOT;
+                } else {
+                    slime->state = MOVE;
+                }
     		}
     	} break;
+    case SHOOT:
+        {
+            if (slime->state_time*60 < 20) {
+                slime->projectile_launched = false;
+                draw_enemy(slime, 4);
+            } else if (slime->state_time*60 < 40) {
+                Image dart = LoadImage(S("slime_dart.png"));
+                draw_enemy(slime, 5);
+                DrawImage(dart, v2(slime->position.x-camera_pos.x+out->width*.5, slime->position.y + 17));
+            } else if (slime->state_time*60 < 60) {
+                if (!slime->projectile_launched) {
+                    make_projectile(slime->projectile, v2(slime->position.x, slime->position.y+17), v2(8000*input->dt*sign_f32(player->position.x-slime->position.x), 0));
+                    slime->projectile_launched = true;
+                }
+
+                draw_enemy(slime, 4);
+            } else {
+                draw_enemy(slime, 0);
+                slime->enemy.sleep_time+=60*input->dt;
+                slime->velocity.x = 0;
+                slime->state_time = 0;
+                slime->projectile_launched = false;
+
+                if (random_f32_between(0, 1) < .25) {
+                    slime->state = SHOOT;
+                } else {
+                    slime->state = MOVE;
+                }
+            }
+        } break;
     case HIT:
         {
             if (slime->state_time*60 <= 6) {
@@ -134,4 +182,13 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
             slime->alive = false;
         } break;
     }
+    
+    if (invuln_time <= 0){
+        if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(slime->position, slime->size, v2_zero, v2_one)))
+        {
+            player_hit(slime, input);
+        }
+    }
+
+    move_enemy(slime, input->dt);
 }

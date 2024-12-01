@@ -232,12 +232,18 @@ Entity load_enemy(Vector2 pos, i32 type) {
                 LoadImage(S("slime2.png")),
                 LoadImage(S("slime3.png")),
                 LoadImage(S("slime4.png")),
+                LoadImage(S("slime5.png")),
+                LoadImage(S("slime6.png")),
+            };
+
+            static Image dart[] = {
+                LoadImage(S("slime_dart.png")),
             };
 
             Entity slim = {};
             slim.max_health = 220;
             slim.current_health = slim.max_health;
-            slim.enemy.offset = v2_zero;
+            slim.enemy.offset = v2(0, -11);
             slim.position = pos;
             slim.size = v2(48, 37);
             slim.invuln = false;
@@ -251,6 +257,8 @@ Entity load_enemy(Vector2 pos, i32 type) {
             slim.enemy.exp_dropped = 100;
             slim.has_hit = true;
             slim.alive = true;
+            slim.projectile = dart;
+            slim.velocity_prev = v2_zero;
 
             return slim;
         } break;
@@ -471,7 +479,7 @@ void make_world(Level level) {
                         bgnd[bgnd_count].image = image;
                         bgnd_count++;
                     } break;
-                    case 640369919:
+                case 640369919:
                     {
                         //262b44
                         static Image image = LoadImage(S("bolted_plates14.png"));
@@ -696,6 +704,20 @@ void make_world(Level level) {
     }
 }
 
+bool enemy_on_enemy(Entity *entity_one) {
+    for (int i = 0; i < enemy_count; i++) {
+        if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
+            r2_bounds(v2(enemys[i].position.x, enemys[i].position.y), enemys[i].size, v2_zero, v2_one))) {
+
+            if (entity_one->enemy.id != enemys[i].enemy.id) {
+                return true;
+            }
+        } 
+    }
+
+    return false;
+}
+
 bool entity_on_wall(Entity *entity_one) {
     for (int i = 0; i < wall_count; i++) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
@@ -857,7 +879,11 @@ void draw_enemy(Entity *nme, i32 frame) {
 }
 
 void move_enemy(Entity *nme, f32 dt) {
-    nme->velocity.y+=496*input->dt;
+    if (nme->enemy.type != 7) {
+        nme->velocity.y+=496*input->dt;
+    } else {
+        nme->velocity.y = 0;
+    }
 
     f32 dy = nme->velocity.y*dt;
     f32 dx = nme->velocity.x*dt;
@@ -878,6 +904,76 @@ void move_enemy(Entity *nme, f32 dt) {
             nme->position.x-=sign_f32(dx);
             nme->velocity.x=0;
             break;
+        }
+    }
+}
+
+Entity projectiles[1000] = {};
+i32 proj_count = 0;
+
+i32 get_prejectile_slot() {
+    assert(proj_count != 1000);
+
+    for (int i = 0; i < 1000; i++) {
+        if (!projectiles[i].alive)
+        {
+            return i;
+        }
+    }
+
+    return proj_count;
+}
+
+void make_projectile(Image *image, Vector2 pos, Vector2 vel) {
+
+    i32 slot = get_prejectile_slot();
+
+    projectiles[slot].enemy.image = image;
+    projectiles[slot].position = pos;
+    projectiles[slot].velocity = vel;
+    projectiles[slot].alive = true;
+    projectiles[slot].enemy.offset = v2_zero;
+    projectiles[slot].enemy.type = 7;
+    projectiles[slot].enemy.damage = 20;
+    if (projectiles[slot].velocity.x > 0) {
+        projectiles[slot].facing = 1;
+    } else {
+        projectiles[slot].facing = -1;
+    }
+    proj_count++;
+}
+
+void update_projectiles(Game_Input *input, Entity *player) {
+    for (int i = 0; i < 1000; i++) {
+        if (projectiles[i].alive) {
+            draw_bound_box(&projectiles[i]);
+            
+            f32 dy = projectiles[i].velocity.y*input->dt;
+            f32 dx = projectiles[i].velocity.x*input->dt;
+
+            projectiles[i].state_time+=input->dt;
+            if (projectiles[i].state_time*60 >= 1000)
+            {
+                projectiles[i].alive = false;
+                proj_count--;
+            }
+
+            move_enemy(&projectiles[i], input->dt);
+            draw_enemy(&projectiles[i], 0);
+
+            if (wall_intersects(&projectiles[i])) {
+                projectiles[i].alive = false;
+                proj_count--;
+            }
+
+            if (invuln_time <= 0){
+                if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(projectiles[i].position, projectiles[i].size, v2_zero, v2_one)))
+                {
+                    projectiles[i].alive = false;
+                    proj_count--;
+                    player_hit(&projectiles[i], input);
+                }
+            }
         }
     }
 }

@@ -11,15 +11,15 @@ const i32 STATEDASH = 9;
 const i32 TALKING = 10;
 const i32 JUMP = 11;
 const i32 GUARD = 12;
-const i32 DYING = 13;
-const i32 DEAD = 14;
+const i32 SHOOT = 13;
+const i32 DYING = 14;
+const i32 DEAD = 15;
 
+#include "interactable.cpp"
 #include "levels.cpp"
 
 bool in_menu = false;
 bool bosses_killed[48] = {};
-
-Image background;
 
 struct texture {
     u32 pixel;
@@ -76,8 +76,10 @@ struct Entity
     i32 fairy_uses;
     i32 current_fairy_uses;
 
+    Vector2 check_point;
     Vector2 position;
     Vector2 velocity;
+    Vector2 velocity_prev;
 
     Vector2 size;
     Vector2 anchor;
@@ -90,6 +92,8 @@ struct Entity
     f32 animation_time;
 
     Weapon weapon;
+    Image *projectile;
+    b32 projectile_launched;
 
     texture wall_type;
     Enemy enemy;
@@ -108,7 +112,7 @@ struct Entity
     i32 exp_to_level;
     i32 level;
 
-    i32 world_level;
+    Level player_level;
 };
 
 #include "background.cpp"
@@ -116,6 +120,7 @@ struct Entity
 
 bool enemy_overlap(Entity *entity);
 Rectangle2 get_entity_rect(Entity *entity);
+void draw_bound_box(Entity *entity);
 
 f32 invuln_time = 0;
 
@@ -299,7 +304,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.position = v2(9456, 476);//v2(624, out->height - 244);
+    player.check_point = v2(9456, 476);//v2(624, out->height - 244);
+    player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
     player.max_health = 10*player.constitution;
@@ -322,7 +328,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.exp_to_level = 600;
     player.level = 1;
     player.type = 0;
-    player.world_level = 0;
+    player.player_level = village;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -345,10 +351,6 @@ void GameStart(Game_Input *input, Game_Output *out)
         LoadImage(S("charge_right9.png")),
     };
 
-    static Image image = LoadImage(S("factory_background.png"));
-
-    background = image;
-
     camera_pos = player.position;
 
     charge_meter = img;
@@ -364,7 +366,7 @@ void GameStart(Game_Input *input, Game_Output *out)
 
 void reset_vars() {
     TimeFunction;
-    player.position = v2(624, out->height - 244);
+    player.position = player.check_point;
     player.current_health = player.max_health;
     player.current_stamina = player.max_stamina;
     player.current_mp = player.max_mp;
@@ -413,6 +415,9 @@ void set_world(b32 reset, Level level) {
 
         bgnd[10000] = {};
         bgnd_count = 0;
+
+        housing[100] = {};
+        house_count = 0;
         camera_state = CAMERAFOLLOW;
     }
 
@@ -490,7 +495,7 @@ void draw_background()
    new_pos_x = Clamp(new_pos_x, -280, 0);
    new_pos_y = Clamp(new_pos_y, -200, 0);
 
-   DrawImage(background, v2(new_pos_x, new_pos_y));
+   DrawImage(player.player_level.background, v2(new_pos_x, new_pos_y));
 }
 
 void GameRender(Game_Input *input, Game_Output *out)
@@ -506,8 +511,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
     if (!initted)
     {
-        GameStart(input, out);
         create_levels();
+        GameStart(input, out);
         set_world(false, village);
         initted = true;
     }
@@ -532,13 +537,15 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         GameUpdate(input, out);
         GameRender(input, out);
 
-        if (player.world_level == 0) {
+        if (player.player_level.id == 0) {
             spawn_snowflakes(out, input);
             update_snowflakes(out, camera_pos.x);
         }
 
         check_level();
         set_camera_pos();
+
+        update_projectiles(input, &player);
 
         for (int i = 0; i < bgnd_count; i++) {
             DrawImage(bgnd[i].image, v2(bgnd[i].position.x-camera_pos.x+out->width*.5, bgnd[i].position.y));
@@ -548,7 +555,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
         }
 
-        if (player.world_level == 0 && abs_i32(fire.position.x - player.position.x) < 1200) {
+        if (player.player_level.id == 0 && abs_i32(fire.position.x - player.position.x) < 1200) {
             draw_fire(input->dt);
         }
 
@@ -657,6 +664,10 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
                 } else if (enemys[i].type == 6 && abs_i32(enemys[i].position.x - player.position.x) < 1200) {
                     slime_action(&enemys[i], &player, input);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5-2, enemys[i].position.y-2-12), v2(enemys[i].size.x+4-enemys[i].enemy.offset.x, 12),
+                     v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(enemys[i].position.x-camera_pos.x+out->width*.5, enemys[i].position.y-12), v2(enemys[i].current_health/enemys[i].max_health*(enemys[i].size.x+4-enemys[i].enemy.offset.x),
+                        8), v2_zero, v2_one), v4_red);
                 }
 
             }

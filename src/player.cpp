@@ -503,22 +503,22 @@ void player_action(Game_Input *input) {
 }
 
 void check_level() {
-	switch (player.world_level)
+	switch (player.player_level.id)
 	{
 	case 0:
 		{
 			if (r2_intersects(get_entity_rect(&player), village.entry_points)) {
-				player.position = scram_sewers.landing_pos;
-				set_world(false, scram_sewers);
-				player.world_level = 1;
+				player.position = scram_sewers_entry.landing_pos;
+				set_world(false, scram_sewers_entry);
+				player.player_level = scram_sewers_entry;
 			}
 		} break;
 	case 1:
 		{
-		if (r2_intersects(get_entity_rect(&player), scram_sewers.entry_points)) {
+		if (r2_intersects(get_entity_rect(&player), scram_sewers_entry.entry_points)) {
 				player.position = village.landing_pos;
 				set_world(false, village);
-				player.world_level = 0;
+				player.player_level = village;
 			}
 		} break;
 	}
