@@ -1,33 +1,3 @@
-struct Weapon {
-    Image *image;
-    String name;
-    Image icon;
-
-    Vector2 position;
-    Vector2 size;
-
-    Vector2 weapon_frames;
-    Vector2 offset_right;
-    Vector2 offset_left;
-
-    Vector2 hit_size;
-    Vector2 hit_offset_right;
-    Vector2 hit_offset_left;
-    Vector2 charged_frames;
-    i32 charge_time;
-
-    i32 base_damage;
-    String damage_attribute;
-    i32 damage_multiplier;
-    i32 guard_damage;
-
-    Vector2 jump_frame;
-    Vector2 dash_frame;
-    Vector2 jump;
-    Vector2 guard;
-    i32 frame_hit;
-};
-
 Weapon sword = {};
 Weapon cleaver = {};
 

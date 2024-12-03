@@ -1,28 +1,5 @@
 const i32 TYPESNOW = 0;
 
-struct Particle {
-	Image image;
-	Vector2 velocity;
-	Vector2 position;
-	bool is_alive;
-	f32 depth;
-	i32 direction;
-	f32 life_time;
-	i32 type;
-	Entity *magnet;
-	f32 sleep_time;
-};
-
-struct Particle_Parameters {
-	Vector2 velocity;
-	Vector2 position;
-	Vector4 color;
-	f32 life_time;
-	Vector2 accel;
-	f32 friction;
-	Entity *magnet;
-};
-
 i32 snow_count = 5000;
 Particle snow[5000] = {};
 

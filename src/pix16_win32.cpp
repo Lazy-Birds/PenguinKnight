@@ -679,6 +679,7 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
                 player0->bumper |= (GetKeyState('K') & (1 << 15)) == (1 << 15);
 
                 player0->h |= (GetKeyState('H') & (1 << 15)) == (1 << 15);
+                player0->u |= (GetKeyState('U') & (1 << 15)) == (1 << 15);
             }
         }
 

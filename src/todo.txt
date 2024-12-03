@@ -38,7 +38,8 @@ Todo:
 
 -enemies
 --Put pengu kings title above health bar
---
+--slimes stop fire darts after a while for some reason.
+--make better slime darts
 
 -Peoples todo:
 --Nick: attack combos

@@ -1,5 +1,3 @@
-void seal_move(Entity *seal, Game_Input *input);
-
 void seal_action(Entity *seal, Game_Input *input, Entity *player) {
     if (seal->state == NEUTRAL) {
         if (seal->alive) {

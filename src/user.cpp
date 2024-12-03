@@ -1,3 +1,5 @@
+#include "pengu_def.h"
+
 const i32 NEUTRAL = 0;
 const i32 MOVE = 1;
 const i32 ATTACK = 2;
@@ -15,129 +17,11 @@ const i32 SHOOT = 13;
 const i32 DYING = 14;
 const i32 DEAD = 15;
 
-#include "interactable.cpp"
-#include "levels.cpp"
-
-bool in_menu = false;
-bool bosses_killed[48] = {};
-
-struct texture {
-    u32 pixel;
-    Image image;
-};
-
-#include "weapon.cpp"
-
-struct Enemy {
-    Image *image;
-    Vector2 frames;
-    i32 damage;
-    i32 type;
-    Vector2 offset;
-    i32 id;
-
-    Vector2 weapon_size;
-    Vector2 weapon_offset;
-
-    f32 enemy_time ;
-    i32 enemy_state;
-
-    f32 sleep_time;
-    i32 guard;
-
-    Vector2 anchor_pos;
-    i32 exp_dropped;
-};
-
-struct Entity
-{
-    i32 constitution;
-    i32 rigour;
-    i32 strength;
-    i32 dexterity;
-    i32 mental;
-
-    i32 max_health;
-    f32 current_health;
-    f32 min_health;
-
-    bool invuln;
-    bool alive;
-    bool has_hit;
-
-    f32 max_stamina;
-    f32 current_stamina;
-
-    f32 max_mp;
-    f32 current_mp;
-    f32 mp_cooldown;
-    f32 shield_hit;
-
-    i32 fairy_uses;
-    i32 current_fairy_uses;
-
-    Vector2 check_point;
-    Vector2 position;
-    Vector2 velocity;
-    Vector2 velocity_prev;
-
-    Vector2 size;
-    Vector2 anchor;
-
-    i32 facing;
-    i32 type;
-
-    i32 sprite_index;
-    f32 state_time;
-    f32 animation_time;
-
-    Weapon weapon;
-    Image *projectile;
-    b32 projectile_launched;
-
-    texture wall_type;
-    Enemy enemy;
-
-    i32 state;
-    i32 state_prev;
-
-    Image *image;
-    Image *portrait;
-
-    String *dialogue;
-    f32 dialogue_time;
-    b32 talking;
-
-    i32 exp_gained;
-    i32 exp_to_level;
-    i32 level;
-
-    Level player_level;
-};
-
-#include "background.cpp"
-
-
-bool enemy_overlap(Entity *entity);
-Rectangle2 get_entity_rect(Entity *entity);
-void draw_bound_box(Entity *entity);
-
-f32 invuln_time = 0;
-
 const i32 CAMERAFOLLOW = 0;
 const i32 CAMERALOCKED = 1;
 
-Vector2 camera_pos;
-Vector2 camera_pos_target;
-i32 camera_state = 0;
-
-void player_hit(Entity *entity, Game_Input *input);
-
-#include "dialogue.cpp"
-#include "entity.cpp"
-#include "menu.cpp"
-
-
+String font_chars = {};
+Font font_hellomyoldfriend = {};
 
 Entity player = {};
 
@@ -145,13 +29,28 @@ bool swing_weapon;
 bool charging_weapon;
 bool on_cooldown;
 bool charged_attack;
+bool in_menu = false;
+bool in_cinematic = false;
+bool bosses_killed[48] = {};
+bool gate_scene;
 
+f32 invuln_time = 0;
+
+Vector2 camera_pos;
+Vector2 camera_pos_target;
+i32 camera_state = 0;
 Image *charge_meter;
-
 f32 walk_frame = 0;
 f32 attack_frame = 0;
 i32 charging = 0;
 i32 weapon_cooldown = 0;
+
+#include "levels.cpp"
+#include "weapon.cpp"
+#include "background.cpp"
+#include "dialogue.cpp"
+#include "entity.cpp"
+#include "menu.cpp"
 
 void set_camera_pos() {
     if (camera_state == CAMERAFOLLOW) {
@@ -328,7 +227,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.exp_to_level = 600;
     player.level = 1;
     player.type = 0;
-    player.player_level = village;
+    player.player_level = VILLAGE;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -358,10 +257,14 @@ void GameStart(Game_Input *input, Game_Output *out)
     swing_weapon = false;
     charging_weapon = false;
     charged_attack = false;
+    gate_scene = false;
 
     bosses_alive();
 
     spawn_initial_snowflakes(out, input);
+
+    font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
+    font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
 }
 
 void reset_vars() {
@@ -421,7 +324,7 @@ void set_world(b32 reset, Level level) {
         camera_state = CAMERAFOLLOW;
     }
 
-    make_world(level);
+    make_world(World[player.player_level]);
 }
 
 i32 get_frame_walk(f32 dt) {
@@ -495,7 +398,7 @@ void draw_background()
    new_pos_x = Clamp(new_pos_x, -280, 0);
    new_pos_y = Clamp(new_pos_y, -200, 0);
 
-   DrawImage(player.player_level.background, v2(new_pos_x, new_pos_y));
+   DrawImage(World[player.player_level].background, v2(new_pos_x, new_pos_y));
 }
 
 void GameRender(Game_Input *input, Game_Output *out)
@@ -537,7 +440,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         GameUpdate(input, out);
         GameRender(input, out);
 
-        if (player.player_level.id == 0) {
+        if (player.player_level == 0) {
             spawn_snowflakes(out, input);
             update_snowflakes(out, camera_pos.x);
         }
@@ -547,15 +450,44 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         update_projectiles(input, &player);
 
+        for (int i = 0; i < World[player.player_level].interactible_count; i++)
+        {
+            if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible[i])) && !World[player.player_level].interactible[i].acting 
+                && World[player.player_level].interactible[i].actable)
+            {
+                Rectangle2 text_box = r2_bounds(v2(World[player.player_level].interactible[i].position.x-28-camera_pos.x+out->width*.5, World[player.player_level].interactible[i].position.y-28),
+                    v2(104, 20), v2_zero, v2_one);
+
+                DrawRect(text_box, v4_black);
+
+                DrawTextExt(font_hellomyoldfriend, S("Press U."), v2(World[player.player_level].interactible[i].position.x-24-camera_pos.x+out->width*.5,
+                    World[player.player_level].interactible[i].position.y-24), v4_white, v2_zero, 1.0);
+
+                if ((player.state == NEUTRAL || player.state == MOVE) && player.acting)
+                {
+                    World[player.player_level].interactible[i].acting = true;
+                }
+            }
+            
+            if (World[player.player_level].interactible[i].acting)
+            {
+                interact(&World[player.player_level].interactible[i], input, camera_pos);
+            } else
+            {
+                DrawImage(World[player.player_level].interactible[i].image[0], 
+                    v2(World[player.player_level].interactible[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].interactible[i].position.y));
+            }
+        }
+
         for (int i = 0; i < bgnd_count; i++) {
             DrawImage(bgnd[i].image, v2(bgnd[i].position.x-camera_pos.x+out->width*.5, bgnd[i].position.y));
         }
 
         for (int i = 0; i < wall_count; i++) {
-            DrawImage(wall[i].wall_type.image, v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
+            DrawImage(wall[i].image[0], v2(wall[i].position.x-camera_pos.x+out->width*.5, wall[i].position.y));
         }
 
-        if (player.player_level.id == 0 && abs_i32(fire.position.x - player.position.x) < 1200) {
+        if (player.player_level == 0 && abs_i32(fire.position.x - player.position.x) < 1200) {
             draw_fire(input->dt);
         }
 
@@ -657,6 +589,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
                         boss_walls_active = true;
                     }
+
 
                     
 

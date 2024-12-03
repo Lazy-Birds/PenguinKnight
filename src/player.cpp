@@ -4,9 +4,6 @@ i32 state_change = 0;
 f32 state_time = 0;
 f32 heal_cd = 0;
 
-void set_enemy_vuln();
-void check_level();
-
 void player_action(Game_Input *input) {
 	f32 max_speed = 600.0;
 	i32 weapon_cooldown = 2;
@@ -72,6 +69,7 @@ void player_action(Game_Input *input) {
 		state_change = player.state;
 	}
 
+	//Healing
 	if (c0.h && heal_cd <= 0 && player.current_fairy_uses > 0) {
 		player.current_health += 50;
 		player.current_health = clamp_i32(player.current_health, 0, player.max_health);
@@ -79,6 +77,12 @@ void player_action(Game_Input *input) {
 		heal_cd+=120*dt;
 	}
 
+	//Toggles player as interacting
+	if (c0.u) {
+		player.acting = true;
+	} else {
+		player.acting = false;
+	}
 	
 	if (!(sleep<=0)) {
 		sleep--;
@@ -503,22 +507,26 @@ void player_action(Game_Input *input) {
 }
 
 void check_level() {
-	switch (player.player_level.id)
+	switch (player.player_level)
 	{
 	case 0:
 		{
-			if (r2_intersects(get_entity_rect(&player), village.entry_points)) {
-				player.position = scram_sewers_entry.landing_pos;
-				set_world(false, scram_sewers_entry);
-				player.player_level = scram_sewers_entry;
+			if (r2_intersects(get_entity_rect(&player), World[VILLAGE].entry_points)) {
+				player.position = World[SCRAMSEWERSENTRY].landing_pos;
+				player.player_level = SCRAMSEWERSENTRY;
+				World[player.player_level].interactible = village_int;
+				World[player.player_level].interactible_count = 0;
+				set_world(false, World[player.player_level]);
 			}
 		} break;
 	case 1:
 		{
-		if (r2_intersects(get_entity_rect(&player), scram_sewers_entry.entry_points)) {
-				player.position = village.landing_pos;
-				set_world(false, village);
-				player.player_level = village;
+		if (r2_intersects(get_entity_rect(&player), World[SCRAMSEWERSENTRY].entry_points)) {
+				player.position = World[VILLAGE].landing_pos;
+				player.player_level = VILLAGE;
+				World[player.player_level].interactible = scram_sewers_int;
+				World[player.player_level].interactible_count = 0;
+				set_world(false, World[player.player_level]);
 			}
 		} break;
 	}

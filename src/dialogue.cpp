@@ -67,8 +67,6 @@ i32 letter_time = 0;
 i32 box_count = 0;
 
 b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) {
-	String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
-    Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
 
     Vector2 size = MeasureText(font_hellomyoldfriend, words);
 

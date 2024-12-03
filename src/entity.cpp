@@ -8,34 +8,6 @@ int enemy_count = 0;
 Entity npc[200] = {};
 int npc_count = 0;
 
-void move_pengu(Entity *pengu_king, f32 dt);
-void draw_pengu(Entity *pengu_king, i32 frame);
-void draw_clouds(Entity *pengu, f32 dt);
-void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image);
-
-struct Background {
-    Vector2 position;
-    Vector2 size;
-    Image image;
-    i32 frames;
-};
-
-struct Housing {
-    Vector2 position;
-    Vector2 size;
-    Image *image;
-    i32 frames;
-    f32 state_time;
-};
-
-struct Fire {
-    Vector2 position;
-    Vector2 size;
-    Image *image;
-    i32 frames;
-    f32 state_time;
-};
-
 Fire fire = {};
 
 Background bgnd[10000] = {};
@@ -333,7 +305,7 @@ void draw_player(Weapon weapon, Vector2 position, i32 frame, i32 facing) {
     }
 }
 
-void make_wall(Vector2 pos, u32 pixel, String image) {
+void make_wall(Vector2 pos, u32 pixel, Image *image) {
     i32 new_pos = 0;
 
     if (pos.y < 0) {
@@ -345,7 +317,7 @@ void make_wall(Vector2 pos, u32 pixel, String image) {
     wall[wall_count].position = v2(pos.x*48, new_pos);
     wall[wall_count].size = v2(48, 48);
     wall[wall_count].wall_type.pixel = pixel;
-    wall[wall_count].wall_type.image = LoadImage(image);
+    wall[wall_count].image = image;
 
     wall_count++;
 }
@@ -506,202 +478,269 @@ void make_world(Level level) {
                         bgnd[bgnd_count].image = image;
                         bgnd_count++;
                     } break;
-                case 842807807: 
+                case -16759553:
                     {
-                        make_wall(v2(i, k), pixel, S("grass_bot.png"));
+                        //ff0044
+                        make_interactible(v2(i*48, k*48), 0, level.id);
+                    } break;
+                case -1958396417:
+                    {
+                        //8b453d
+                        make_interactible(v2(i*48, k*48), 1, level.id);
+                    } break;
+                case 1950037503:
+                    {
+                        //743b35
+                        make_interactible(v2(i*48, k*48), 2, level.id);
+                    } break;
+                case 842807807:
+                    {
+                        static Image image[] = {LoadImage(S("grass_bot.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1713024769:
                     {
-                        make_wall(v2(i, k), pixel, S("grass_top.png"));
+                        static Image image[] = {LoadImage(S("grass_top.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1437261311: 
                     {
-                        make_wall(v2(i, k), pixel, S("dirt_covered_snow.png"));
+                        static Image image[] = {LoadImage(S("dirt_covered_snow.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1715024383:
                     {
-                        make_wall(v2(i, k), pixel, S("dirt.png"));
+                        static Image image[] = {LoadImage(S("dirt.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -521737985:
                     {
-                        make_wall(v2(i, k), pixel, S("ice_brick.png"));
+                        static Image image[] = {LoadImage(S("ice_brick.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 7903743:
                     {
-                        make_wall(v2(i, k), pixel, S("rocks.png"));
+                        static Image image[] = {LoadImage(S("rocks.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 629118975:
                     {
-                        make_wall(v2(i, k), pixel, S("stone_brick.png"));
+                        static Image image[] = {LoadImage(S("stone_brick.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 530563839:
                     {
-                        make_wall(v2(i, k), pixel, S("rocks_crack.png"));
+                        static Image image[] = {LoadImage(S("rocks_crack.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -2003194113:
                     {
-                        make_wall(v2(i, k), pixel, S("cloud_brick.png"));
+                        static Image image[] = {LoadImage(S("cloud_brick.png"))};
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -513925889:
                     {
+                        static Image image[] = {LoadImage(S("pipe6.png"))};
                         //e15e1c
-                        make_wall(v2(i, k), pixel, S("pipe6.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -663337729:
                     {
+                        static Image image[] = {LoadImage(S("pipe1.png"))};
                         //d87644
-                        make_wall(v2(i, k), pixel, S("pipe1.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -595899905:
                     {
+                        static Image image[] = {LoadImage(S("pipe5.png"))};
                         //dc7b49
-                        make_wall(v2(i, k), pixel, S("pipe5.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -227990785:
                     {
+                        static Image image[] = {LoadImage(S("pipe4.png"))};
                         //f26922
-                        make_wall(v2(i, k), pixel, S("pipe4.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -814463489:
                     {
-                        //f26922
-                        make_wall(v2(i, k), pixel, S("pipe2.png"));
+                        static Image image[] = {LoadImage(S("pipe2.png"))};
+                        //f26922 
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1102434305:
                     {
+                        static Image image[] = {LoadImage(S("pipe7.png"))};
                         //f26922
-                        make_wall(v2(i, k), pixel, S("pipe7.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1824115457:
                     {
+                        static Image image[] = {LoadImage(S("pipe8.png"))};
                         //f26922
-                        make_wall(v2(i, k), pixel, S("pipe8.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -661491969:
                     {
+                        static Image image[] = {LoadImage(S("pipe9.png"))};
                         //d8926e
-                        make_wall(v2(i, k), pixel, S("pipe9.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1937938943:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls1.png"))};
                         //738299
-                        make_wall(v2(i, k), pixel, S("factory_walls1.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1028485119:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls2.png"))};
                         //3d4d6f
-                        make_wall(v2(i, k), pixel, S("factory_walls2.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1519048191:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls3.png"))};
                         //5a8ad5
-                        make_wall(v2(i, k), pixel, S("factory_walls3.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 811442943:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls4.png"))};
                         //305da2
-                        make_wall(v2(i, k), pixel, S("factory_walls4.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 658863359:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls5.png"))};
                         //274574
-                        make_wall(v2(i, k), pixel, S("factory_walls5.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1315674623:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls6.png"))};
                         //4e6b99
-                        make_wall(v2(i, k), pixel, S("factory_walls6.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 574383871:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls7.png"))};
                         //223c66d
-                        make_wall(v2(i, k), pixel, S("factory_walls7.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 557010943:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls8.png"))};
                         //21334f
-                        make_wall(v2(i, k), pixel, S("factory_walls8.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 523457535:
                     {
+                        static Image image[] = {LoadImage(S("factory_walls9.png"))};
                         //1f3353
-                        make_wall(v2(i, k), pixel, S("factory_walls9.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1128283137:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates1.png"))};
                         //bcbfc3
-                        make_wall(v2(i, k), pixel, S("bolted_plates1.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1448432385:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates2.png"))};
                         //a9aaac
-                        make_wall(v2(i, k), pixel, S("bolted_plates2.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1734697217:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates3.png"))};
                         //989a9e
-                        make_wall(v2(i, k), pixel, S("bolted_plates3.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -2037871617:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates4.png"))};
                         //86888b
-                        make_wall(v2(i, k), pixel, S("bolted_plates4.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 2088930303:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates5.png"))};
                         //7c828b
-                        make_wall(v2(i, k), pixel, S("bolted_plates5.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1902730497:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates6.png"))};
                         //8e96a2
-                        make_wall(v2(i, k), pixel, S("bolted_plates6.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1987408897:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates7.png"))};
                         //898a8b
-                        make_wall(v2(i, k), pixel, S("bolted_plates7.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case -2121954305:
                     {
+                        static Image image[] ={LoadImage(S("bolted_plates8.png"))};
                         //81858b
-                        make_wall(v2(i, k), pixel, S("bolted_plates8.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 2021624831:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates9.png"))};
                         //787f8b
-                        make_wall(v2(i, k), pixel, S("bolted_plates9.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1718185983:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates10.png"))};
                         //66696f
-                        make_wall(v2(i, k), pixel, S("bolted_plates10.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1532978943:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates11.png"))};
                         //5b5f66
-                        make_wall(v2(i, k), pixel, S("bolted_plates11.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1448896255:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates12.png"))};
                         //565c66
-                        make_wall(v2(i, k), pixel, S("bolted_plates12.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 case 1381259519:
                     {
+                        static Image image[] = {LoadImage(S("bolted_plates13.png"))};
                         //525458
-                        make_wall(v2(i, k), pixel, S("bolted_plates13.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 default:
                     {
+                        static Image image[] = {LoadImage(S("penguin_idle.png"))};
                         Dump(pixel);
-                        make_wall(v2(i, k), pixel, S("penguin_idle.png"));
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 }; 
                 
             }
         }
     }
+}
+
+Entity get_wall_at(Vector2 pos) {
+    for (int i = 0; i < wall_count; i++) {
+        if (wall[i].position.x == pos.x && wall[i].position.y == pos.y) {
+            return wall[i];
+        }
+    }
+
+    Entity blank = {};
+
+    return blank;
 }
 
 bool enemy_on_enemy(Entity *entity_one) {
@@ -732,6 +771,14 @@ return false;
 bool wall_intersects(Entity *entity) {
     for (int i = 0; i < wall_count; i++) {
         if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(v2(wall[i].position.x, wall[i].position.y), wall[i].size, v2_zero, v2_one))) {
+            return true;
+        }
+    }
+
+    for (int i = 0; i < World[player.player_level].interactible_count; i++) {
+        if (World[player.player_level].interactible[i].type == 1 && r2_intersects(get_entity_rect(entity), r2_bounds(v2(World[player.player_level].interactible[i].position.x, World[player.player_level].interactible[i].position.y), 
+            World[player.player_level].interactible[i].size, v2_zero, v2_one)))
+        {
             return true;
         }
     }
@@ -843,12 +890,12 @@ void particle_update(f32 dt) {
 }
 
 void make_boss_walls(Vector2 *pos, i32 count) {
-    static Image boss_walls = LoadImage(S("wall_flowers_white.png"));
+    static Image boss_walls[] = {LoadImage(S("wall_flowers_white.png"))};
 
     for (int i = 0; i < count; i++) {
         wall[wall_count].position = pos[i];
         wall[wall_count].size = v2(48, 48);
-        wall[wall_count].wall_type.image = boss_walls;
+        wall[wall_count].image = boss_walls;
         wall[wall_count].type = 2;
 
         wall_count++;

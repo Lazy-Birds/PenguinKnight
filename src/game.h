@@ -53,6 +53,7 @@ struct Controller
     b32 bumper;
 
     b32 h;
+    b32 u;
 
     f32 stick_x;
     f32 stick_y;
