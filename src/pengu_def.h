@@ -134,9 +134,22 @@ struct Level {
     Image background;
     Rectangle2 entry_points;
     i32 id;
+    i32 interactible_count;
+    i32 wall_count;
+    i32 enemy_count;
+    i32 npc_count;
+    i32 bgnd_count;
+    i32 house_count;
     Vector2 landing_pos;
     Entity *interactible;
-    i32 interactible_count;
+    Entity *wall;
+    Entity *enemies;
+    Entity *npcs;
+    Entity *backgrounds;
+    Entity *housing;
+    Entity *fire;
+    bool initialized;
+
 };
 
 //Background

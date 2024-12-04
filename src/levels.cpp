@@ -6,31 +6,67 @@ Level scram_sewers_entry = {};
 Entity village_int[100] = {};
 Entity scram_sewers_int[100] = {};
 
+Entity village_walls[10000] = {};
+Entity scram_sewers_walls[1000] = {};
+
+Entity village_nme[100] = {};
+Entity scram_sewers_nme[20] {};
+
+Entity village_npc[50] = {};
+Entity scram_sewers_npc[5] = {};
+
+Entity village_bgs[1000] = {};
+Entity scram_sewers_bgs[100] = {};
+
+Entity village_hs[100] = {};
+
+Entity village_fs[10] = {};
+
 
 const i32 VILLAGE = 0;
 const i32 SCRAMSEWERSENTRY = 1;
 
 void create_levels() {
-    static Image village_world = LoadImage(S("village.png"));
+    static Image village_world = LoadImage(S("village_area2.png"));
     static Image village_bg = LoadImage(S("factory_background.png"));
-    static Image scram_sewers_world = LoadImage(S("scrap_metal_cave.png"));
+    static Image scram_sewers_world = LoadImage(S("scram_entry2.png"));
     static Image scram_sewers_bg = LoadImage(S("scram_sewers_bg.png"));
 
     village.world = village_world;
     village.background = village_bg;
-    village.entry_points = r2_bounds(v2(9552, 436), v2(48, 96), v2_zero, v2_one);
+    village.entry_points = r2_bounds(v2(9264, 480), v2(48, 96), v2_zero, v2_one);
     village.id = 0;
-    village.landing_pos = v2(9504, 476);
+    village.landing_pos = v2(9216, 524);
     village.interactible = village_int;
     village.interactible_count = 0;
+    village.wall = village_walls;
+    village.wall_count = 0;
+    village.enemies = village_nme;
+    village.enemy_count = 0;
+    village.npcs = village_npc;
+    village.npc_count = 0;
+    village.backgrounds = village_bgs;
+    village.bgnd_count = 0;
+    village.housing = village_hs;
+    village.fire = village_fs;
+    village.initialized = false;
 
     scram_sewers_entry.world = scram_sewers_world;
     scram_sewers_entry.background = scram_sewers_bg;
-    scram_sewers_entry.entry_points = r2_bounds(v2(480, 480), v2(48, 96), v2_zero, v2_one);
+    scram_sewers_entry.entry_points = r2_bounds(v2(432, 480), v2(48, 96), v2_zero, v2_one);
     scram_sewers_entry.id = 1;
-    scram_sewers_entry.landing_pos = v2(528, 524);
+    scram_sewers_entry.landing_pos = v2(480, 524);
     scram_sewers_entry.interactible = scram_sewers_int;
     scram_sewers_entry.interactible_count = 0;
+    scram_sewers_entry.wall = scram_sewers_walls;
+    scram_sewers_entry.wall_count = 0;
+    scram_sewers_entry.enemies = scram_sewers_nme;
+    scram_sewers_entry.enemy_count = 0;
+    scram_sewers_entry.npcs = scram_sewers_npc;
+    scram_sewers_entry.npc_count = 0;
+    scram_sewers_entry.backgrounds = scram_sewers_bgs;
+    scram_sewers_entry.bgnd_count = 0;
+    scram_sewers_entry.initialized = false;
 
     World[0] = village;
     World[1] = scram_sewers_entry;

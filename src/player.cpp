@@ -514,8 +514,6 @@ void check_level() {
 			if (r2_intersects(get_entity_rect(&player), World[VILLAGE].entry_points)) {
 				player.position = World[SCRAMSEWERSENTRY].landing_pos;
 				player.player_level = SCRAMSEWERSENTRY;
-				World[player.player_level].interactible = village_int;
-				World[player.player_level].interactible_count = 0;
 				set_world(false, World[player.player_level]);
 			}
 		} break;
@@ -524,8 +522,6 @@ void check_level() {
 		if (r2_intersects(get_entity_rect(&player), World[SCRAMSEWERSENTRY].entry_points)) {
 				player.position = World[VILLAGE].landing_pos;
 				player.player_level = VILLAGE;
-				World[player.player_level].interactible = scram_sewers_int;
-				World[player.player_level].interactible_count = 0;
 				set_world(false, World[player.player_level]);
 			}
 		} break;
@@ -535,9 +531,9 @@ void check_level() {
 }
 
 void set_enemy_vuln() {
-	for (int i = 0; i < enemy_count; i++) {
-		if (enemys[i].alive) {
-			enemys[i].invuln = false;
+	for (int i = 0; i < World[player.player_level].enemy_count; i++) {
+		if (World[player.player_level].enemies[i].alive) {
+			World[player.player_level].enemies[i].invuln = false;
 
 		}
 	}

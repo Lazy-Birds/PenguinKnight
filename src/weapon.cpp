@@ -59,9 +59,9 @@ void load_weapon() {
     cleaver.name = S("Cleaver");
     cleaver.offset_right = v2(-42, -40);
     cleaver.offset_left = v2(-67, -40);
-    cleaver.hit_size = v2(71, 81);
-    cleaver.hit_offset_right = v2(25, 31);
-    cleaver.hit_offset_left = v2(57, 31);
+    cleaver.hit_size = v2(76, 81);
+    cleaver.hit_offset_right = v2(20, 31);
+    cleaver.hit_offset_left = v2(62, 31);
     cleaver.charged_frames = v2(9, 14);
     cleaver.base_damage = 30;
     cleaver.damage_attribute = S("Strength");

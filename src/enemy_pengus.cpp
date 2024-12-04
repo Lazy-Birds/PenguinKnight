@@ -1,9 +1,9 @@
 void make_guards(Vector2 positions) {
-    enemys[enemy_count] = load_enemy(v2(positions.x, 0), 3);
-    enemy_count++;
+    World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(positions.x, 0), 3);
+    World[player.player_level].enemy_count++;
 
-    enemys[enemy_count] = load_enemy(v2(positions.y, 0), 3);
-    enemy_count++;
+    World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(positions.y, 0), 3);
+    World[player.player_level].enemy_count++;
 }
 
 const i32 KINGNEUTRAL = 0;
@@ -22,7 +22,7 @@ const i32 PHASETWO = 1;
 i32 king_phase = PHASEONE;
 
 
-Vector2 stage_size = v2(8640, 9504);
+Vector2 stage_size = v2(8496, 9168);
 
 void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output *out) {
 
@@ -375,7 +375,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case KINGWAIT:
         {
-            if (enemys[enemy_count-1].alive || enemys[enemy_count-2].alive) {
+            if (World[player->player_level].enemies[World[player->player_level].enemy_count-1].alive || World[player->player_level].enemies[World[player->player_level].enemy_count-2].alive) {
                 draw_enemy(pengu_king, 0);
             } else {
                 draw_enemy(pengu_king, 0);
@@ -454,6 +454,14 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
             bosses_killed[0] = true;
 
             pengu_king->alive = false;
+
+            for (int i = 0; i < World[player->player_level].interactible_count; i++) {
+                if (World[player->player_level].interactible[i].action_id == 1) {
+                    World[player->player_level].interactible[i].acting = true;
+                    camera_state = CAMERALOCKED;
+                    camera_pos_target = World[player->player_level].interactible[i].position;
+                }
+            }
         } break;
     }
 
