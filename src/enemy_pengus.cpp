@@ -599,7 +599,9 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
     {
     case MOVE:
         {
-            soldier->velocity.x = 120*sign_f32(soldier->facing);
+            f32 soldier_speed = random_f32_between(100, 140);
+
+            soldier->velocity.x = soldier_speed*sign_f32(soldier->facing);
 
             move_enemy(soldier, dt);
             if (soldier->facing > 0) {
@@ -651,14 +653,17 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
                 draw_enemy(soldier, 7);
             }
 
+            f32 x_distance = random_f32_between(7000, 9000);
+            f32 y_distance = random_f32_between(5000, 7000);
+
             if (soldier->position.x > player->position.x)
             {
-                soldier->velocity.x = 8000*dt;
-                soldier->velocity.y -= 6000*dt;
+                soldier->velocity.x = x_distance*dt;
+                soldier->velocity.y -= y_distance*dt;
             } else
             {
-                soldier->velocity.x = -8000*dt;
-                soldier->velocity.y -= 6000*dt;
+                soldier->velocity.x = -x_distance*dt;
+                soldier->velocity.y -= y_distance*dt;
             }
 
             soldier->enemy.sleep_time=25*input->dt;

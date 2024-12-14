@@ -93,6 +93,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id) {
             World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
 
             World[level_id].interactible.count++;
         } break;
@@ -110,6 +111,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id) {
             World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
 
             World[level_id].interactible.count++;
         } break;

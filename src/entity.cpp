@@ -216,7 +216,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             slim.enemy.id = World[player.player_level].enemies.count;
             slim.state = NEUTRAL;
             slim.enemy.exp_dropped = 100;
-            slim.has_hit = false;
+            slim.has_hit = true;
             slim.alive = true;
             slim.projectile = dart;
             slim.velocity_prev = v2_zero;

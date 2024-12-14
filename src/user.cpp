@@ -209,8 +209,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.check_point = v2(480, 524);//v2(8449, 476);//v2(672, out->height - 244);
-    player.check_point_level = 1;
+    player.check_point = /*v2(480, 524);//v2(8449, 476);/*/v2(672, out->height - 244);
+    player.check_point_level = 0;
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
@@ -223,7 +223,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_mp = player.max_mp;
     player.mp_cooldown = 0;
     player.shield_hit = 0;
-    player.fairy_uses = 3;
+    player.fairy_uses = 0;
     player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
@@ -234,7 +234,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.exp_to_level = 600;
     player.level = 1;
     player.type = 0;
-    player.player_level = SCRAMSEWERSENTRY;
+    player.player_level = player.check_point_level;
     player.acting_cd = 0;
 
     static Image img[] = {
@@ -431,6 +431,18 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         update_projectiles(input, &player);
 
+        for (int i = 0; i < World[player.player_level].liquid.count; i++) {
+            liquid_do_liquid(&World[player.player_level].liquid.data[i], input, i);
+        }
+
+        for (int i = 0; i < World[player.player_level].backgrounds.count; i++) {
+            DrawImage(World[player.player_level].backgrounds.data[i].image[0], v2(World[player.player_level].backgrounds.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds.data[i].position.y));
+        }
+
+        /*if (World[player.player_level].fire_count != 0 && abs_i32(World[player.player_level].fire[0].position.x - player.position.x) < 1200) {
+            draw_fire(input->dt);
+        }*/
+
         for (int i = 0; i < World[player.player_level].interactible.count; i++)
         {
             if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible.data[i])) && !World[player.player_level].interactible.data[i].acting 
@@ -440,7 +452,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                     v2(104, 20), v2_zero, v2_one);
 
                 DrawRect(text_box, v4_black);
-
+                Dump("acting");
                 DrawTextExt(font_hellomyoldfriend, S("Press U."), v2(World[player.player_level].interactible.data[i].position.x-24-camera_pos.x+out->width*.5,
                     World[player.player_level].interactible.data[i].position.y-24), v4_white, v2_zero, 1.0);
 
@@ -466,21 +478,9 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             }
         }
 
-        for (int i = 0; i < World[player.player_level].liquid.count; i++) {
-            liquid_do_liquid(&World[player.player_level].liquid.data[i], input, i);
-        }
-
-        for (int i = 0; i < World[player.player_level].backgrounds.count; i++) {
-            DrawImage(World[player.player_level].backgrounds.data[i].image[0], v2(World[player.player_level].backgrounds.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds.data[i].position.y));
-        }
-
         for (int i = 0; i < World[player.player_level].wall.count; i++) {
             DrawImage(World[player.player_level].wall.data[i].image[0], v2(World[player.player_level].wall.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].wall.data[i].position.y));
         }
-
-        /*if (World[player.player_level].fire_count != 0 && abs_i32(World[player.player_level].fire[0].position.x - player.position.x) < 1200) {
-            draw_fire(input->dt);
-        }*/
 
         for (int i = 0; i < World[player.player_level].housing.count; i++) {
             if (abs_i32(World[player.player_level].housing.data[i].position.x - player.position.x) < 1200 && abs_i32(World[player.player_level].housing.data[i].position.y - player.position.y) < 500) {
@@ -493,7 +493,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         }
 
         for (int i = 0; i < World[player.player_level].npcs.count; i++) {
-            if (abs_i32(World[player.player_level].npcs.data[i].position.x - player.position.x) < 1200) {
+            if (entity_get_distance_x(&player, &level->npcs.data[i]) < 1200) {
                 npc_action(&World[player.player_level].npcs.data[i], &player);
             }
         }

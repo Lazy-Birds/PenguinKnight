@@ -120,6 +120,7 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
         } break;
     case HIT:
         {
+            Dump("OOOFFF");
             if (slime->state_time*60 <= 6) {
                 draw_enemy(slime, 4);
                 if (slime->position.x > player->position.x)
