@@ -51,9 +51,19 @@ void load_weapon() {
         LoadImage(S("cleaver25.png")),
     };
 
+    cleaver.image = cleaver_image;
+
+    static Image psn_img[] = {
+        LoadImage(S("cleaver_poisoned1.png")),
+        LoadImage(S("cleaver_poisoned2.png")),
+        LoadImage(S("cleaver_poisoned3.png")),
+        LoadImage(S("cleaver_poisoned4.png")),
+    };
+
+    cleaver.poisoned_image = psn_img;
+
     static Image icon = LoadImage(S("cleaver_icon.png"));
 
-    cleaver.image = cleaver_image;
     cleaver.size = v2(139, 87), v2(149, 92);
     cleaver.weapon_frames = v2(4, 9);
     cleaver.name = S("Cleaver");

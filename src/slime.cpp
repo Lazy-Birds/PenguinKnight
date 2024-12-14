@@ -192,3 +192,91 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
 
     move_enemy(slime, input->dt);
 }
+
+void ooze_action(Entity *ooze, Game_Input *input) {
+    Level *level = &World[player.player_level];
+
+    Rectangle2 kill_box = r2_bounds(v2(ooze->position.x, ooze->position.y+101), v2(48, 45), v2_zero, v2_one);
+    Rectangle2 kill_box_out = r2_shift(kill_box, v2(-camera_pos.x+out->width*.5, 0));
+    DrawRectOutline(kill_box_out, v4_red, 2);
+
+    if (r2_intersects(get_entity_rect(&player), kill_box)) {
+        player.alive = false;
+    }
+
+    if (ooze->sprite_index == 1) {
+        ooze->state_time-=input->dt;
+    } else {
+        ooze->state_time+=input->dt;
+    }
+
+    if (ooze->enemy.sleep_time > 0) {
+        move_enemy(ooze, input->dt);
+        ooze->enemy.sleep_time-=input->dt;
+        if (ooze->state_time*60 <= 20) {
+            draw_enemy(ooze, 0);
+            if (ooze->state_time*60 >= 10) ooze->velocity.x = 0;
+        } else {
+            draw_enemy(ooze, 1);
+        }
+        
+        if (ooze->enemy.sleep_time*60 <= 1) ooze->state_time = 0;
+
+        return;
+    }
+
+    if (player.position.x < ooze->position.x) {
+        ooze->facing = -1;
+        ooze->enemy.anchor_pos = v2(ooze->position.x+15, ooze->position.y+18);
+    } else {
+        ooze->facing = 1;
+        ooze->enemy.anchor_pos = v2(ooze->position.x+21, ooze->position.y+18);
+    }
+
+    if (ooze->state_prev != ooze->state) {
+        ooze->state_prev = ooze->state;
+        ooze->state_time = 0;
+    }
+
+    switch (ooze->state)
+    {
+    case NEUTRAL:
+        {
+            draw_enemy(ooze, 0);
+            if (ooze->state_time*60 > 20 && ooze->sprite_index == 0) ooze->state = SPYING;
+        } break;
+    case SPYING:
+        {
+            if (ooze->state_time*60 < -1) {
+                ooze->state = NEUTRAL;
+                ooze->sprite_index = 2;
+            }
+
+            if (ooze->state_time*60 < 10) {
+                draw_enemy(ooze, 1);
+            } else if (ooze->state_time*60 < 20) {
+                draw_enemy(ooze, 2);
+            } else if (ooze->state_time*60 < 30) {
+                draw_enemy(ooze, 3);
+            } else if (ooze->state_time*60 < 40) {
+                draw_enemy(ooze, 4);
+            } else if (ooze->state_time*60 < 50) {
+                draw_enemy(ooze, 5);
+            } else if (ooze->state_time*60 < 60) {
+                draw_enemy(ooze, 6);
+            } else if (ooze->state_time*60 < 70) {
+                draw_enemy(ooze, 7);
+            } else if (ooze->state_time*60 < 80) {
+                draw_enemy(ooze, 8);
+            } else if (ooze->state_time*60 < 140) {
+                draw_enemy(ooze, 9);
+            } else if (ooze->state_time*60 < 160) {
+                draw_enemy(ooze, 10);
+            } else if (ooze->state_time*60 < 180) {
+                draw_enemy(ooze, 10);
+                ooze->state_time = 59*input->dt;
+                ooze->sprite_index = 1;
+            }
+        } break;
+    }
+}

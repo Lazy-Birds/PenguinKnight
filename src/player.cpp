@@ -20,13 +20,22 @@ void player_action(Game_Input *input) {
 	if (player.shield_hit > 0) {
 		player.shield_hit-=dt;
 	}
-	
+
+	if (player_in_poison()) {
+		player.current_health = 0;
+		player.alive = false;
+	} 
+
 	if (invuln_time > 0){
 		invuln_time-=dt;
 	}
 
 	if (heal_cd > 0) {
 		heal_cd-=dt;
+	}
+
+	if (player.acting_cd > 0) {
+		player.acting_cd-=input->dt;
 	}
 	
 
@@ -78,7 +87,7 @@ void player_action(Game_Input *input) {
 	}
 
 	//Toggles player as interacting
-	if (c0.u) {
+	if (c0.u && !in_menu) {
 		player.acting = true;
 	} else {
 		player.acting = false;
@@ -507,33 +516,24 @@ void player_action(Game_Input *input) {
 }
 
 void check_level() {
-	switch (player.player_level)
-	{
-	case 0:
-		{
-			if (r2_intersects(get_entity_rect(&player), World[VILLAGE].entry_points)) {
-				player.position = World[SCRAMSEWERSENTRY].landing_pos;
-				player.player_level = SCRAMSEWERSENTRY;
-				set_world(false, World[player.player_level]);
-			}
-		} break;
-	case 1:
-		{
-		if (r2_intersects(get_entity_rect(&player), World[SCRAMSEWERSENTRY].entry_points)) {
-				player.position = World[VILLAGE].landing_pos;
-				player.player_level = VILLAGE;
-				set_world(false, World[player.player_level]);
-			}
-		} break;
+	for (int i = 0; i < tele_count; i++) {
+		if (player.player_level == tele[i].level_id && tele[i].actable && player.acting_cd <=0 && player.acting && r2_intersects(get_entity_rect(&player), tele[i].entry)) {
+			player.acting_cd+=1.0;
+			player.position = tele[tele[i].link_id].landing_pos;
+			player.player_level = tele[tele[i].link_id].level_id;
+			set_world(false, World[player.player_level]);
+		} else if (!tele[i].actable && player.player_level == tele[i].level_id && r2_intersects(get_entity_rect(&player), tele[i].entry)) {
+			player.position = tele[tele[i].link_id].landing_pos;
+			player.player_level = tele[tele[i].link_id].level_id;
+			set_world(false, World[player.player_level]);
+		}
 	}
-
-	
 }
 
 void set_enemy_vuln() {
-	for (int i = 0; i < World[player.player_level].enemy_count; i++) {
-		if (World[player.player_level].enemies[i].alive) {
-			World[player.player_level].enemies[i].invuln = false;
+	for (int i = 0; i < World[player.player_level].enemies.count; i++) {
+		if (World[player.player_level].enemies.data[i].alive) {
+			World[player.player_level].enemies.data[i].invuln = false;
 
 		}
 	}
@@ -562,6 +562,16 @@ void player_hit(Entity *entity, Game_Input *input) {
 	player.state = HIT;
 	
 	invuln_time = 80*input->dt;
+}
+
+b32 player_in_poison() {
+	for (i32 i = 0; i < World[player.player_level].liquid.count; i++) {
+		if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].liquid.data[i]))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void player_move(Game_Input *input) {

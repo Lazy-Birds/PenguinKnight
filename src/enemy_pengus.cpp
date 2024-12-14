@@ -1,9 +1,9 @@
 void make_guards(Vector2 positions) {
-    World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(positions.x, 0), 3);
-    World[player.player_level].enemy_count++;
+    World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(positions.x, 0), 3);
+    World[player.player_level].enemies.count++;
 
-    World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(positions.y, 0), 3);
-    World[player.player_level].enemy_count++;
+    World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(positions.y, 0), 3);
+    World[player.player_level].enemies.count++;
 }
 
 const i32 KINGNEUTRAL = 0;
@@ -77,11 +77,11 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         {
             if (pengu_king->facing > 0)
             {
-                DrawImageMirrored(pengu_king->enemy.image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
+                DrawImageMirrored(pengu_king->image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
                  pengu_king->position.y+pengu_king->enemy.offset.y), true, false);
             } else 
             {
-                DrawImage(pengu_king->enemy.image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
+                DrawImage(pengu_king->image[0], v2(pengu_king->position.x-player->position.x+out->width*.5 + pengu_king->enemy.offset.x,
                     pengu_king->position.y+pengu_king->enemy.offset.y));
             }
 
@@ -375,7 +375,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case KINGWAIT:
         {
-            if (World[player->player_level].enemies[World[player->player_level].enemy_count-1].alive || World[player->player_level].enemies[World[player->player_level].enemy_count-2].alive) {
+            if (World[player->player_level].enemies.data[World[player->player_level].enemies.count-1].alive || World[player->player_level].enemies.data[World[player->player_level].enemies.count-2].alive) {
                 draw_enemy(pengu_king, 0);
             } else {
                 draw_enemy(pengu_king, 0);
@@ -447,6 +447,11 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case DEAD:
         {
+            if (pengu_king->state_time*60 < 60) {
+
+            } else {
+
+            }
             destroy_boss_walls();
 
             camera_state = CAMERAFOLLOW;
@@ -455,11 +460,11 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
             pengu_king->alive = false;
 
-            for (int i = 0; i < World[player->player_level].interactible_count; i++) {
-                if (World[player->player_level].interactible[i].action_id == 1) {
-                    World[player->player_level].interactible[i].acting = true;
+            for (int i = 0; i < World[player->player_level].interactible.count; i++) {
+                if (World[player->player_level].interactible.data[i].action_id == 1) {
+                    World[player->player_level].interactible.data[i].acting = true;
                     camera_state = CAMERALOCKED;
-                    camera_pos_target = World[player->player_level].interactible[i].position;
+                    camera_pos_target = World[player->player_level].interactible.data[i].position;
                 }
             }
         } break;
@@ -491,10 +496,10 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
 /*void draw_enemy(Entity *pengu, i32 frame) {
     if (pengu->facing > 0) {
-        DrawImageMirrored(pengu->enemy.image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5,
+        DrawImageMirrored(pengu->image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5,
             pengu->position.y + pengu->enemy.offset.y), true, false);
     } else {
-        DrawImage(pengu->enemy.image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5 + pengu->enemy.offset.x,
+        DrawImage(pengu->image[frame], v2(pengu->position.x-camera_pos.x+out->width*.5 + pengu->enemy.offset.x,
             pengu->position.y+pengu->enemy.offset.y));
     }
 }

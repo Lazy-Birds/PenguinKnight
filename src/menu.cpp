@@ -123,7 +123,7 @@ void draw_menu(Game_Output *out, Entity *player, Image screen) {
 	String exp = string_concat(sprint("%d", player->exp_gained), S("/"));
 	exp = string_concat(exp, sprint("%d", player->exp_to_level));
 
-	static Image image = LoadImage(S("menu_sprite.png"));
+	static Image image = LoadImage(S("sleeping_bag_pengu.png"));
 
 	String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
     Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));

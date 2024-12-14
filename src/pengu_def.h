@@ -2,6 +2,7 @@
 //Weapon
 struct Weapon {
     Image *image;
+    Image *poisoned_image;
     String name;
     Image icon;
 
@@ -54,6 +55,7 @@ struct Enemy {
     i32 guard;
 
     Vector2 anchor_pos;
+    Vector2 anchor_pos_two;
     i32 exp_dropped;
 };
 
@@ -70,8 +72,10 @@ struct Entity
     f32 min_health;
 
     bool invuln;
+    bool attackable;
     bool alive;
     bool has_hit;
+    bool poisoned;
 
     f32 max_stamina;
     f32 current_stamina;
@@ -85,7 +89,9 @@ struct Entity
     i32 current_fairy_uses;
 
     Vector2 check_point;
+    i32 check_point_level;
     Vector2 position;
+    Vector2 extra_position;
     Vector2 velocity;
     Vector2 velocity_prev;
 
@@ -98,6 +104,7 @@ struct Entity
 
     i32 action_id;
     bool acting;
+    f32 acting_cd;
     bool actable;
 
     i32 sprite_index;
@@ -128,28 +135,37 @@ struct Entity
     i32 player_level;
 };
 
+//Generic
+struct EntityArray {
+    Entity *data;
+    i64 count;
+    i64 capacity;
+};
+
 //Levels
+struct Entry_Points {
+    Rectangle2 entry;
+    i32 link_id;
+    i32 level_id;
+    Vector2 landing_pos;
+    bool actable;
+};
+
 struct Level {
+    String name;
     Image world;
     Image background;
-    Rectangle2 entry_points;
+    Vector2i region;
     i32 id;
-    i32 interactible_count;
-    i32 wall_count;
-    i32 enemy_count;
-    i32 npc_count;
-    i32 bgnd_count;
-    i32 house_count;
-    Vector2 landing_pos;
-    Entity *interactible;
-    Entity *wall;
-    Entity *enemies;
-    Entity *npcs;
-    Entity *backgrounds;
-    Entity *housing;
-    Entity *fire;
+    i32 scale;
+    EntityArray interactible;
+    EntityArray wall;
+    EntityArray enemies;
+    EntityArray npcs;
+    EntityArray backgrounds;
+    EntityArray housing;
+    EntityArray liquid;
     bool initialized;
-
 };
 
 //Background
@@ -205,6 +221,7 @@ struct Fire {
 void create_levels();
 void make_interactible(Vector2 position, i32 id, i32 level_id);
 void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos);
+void create_level_entries();
 
 //Weapon
 void load_weapon();
@@ -227,12 +244,18 @@ Entity load_enemy(Vector2 pos, i32 type);
 void make_npcs(Vector2 pos, i32 type);
 void make_wall(Vector2 pos, u32 pixel, String image);
 void make_world(Level level);
+EntityArray make_entity_array(i32 size);
+Entity make_liquid(Vector2 pos, i32 id);
+void liquid_do_liquid(Entity *liquid, Game_Input *input, i32 count);
 Entity get_wall_at(Vector2 pos);
 bool enemy_on_enemy(Entity *entity_one);
 bool entity_on_wall(Entity *entity_one);
 bool wall_intersects(Entity *entity);
+bool wall_intersects_rec(Rectangle2 rec);
 bool wall_ahead(Entity *entity);
 bool entity_in_air(Entity *entity_one);
+i32 entity_get_distance_x(Entity *one, Entity *two);
+i32 get_entity_direction(Entity *entity);
 void particle_create(Vector2 pos, Vector2 velocity, f32 lifetime, /*Vector4 color, Vector2 accel,*/ Image image);
 void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image);
 void particle_update(f32 dt);
@@ -243,7 +266,7 @@ void move_enemy(Entity *nme, f32 dt);
 i32 get_prejectile_slot();
 void make_projectile(Image *image, Vector2 pos, Vector2 vel);
 void update_projectiles(Game_Input *input, Entity *player);
-void draw_fire(f32 dt);
+void draw_fire(Entity *interactible, Game_Input *input);
 void draw_house(Housing *house);
 void npc_action(Entity *npc, Entity *player);
 
@@ -253,9 +276,10 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 void pengu_attack(Entity *pengu, Entity *player, f32 invuln_time, Game_Input *input);
 void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, Game_Input *input);
 
-//Seals
+//Misc Enemies
 void seal_action(Entity *seal, Game_Input *input, Entity *player);
-void seal_move(Entity *seal, Game_Input *input);
+void eye_monster_action(Entity *monster, Game_Input *input);
+void lazer_attack(Entity *monster);
 
 //Slime
 void slime_action(Entity *slime, Entity *player, Game_Input *input);
@@ -287,3 +311,4 @@ void check_level();
 void set_enemy_vuln();
 void player_hit(Entity *entity, Game_Input *input);
 void player_move(Game_Input *input);
+b32 player_in_poison();

@@ -19,7 +19,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             enemy_plant.size = v2(48, 48),
             enemy_plant.invuln = false,
             enemy_plant.alive = true,
-            enemy_plant.enemy.image = image;
+            enemy_plant.image = image;
             enemy_plant.facing = 1;
             enemy_plant.enemy.type = 0;
             enemy_plant.enemy.offset =v2(0,0);
@@ -35,14 +35,15 @@ Entity load_enemy(Vector2 pos, i32 type) {
             };
 
             Entity enemy_seal = {};
-            enemy_seal.max_health = 50,
-            enemy_seal.current_health = enemy_seal.max_health,
-            enemy_seal.min_health = 0,
-            enemy_seal.position = pos,
-            enemy_seal.size = v2(32, 32),
-            enemy_seal.invuln = false,
-            enemy_seal.alive = true,
-            enemy_seal.enemy.image = image;
+            enemy_seal.max_health = 50;
+            enemy_seal.current_health = enemy_seal.max_health;
+            enemy_seal.min_health = 0;
+            enemy_seal.position = pos;
+            enemy_seal.size = v2(32, 32);
+            enemy_seal.invuln = false;
+            enemy_seal.attackable = true;
+            enemy_seal.alive = true;
+            enemy_seal.image = image;
             enemy_seal.enemy.frames = v2(0,1);
             enemy_seal.facing = -1;
             enemy_seal.enemy.type = 1;
@@ -87,9 +88,10 @@ Entity load_enemy(Vector2 pos, i32 type) {
             big_papa.position = pos;
             big_papa.size = v2(64, 94);
             big_papa.invuln = false;
+            big_papa.attackable = true;
             big_papa.alive = true;
             big_papa.facing = -1;
-            big_papa.enemy.image = image;
+            big_papa.image = image;
             big_papa.enemy.type = 3;
             big_papa.enemy.offset = v2(0, 0);
             big_papa.enemy.guard = 60;
@@ -129,16 +131,17 @@ Entity load_enemy(Vector2 pos, i32 type) {
             penguin_soldier.position = v2(pos.x + 6, pos.y);
             penguin_soldier.size = v2(42, 48);
             penguin_soldier.invuln = false;
+            penguin_soldier.attackable = true;
             penguin_soldier.alive = true;
             penguin_soldier.facing = -1;
-            penguin_soldier.enemy.image = image;
+            penguin_soldier.image = image;
             penguin_soldier.enemy.type = 4;
             penguin_soldier.enemy.anchor_pos = pos;
             penguin_soldier.enemy.guard = 20;
             penguin_soldier.enemy.weapon_size = v2(56, 8);
             penguin_soldier.enemy.weapon_offset = v2(-27, 33);
             penguin_soldier.enemy.damage = 30;
-            penguin_soldier.enemy.id = World[player.player_level].enemy_count;
+            penguin_soldier.enemy.id = World[player.player_level].enemies.count;
             penguin_soldier.state = NEUTRAL;
             penguin_soldier.state_prev = NEUTRAL;
             penguin_soldier.enemy.exp_dropped = 75;
@@ -168,13 +171,14 @@ Entity load_enemy(Vector2 pos, i32 type) {
             pup.position = pos;
             pup.size = v2(39, 96);
             pup.invuln = false;
+            pup.attackable = true;
             pup.alive = true;
             pup.facing = 1;
             pup.image = image;
             pup.type = 5;
             pup.enemy.anchor_pos = pos;
             pup.enemy.damage = 40;
-            pup.enemy.id = World[player.player_level].enemy_count;
+            pup.enemy.id = World[player.player_level].enemies.count;
             pup.state = NEUTRAL;
             pup.enemy.exp_dropped = 100;
             pup.has_hit = true;
@@ -197,26 +201,102 @@ Entity load_enemy(Vector2 pos, i32 type) {
             };
 
             Entity slim = {};
-            slim.max_health = 220;
+            slim.max_health = 100;
             slim.current_health = slim.max_health;
             slim.enemy.offset = v2(0, -11);
             slim.position = pos;
             slim.size = v2(48, 37);
-            slim.invuln = false;
+            slim.invuln = true;
+            slim.attackable = true;
             slim.facing = 1;
-            slim.enemy.image = image;
+            slim.image = image;
             slim.type = 6;
             slim.enemy.anchor_pos = pos;
             slim.enemy.damage =  30;
-            slim.enemy.id = World[player.player_level].enemy_count;
+            slim.enemy.id = World[player.player_level].enemies.count;
             slim.state = NEUTRAL;
             slim.enemy.exp_dropped = 100;
-            slim.has_hit = true;
+            slim.has_hit = false;
             slim.alive = true;
             slim.projectile = dart;
             slim.velocity_prev = v2_zero;
 
             return slim;
+        } break;
+    case 6:
+        {
+            static Image image[] {
+                LoadImage(S("eye_monster1.png")),
+                LoadImage(S("eye_monster2.png")),
+                LoadImage(S("eye_monster3.png")),
+            };
+
+            static Image lazer[] = {
+                LoadImage(S("lazer1.png")),
+                LoadImage(S("lazer2.png")),
+            };
+
+            Entity stalker = {};
+            stalker.max_health = 80;
+            stalker.current_health = stalker.max_health;
+            stalker.enemy.offset = v2_zero;
+            stalker.position = pos;
+            stalker.size = v2(48, 48);
+            stalker.invuln = false;
+            stalker.attackable = true;
+            stalker.facing = 1;
+            stalker.image = image;
+            stalker.type = 7;
+            stalker.enemy.anchor_pos = v2(stalker.position.x + 21, stalker.position.y + 18);
+            stalker.enemy.damage = 80;
+            stalker.enemy.id = World[player.player_level].enemies.count;
+            stalker.state = NEUTRAL;
+            stalker.enemy.exp_dropped = 150;
+            stalker.has_hit = true;
+            stalker.alive = true;
+            stalker.projectile = lazer;
+            stalker.velocity_prev = v2_zero;
+
+            return stalker;
+
+        } break;
+    case 7:
+        {
+            Entity ooze = {};
+
+            static Image image[] = {
+                LoadImage(S("the_ooze1.png")),
+                LoadImage(S("the_ooze2.png")),
+                LoadImage(S("the_ooze3.png")),
+                LoadImage(S("the_ooze4.png")),
+                LoadImage(S("the_ooze5.png")),
+                LoadImage(S("the_ooze6.png")),
+                LoadImage(S("the_ooze7.png")),
+                LoadImage(S("the_ooze8.png")),
+                LoadImage(S("the_ooze9.png")),
+                LoadImage(S("the_ooze10.png")),
+                LoadImage(S("the_ooze11.png")),
+            };
+
+            ooze.image = image;
+            ooze.max_health = 2000;
+            ooze.current_health = ooze.max_health;
+            ooze.enemy.offset = v2_zero;
+            ooze.position = pos;
+            ooze.size = v2(48, 144);
+            ooze.invuln = false;
+            ooze.attackable = false;
+            ooze.facing = 1;
+            ooze.type = 8;
+            ooze.enemy.anchor_pos = pos;
+            ooze.enemy.id = World[player.player_level].enemies.count;
+            ooze.enemy.damage = 80;
+            ooze.state = NEUTRAL;
+            ooze.enemy.exp_dropped = 3000;
+            ooze.has_hit = true;
+            ooze.alive = true;
+
+            return ooze;
         } break;
     default:
         {
@@ -230,7 +310,7 @@ Entity load_enemy(Vector2 pos, i32 type) {
             idle_penguin.size = v2(48, 48),
             idle_penguin.invuln = false,
             idle_penguin.alive = true,
-            idle_penguin.enemy.image = image;
+            idle_penguin.image = image;
             idle_penguin.facing = -1;
             idle_penguin.enemy.type = 2;
             idle_penguin.enemy.offset = v2(0,0);
@@ -251,15 +331,15 @@ void make_npcs(Vector2 pos, i32 type) {
             static Image image[2] = {LoadImage(S("fairy_orb1.png")), LoadImage(S("fairy_orb2.png"))};
             static Image portrait[2] = {LoadImage(S("fairy_orb_portrait1.png")), LoadImage(S("fairy_orb_portrait2.png"))};
 
-            World[player.player_level].npcs[World[player.player_level].npc_count].position = pos;
-            World[player.player_level].npcs[World[player.player_level].npc_count].image = image;
-            World[player.player_level].npcs[World[player.player_level].npc_count].alive = true;
-            World[player.player_level].npcs[World[player.player_level].npc_count].state_time = 0;
-            World[player.player_level].npcs[World[player.player_level].npc_count].animation_time = 0;
-            World[player.player_level].npcs[World[player.player_level].npc_count].dialogue_time = 0;
-            World[player.player_level].npcs[World[player.player_level].npc_count].portrait = portrait;
-            World[player.player_level].npcs[World[player.player_level].npc_count].type = fairy;
-            World[player.player_level].npcs[World[player.player_level].npc_count].talking = false;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].position = pos;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].image = image;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].alive = true;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].state_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].animation_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].dialogue_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].portrait = portrait;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].type = fairy;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].talking = false;
 
         } break;
     case lil_pengu:
@@ -269,13 +349,13 @@ void make_npcs(Vector2 pos, i32 type) {
             LoadImage(S("lil_pengu3.png")),
         };
 
-        World[player.player_level].npcs[World[player.player_level].npc_count].position = pos;
-        World[player.player_level].npcs[World[player.player_level].npc_count].image = image;
-        World[player.player_level].npcs[World[player.player_level].npc_count].alive = true;
-        World[player.player_level].npcs[World[player.player_level].npc_count].state_time = 0;
-        World[player.player_level].npcs[World[player.player_level].npc_count].animation_time = 0;
-        World[player.player_level].npcs[World[player.player_level].npc_count].dialogue_time = 0;
-        World[player.player_level].npcs[World[player.player_level].npc_count].type = lil_pengu;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].position = pos;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].image = image;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].alive = true;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].state_time = 0;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].animation_time = 0;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].dialogue_time = 0;
+        World[player.player_level].npcs.data[World[player.player_level].npcs.count].type = lil_pengu;
     } break;
 }
 }
@@ -290,30 +370,30 @@ void draw_player(Weapon weapon, Vector2 position, i32 frame, i32 facing) {
 }
 
 void make_wall(Vector2 pos, u32 pixel, Image *image) {
-    World[player.player_level].wall[World[player.player_level].wall_count].position = pos;
-    World[player.player_level].wall[World[player.player_level].wall_count].size = v2(48, 48);
-    World[player.player_level].wall[World[player.player_level].wall_count].wall_type.pixel = pixel;
-    World[player.player_level].wall[World[player.player_level].wall_count].image = image;
+    World[player.player_level].wall.data[World[player.player_level].wall.count].position = pos;
+    World[player.player_level].wall.data[World[player.player_level].wall.count].size = v2(48, 48);
+    World[player.player_level].wall.data[World[player.player_level].wall.count].wall_type.pixel = pixel;
+    World[player.player_level].wall.data[World[player.player_level].wall.count].image = image;
 
-    World[player.player_level].wall_count++;
+    World[player.player_level].wall.count++;
 }
 
 void make_world(Level level) {
     TimeFunction;
-    /*wall[0].position.y = out->height-32;
-    wall[0].position.x = 32;
-    wall[0].size = v2(32, 32);
-    wall[0].color = v4_yellow;
+    /*wall.data[0].position.y = out->height-32;
+    wall.data[0].position.x = 32;
+    wall.data[0].size = v2(32, 32);
+    wall.data[0].color = v4_yellow;
 
-    wall[1].position.y = out->height-32;
-    wall[1].position.x = out->width-64;
-    wall[1].size = v2(32, 32);
-    wall[1].color = v4_yellow;
+    wall.data[1].position.y = out->height-32;
+    wall.data[1].position.x = out->width-64;
+    wall.data[1].size = v2(32, 32);
+    wall.data[1].color = v4_yellow;
 
-    wall[2].position.y = out->height-64;
-    wall[2].position.x = out->width-64;
-    wall[2].size = v2(32, 32);
-    wall[2].color = v4_yellow;*/
+    wall.data[2].position.y = out->height-64;
+    wall.data[2].position.x = out->width-64;
+    wall.data[2].size = v2(32, 32);
+    wall.data[2].color = v4_yellow;*/
 
     Image world = level.world;
 
@@ -332,45 +412,57 @@ void make_world(Level level) {
                 {
                 case -1405996289: 
                     {
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 0);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 0);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case -1060381441: 
                     {
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 1);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 1);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case -18390529:
                     {
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 2);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 2);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case 1516865791:
                     {
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 3);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 3);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case 1821034495:
                     {
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 4);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 4);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case 643580671:
                     {
                         //265c42
-                        World[player.player_level].enemies[World[player.player_level].enemy_count] = load_enemy(v2(i, k), 5);
-                        World[player.player_level].enemy_count++;
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 5);
+                        World[player.player_level].enemies.count++;
+                    } break;
+                case -1253013249:
+                    {
+                        //b55088
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 6);
+                        World[player.player_level].enemies.count++;
+                    } break;
+                case 595415807:
+                    {
+                        //237d52
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 7);
+                        World[player.player_level].enemies.count++;
                     } break;
                 case -1562516993:
                     {
                         make_npcs(v2(i, k), fairy);
-                        load_fairy_dialogue(&World[player.player_level].npcs[World[player.player_level].npc_count]);
-                        World[player.player_level].npc_count++;
+                        load_fairy_dialogue(&World[player.player_level].npcs.data[World[player.player_level].npcs.count]);
+                        World[player.player_level].npcs.count++;
                     } break;
                 case 1969959423:
                     {
                         make_npcs(v2(i, k), lil_pengu);
-                        World[player.player_level].npc_count++;
+                        World[player.player_level].npcs.count++;
                     } break;
                 case 1059599103:
                     {
@@ -379,67 +471,84 @@ void make_world(Level level) {
                             LoadImage(S("peasant_hovel2.png")),
                             LoadImage(S("peasant_hovel3.png")),
                         };
-                        World[player.player_level].housing[World[player.player_level].house_count].position = v2(i, k);
-                        World[player.player_level].housing[World[player.player_level].house_count].size = v2(192, 202);
-                        World[player.player_level].housing[World[player.player_level].house_count].image = image;
-                        World[player.player_level].house_count++;
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].position = v2(i, k);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].size = v2(192, 202);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].image = image;
+                        World[player.player_level].housing.count++;
+                    } break;
+                case -1017357057:
+                    {
+                        //c35c5c
+                        make_interactible(v2(i, k), 4, level.id);
                     } break;
                 case -465877761:
                     {
-                        static Image image[] = {
-                            LoadImage(S("fire1.png")),
-                            LoadImage(S("fire2.png")),
-                            LoadImage(S("fire3.png")),
-                            LoadImage(S("fire4.png")),
-                            LoadImage(S("fire5.png")),
-                        };
-                        World[player.player_level].fire[0].position = v2(i, k);
-                        World[player.player_level].fire[0].size = v2(48, 48);
-                        World[player.player_level].fire[0].image = image;
-                        World[player.player_level].fire[0].state_time = 0;
+                        //e43b44
+                        make_interactible(v2(i, k), 4, level.id);
                     } break;
                 case 403973631:
                     {
                         static Image image[] = {LoadImage(S("cave_wall.png"))};
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].position = v2(i, k);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].size = v2(48, 48);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].image = image;
-                        World[player.player_level].bgnd_count++;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
                     } break;
                 case 2139260671:
                     {
                         static Image image[] = {LoadImage(S("cloud_brick_background.png"))};
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].position = v2(i, k);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].size = v2(48, 48);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].image = image;
-                        World[player.player_level].bgnd_count++;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
                     } break;
                 case 640369919:
                     {
                         //262b44
                         static Image image[] = {LoadImage(S("bolted_plates14.png"))};
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].position = v2(i, k);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].size = v2(48, 48);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].image = image;
-                        World[player.player_level].bgnd_count++;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
                     } break;
                 case 572998143:
                     {
                         //222741
                         static Image image[] = {LoadImage(S("bolted_plates15.png"))};
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].position = v2(i, k);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].size = v2(48, 48);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].image = image;
-                        World[player.player_level].bgnd_count++;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
                     } break;
                 case 741561343:
                     {
                         //2c3353
                         static Image image[] = {LoadImage(S("bolted_plates16.png"))};
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].position = v2(i, k);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].size = v2(48, 48);
-                        World[player.player_level].backgrounds[World[player.player_level].bgnd_count].image = image;
-                        World[player.player_level].bgnd_count++;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
+                    } break;
+                case 1049184511:
+                    {
+                        //2c3353
+                        static Image image[] = {LoadImage(S("bolted_plates16.png"))};
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.count++;
+                    } break;
+                case 1050692607:
+                    {
+                        //3ea04b
+                        World[player.player_level].liquid.data[World[player.player_level].liquid.count] = make_liquid(v2(i, k), 0);
+                        World[player.player_level].liquid.count++;
+                    } break;
+                case 423378687:
+                    {
+                        //193c3e
+                        World[player.player_level].liquid.data[World[player.player_level].liquid.count] = make_liquid(v2(i, k), 1);
+                        World[player.player_level].liquid.count++;
                     } break;
                 case -16759553:
                     {
@@ -455,6 +564,11 @@ void make_world(Level level) {
                     {
                         //743b35
                         make_interactible(v2(i, k), 2, level.id);
+                    } break;
+                case 776045311:
+                    {
+                        //2e4182
+                        make_interactible(v2(i, k), 3, level.id);
                     } break;
                 case 842807807:
                     {
@@ -685,6 +799,7 @@ void make_world(Level level) {
                     {
                         static Image image[] = {LoadImage(S("penguin_idle.png"))};
                         make_wall(v2(i, k), pixel, image);
+                        Dump(pixel);
                     } break;
                 }; 
                 
@@ -693,10 +808,158 @@ void make_world(Level level) {
     }
 }
 
+EntityArray make_entity_array(i32 size) {
+    EntityArray arr = {};
+    arr.data = (Entity*) malloc(size*sizeof(Entity));
+    arr.count = 0;
+    arr.capacity = size;
+
+    return arr;
+}
+
+/*EntityArray add_to_pos(EntityArray arr, Entity entity, i32 pos) {
+    EntityArray arr_ret = {};
+    Entity ar_data[arr.capacity] = {};
+
+    arr_ret.data = ar_data;
+    arr_ret.count = 0;
+    arr_ret.capacity = arr.capacity;
+
+    i32 count;
+
+    for (int i = 0; i < arr.count+1; i++) {
+        if (i == pos) {
+            arr_ret.data[i] = entity;
+            arr_ret.count++;
+        } else {
+            arr_ret.data[i] = arr.data[count];
+            arr_ret.count++;
+            count++;
+        }
+    }
+
+    return arr;
+}
+
+EntityArray* get_array_with_id(EntityArray arr, i32 id) {
+    EntityArray* arr_ret = {};
+
+    Enitty data[arr.count] = {};
+    arr_ret.count = 0;
+    arr_ret.capacity = arr.count;
+
+    for (int i = 0; i < arr.count; i++) {
+        if (arr.data[i].id == id) {
+            arr_ret.data[arr_ret.count] = arr.data[i];
+            arr_ret.count++;
+        }
+    }
+
+    return arr_ret;
+}
+
+i32 compare_entity_position(const void *one, const void *two) {
+    Entity *a0 = (Entity *)one;
+    Entity *b0 = (Entity *)two;
+
+    return a0->position.x - b0->position.x;
+}
+
+/*void return_gate(EntityArray arr, Entity *pos) {
+    EntityArray gates = {};
+    Entity data[arr.capacity] = {};
+    gates.data = data;
+    gates.capacity = arr.capacity;
+    gates.count = 0;
+
+    for (int i = 0; i < arr.count; i++) {
+        if (gates.count == 0) {
+            gates.data[0] = arr.data[i];
+        }
+        b32 added = false;
+        for (int k = 0; k < gates.count; k++) {
+            if (entity_get_distance_x(&arr.data[i], pos) < entity_get_distance_x(gates.data[k], pos)) {
+                gates = add_to_pos(gates, arr.data[i], k);
+                added = true;
+            }
+        }
+
+        if (!added) {
+            gates.data[gates.count] = arr.data[i];
+            gates.count++;
+        }
+    }
+
+    return gates;
+}*/
+
+const i32 SEWERWATER = 0;
+const i32 SEWERWATERSTILL = 1;
+
+Entity make_liquid(Vector2 pos, i32 id) {
+    Entity entity = {};
+
+    switch (id)
+    {
+    case SEWERWATER:
+        {
+            static Image image[] = {
+                LoadImage(S("sewer_water1.png")),
+                LoadImage(S("sewer_water2.png")),
+                LoadImage(S("sewer_water3.png")),
+            };
+
+            entity.image = image;
+            entity.position = pos;
+            entity.size = v2(48, 48);
+            entity.id = id;
+            entity.state_time = 0;
+            entity.sprite_index = 3;
+        } break;
+    case SEWERWATERSTILL:
+        {
+            static Image image[] = {
+                LoadImage(S("sewer_water_still.png")),
+            };
+
+            entity.image = image;
+            entity.position = pos;
+            entity.size = v2(48, 48);
+            entity.id = id;
+            entity.state_time = 0;
+            entity.sprite_index = 3;
+        } break;
+    default:
+        {
+            Dump(S("Something went wrong."));
+        } break;
+    }
+
+    return entity;
+}
+
+void liquid_do_liquid(Entity *liquid, Game_Input *input, i32 count) {
+    liquid->state_time+=input->dt;
+    liquid->sprite_index++;
+
+    i32 offset = (count%2)*48+liquid->sprite_index;
+
+    DrawImageColumn(liquid->image[0], v2(liquid->position.x-camera_pos.x+out->width*.5, liquid->position.y), liquid->size, offset);
+    //DrawImageColumn(liquid->image[0], v2(liquid->position.x+(liquid->size.x-liquid->sprite_index)-camera_pos.x+out->width*.5, liquid->position.y), v2(liquid->size.x - liquid->sprite_index, liquid->size.y), 0);
+
+    /*Rectangle2 rec = r2_bounds(v2(liquid->position.x-camera_pos.x+out->width*.5, liquid->position.y), liquid->size, v2_zero, v2_one);
+
+    DrawRectOutline(rec, v4_red, 2);*/
+
+    if (liquid->sprite_index == 96) {
+        liquid->sprite_index = 0;
+    }
+}
+
 Entity get_wall_at(Vector2 pos) {
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
-        if (World[player.player_level].wall[i].position.x == pos.x && World[player.player_level].wall[i].position.y == pos.y) {
-            return World[player.player_level].wall[i];
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
+        if (World[player.player_level].wall.data[i].position.x == pos.x && World[player.player_level].wall.data[i].position.y == pos.y) {
+            return World[player.player_level].wall.data[i];
         }
     }
 
@@ -706,11 +969,11 @@ Entity get_wall_at(Vector2 pos) {
 }
 
 bool enemy_on_enemy(Entity *entity_one) {
-    for (int i = 0; i < World[player.player_level].enemy_count; i++) {
+    for (int i = 0; i < World[player.player_level].enemies.count; i++) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
-            r2_bounds(v2(World[player.player_level].enemies[i].position.x, World[player.player_level].enemies[i].position.y), World[player.player_level].enemies[i].size, v2_zero, v2_one))) {
+            r2_bounds(v2(World[player.player_level].enemies.data[i].position.x, World[player.player_level].enemies.data[i].position.y), World[player.player_level].enemies.data[i].size, v2_zero, v2_one))) {
 
-            if (entity_one->enemy.id != World[player.player_level].enemies[i].enemy.id) {
+            if (entity_one->enemy.id != World[player.player_level].enemies.data[i].enemy.id) {
                 return true;
             }
         } 
@@ -720,9 +983,9 @@ bool enemy_on_enemy(Entity *entity_one) {
 }
 
 bool entity_on_wall(Entity *entity_one) {
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
-            r2_bounds(v2(World[player.player_level].wall[i].position.x, World[player.player_level].wall[i].position.y), World[player.player_level].wall[i].size, v2_zero, v2_one))) {
+            r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one))) {
             return true;
     } 
 }
@@ -731,15 +994,14 @@ return false;
 }
 
 bool wall_intersects(Entity *entity) {
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
-        if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall[i].position.x, World[player.player_level].wall[i].position.y), World[player.player_level].wall[i].size, v2_zero, v2_one))) {
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
+        if (r2_intersects(r2_bounds(entity->position, entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one))) {
             return true;
         }
     }
 
-    for (int i = 0; i < World[player.player_level].interactible_count; i++) {
-        if (World[player.player_level].interactible[i].type == 1 && r2_intersects(get_entity_rect(entity), r2_bounds(v2(World[player.player_level].interactible[i].position.x, World[player.player_level].interactible[i].position.y), 
-            World[player.player_level].interactible[i].size, v2_zero, v2_one)))
+    for (int i = 0; i < World[player.player_level].interactible.count; i++) {
+        if (World[player.player_level].interactible.data[i].type == 1 && r2_intersects(get_entity_rect(entity), get_entity_rect(&World[player.player_level].interactible.data[i])))
         {
             return true;
         }
@@ -747,30 +1009,40 @@ bool wall_intersects(Entity *entity) {
     return false;
 }
 
+bool wall_intersects_rec(Rectangle2 rec) {
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
+        if (r2_intersects(get_entity_rect(&World[player.player_level].wall.data[i]), rec)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool wall_ahead(Entity *entity) {
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
         if (entity->facing > 0)
         {
-            if (r2_intersects(r2_bounds(v2(entity->position.x+1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall[i].position.x, World[player.player_level].wall[i].position.y), World[player.player_level].wall[i].size, v2_zero, v2_one)))
+            if (r2_intersects(r2_bounds(v2(entity->position.x+1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one)))
             {
                 return true;
             }
-        } else if (r2_intersects(r2_bounds(v2(entity->position.x-1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall[i].position.x, World[player.player_level].wall[i].position.y), World[player.player_level].wall[i].size, v2_zero, v2_one)))
+        } else if (r2_intersects(r2_bounds(v2(entity->position.x-1, entity->position.y-1), entity->size, v2_zero, v2_one), r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one)))
         {
             return true;
         }
     }
 
-    for (int i = 0; i < World[player.player_level].interactible_count; i++) {
+    for (int i = 0; i < World[player.player_level].interactible.count; i++) {
         if (entity->facing > 0)
         {
             if (r2_intersects(r2_bounds(v2(entity->position.x+1, entity->position.y-1), entity->size, v2_zero, v2_one), 
-                r2_bounds(v2(World[player.player_level].interactible[i].position.x, World[player.player_level].interactible[i].position.y), World[player.player_level].interactible[i].size, v2_zero, v2_one)))
+                r2_bounds(v2(World[player.player_level].interactible.data[i].position.x, World[player.player_level].interactible.data[i].position.y), World[player.player_level].interactible.data[i].size, v2_zero, v2_one)))
             {
                 return true;
             }
         } else if (r2_intersects(r2_bounds(v2(entity->position.x-1, entity->position.y-1), entity->size, v2_zero, v2_one),
-            r2_bounds(v2(World[player.player_level].interactible[i].position.x, World[player.player_level].interactible[i].position.y), World[player.player_level].interactible[i].size, v2_zero, v2_one)))
+            r2_bounds(v2(World[player.player_level].interactible.data[i].position.x, World[player.player_level].interactible.data[i].position.y), World[player.player_level].interactible.data[i].size, v2_zero, v2_one)))
         {
             return true;
         }
@@ -780,13 +1052,21 @@ bool wall_ahead(Entity *entity) {
 }
 
 bool entity_in_air(Entity *entity_one) {
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+2), entity_one->size, v2_zero, v2_one),
-            r2_bounds(v2(World[player.player_level].wall[i].position.x, World[player.player_level].wall[i].position.y), World[player.player_level].wall[i].size, v2_zero, v2_one))) {
+            r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one))) {
             return false;
     }
 }
 return true;
+}
+
+i32 entity_get_distance_x(Entity *one, Entity *two) {
+    return abs_i32(one->position.x - two->position.x);
+}
+
+i32 get_entity_direction(Entity *entity) {
+    return sign_i32(player.position.x - entity->position.x);
 }
 
 const i32 particle_count = 10000;
@@ -870,34 +1150,34 @@ void make_boss_walls(Vector2 *pos, i32 count) {
     static Image boss_walls[] = {LoadImage(S("wall_flowers_white.png"))};
 
     for (int i = 0; i < count; i++) {
-        World[player.player_level].wall[World[player.player_level].wall_count].position = pos[i];
-        World[player.player_level].wall[World[player.player_level].wall_count].size = v2(48, 48);
-        World[player.player_level].wall[World[player.player_level].wall_count].image = boss_walls;
-        World[player.player_level].wall[World[player.player_level].wall_count].type = 2;
+        World[player.player_level].wall.data[World[player.player_level].wall.count].position = pos[i];
+        World[player.player_level].wall.data[World[player.player_level].wall.count].size = v2(48, 48);
+        World[player.player_level].wall.data[World[player.player_level].wall.count].image = boss_walls;
+        World[player.player_level].wall.data[World[player.player_level].wall.count].type = 2;
 
-        World[player.player_level].wall_count++;
+        World[player.player_level].wall.count++;
     }
 }
 
 void destroy_boss_walls() {
     i32 walls_destroyed = 0;
 
-    for (int i = 0; i < World[player.player_level].wall_count; i++) {
-        if (World[player.player_level].wall[i].type == 2) {
-            World[player.player_level].wall[i] = {};
+    for (int i = 0; i < World[player.player_level].wall.count; i++) {
+        if (World[player.player_level].wall.data[i].type == 2) {
+            World[player.player_level].wall.data[i] = {};
             walls_destroyed++;
         }
     }
 
-    World[player.player_level].wall_count-=walls_destroyed;
+    World[player.player_level].wall.count-=walls_destroyed;
 }
 
 void draw_enemy(Entity *nme, i32 frame) {
     if (nme->facing > 0) {
-        DrawImageMirrored(nme->enemy.image[frame], v2(nme->position.x-camera_pos.x+out->width*.5,
+        DrawImageMirrored(nme->image[frame], v2(nme->position.x-camera_pos.x+out->width*.5,
             nme->position.y + nme->enemy.offset.y), true, false);
     } else {
-        DrawImage(nme->enemy.image[frame], v2(nme->position.x-camera_pos.x+out->width*.5 + nme->enemy.offset.x,
+        DrawImage(nme->image[frame], v2(nme->position.x-camera_pos.x+out->width*.5 + nme->enemy.offset.x,
             nme->position.y+nme->enemy.offset.y));
     }
 }
@@ -914,22 +1194,22 @@ void move_enemy(Entity *nme, f32 dt) {
 
     for (int i = 0; i < abs_f32(dy); i++) {
         nme->position.y+=sign_f32(dy);
-        if (wall_intersects(nme) || enemy_overlap(nme)) {
-            nme->position.y-=sign_f32(dy);
-            nme->velocity.y=0;
-            break;
-        }
+        if (wall_intersects(nme) /*|| enemy_overlap(nme)*/) {
+        nme->position.y-=sign_f32(dy);
+        nme->velocity.y=0;
+        break;
     }
+}
 
 
-    for (int i = 0; i < abs_f32(dx); i++) {
-        nme->position.x+=sign_f32(dx);
-        if (wall_intersects(nme) || enemy_overlap(nme)) {
-            nme->position.x-=sign_f32(dx);
-            nme->velocity.x=0;
-            break;
-        }
-    }
+for (int i = 0; i < abs_f32(dx); i++) {
+    nme->position.x+=sign_f32(dx);
+        if (wall_intersects(nme) /*|| enemy_overlap(nme)*/) {
+    nme->position.x-=sign_f32(dx);
+    nme->velocity.x=0;
+    break;
+}
+}
 }
 
 Entity projectiles[1000] = {};
@@ -952,7 +1232,7 @@ void make_projectile(Image *image, Vector2 pos, Vector2 vel) {
 
     i32 slot = get_prejectile_slot();
 
-    projectiles[slot].enemy.image = image;
+    projectiles[slot].image = image;
     projectiles[slot].position = pos;
     projectiles[slot].velocity = vel;
     projectiles[slot].alive = true;
@@ -1003,41 +1283,41 @@ void update_projectiles(Game_Input *input, Entity *player) {
 }
 
 #include "enemy_pengus.cpp"
-#include "seals.cpp"
+#include "misc_enemies.cpp"
 #include "slime.cpp"
 
-void draw_fire(f32 dt) {
-    World[player.player_level].fire[0].state_time+=dt;
+void draw_fire(Entity *interactible, Game_Input *input) {
+    interactible->state_time+=input->dt;
 
-    if (i32(World[player.player_level].fire[0].state_time*60)%50 < 10) {
-        DrawImage(World[player.player_level].fire[0].image[0], v2(World[player.player_level].fire[0].position.x-camera_pos.x+out->width*.5, World[player.player_level].fire[0].position.y));
-    } else if (i32(World[player.player_level].fire[0].state_time*60)%50 < 20) {
-        DrawImage(World[player.player_level].fire[0].image[1], v2(World[player.player_level].fire[0].position.x-camera_pos.x+out->width*.5, World[player.player_level].fire[0].position.y));
-    } else if (i32(World[player.player_level].fire[0].state_time*60)%50 < 30) {
-        DrawImage(World[player.player_level].fire[0].image[2], v2(World[player.player_level].fire[0].position.x-camera_pos.x+out->width*.5, World[player.player_level].fire[0].position.y));
-    } else if (i32(World[player.player_level].fire[0].state_time*60)%50 < 40) {
-        DrawImage(World[player.player_level].fire[0].image[3], v2(World[player.player_level].fire[0].position.x-camera_pos.x+out->width*.5, World[player.player_level].fire[0].position.y));
+    if (i32(interactible->state_time*60)%50 < 10) {
+        DrawImage(interactible->image[0], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
+    } else if (i32(interactible->state_time*60)%50 < 20) {
+        DrawImage(interactible->image[1], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
+    } else if (i32(interactible->state_time*60)%50 < 30) {
+        DrawImage(interactible->image[2], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
+    } else if (i32(interactible->state_time*60)%50 < 40) {
+        DrawImage(interactible->image[3], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
     } else {
-        DrawImage(World[player.player_level].fire[0].image[4], v2(World[player.player_level].fire[0].position.x-camera_pos.x+out->width*.5, World[player.player_level].fire[0].position.y));
+        DrawImage(interactible->image[4], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
     }
 
     Particle_Parameters min = {};
     Particle_Parameters max = {};
 
-    min.position.x = World[player.player_level].fire[0].position.x+12;
-    max.position.x = World[player.player_level].fire[0].position.x + 36;
+    min.position.x = interactible->position.x+12;
+    max.position.x = interactible->position.x + 36;
 
-    min.position.y = World[player.player_level].fire[0].position.y;
-    max.position.y = World[player.player_level].fire[0].position.y + 18;
+    min.position.y = interactible->position.y;
+    max.position.y = interactible->position.y + 18;
 
     min.velocity.x = 0;
     max.velocity.x = 0;
 
-    min.velocity.y = -1200*dt;
-    max.velocity.y = -1700*dt;
+    min.velocity.y = -1200*input->dt;
+    max.velocity.y = -1700*input->dt;
 
-    min.life_time = 100.0*dt;
-    max.life_time = 200.0*dt;
+    min.life_time = 100.0*input->dt;
+    max.life_time = 200.0*input->dt;
 
     static Image smoke = LoadImage(S("smoke.png"));
 

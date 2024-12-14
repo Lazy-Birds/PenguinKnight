@@ -1,5 +1,6 @@
 #include "pengu_def.h"
 
+//General States
 const i32 NEUTRAL = 0;
 const i32 MOVE = 1;
 const i32 ATTACK = 2;
@@ -17,6 +18,9 @@ const i32 SHOOT = 13;
 const i32 DYING = 14;
 const i32 DEAD = 15;
 
+//Ooze States
+const i32 SPYING = 100;
+
 const i32 CAMERAFOLLOW = 0;
 const i32 CAMERALOCKED = 1;
 
@@ -24,6 +28,8 @@ String font_chars = {};
 Font font_hellomyoldfriend = {};
 
 Entity player = {};
+Entry_Points tele[100] = {};
+i32 tele_count = 0;
 
 bool swing_weapon;
 bool charging_weapon;
@@ -67,12 +73,12 @@ Rectangle2 get_entity_rect(Entity *entity) {
 }
 
 bool enemy_overlap(Entity *entity) {
-    for (int i = 0; i < World[player.player_level].enemy_count; i++) {
-        if (entity->enemy.id == World[player.player_level].enemies[i].enemy.id) return false;
-        if (!World[player.player_level].enemies[i].alive) continue;
+    for (int i = 0; i < World[player.player_level].enemies.count; i++) {
+        if (entity->enemy.id == World[player.player_level].enemies.data[i].enemy.id) return false;
+        if (!World[player.player_level].enemies.data[i].alive) continue;
 
         Rectangle2 rec1 = get_entity_rect(entity);
-        Rectangle2 rec2 = get_entity_rect(&World[player.player_level].enemies[i]);
+        Rectangle2 rec2 = get_entity_rect(&World[player.player_level].enemies.data[i]);
 
         if (r2_intersects(rec1, rec2)) {
             return true;
@@ -109,24 +115,24 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
     }  
 
 
-    for (int i = 0; i < World[player.player_level].enemy_count; i++) {
-        if (!World[player.player_level].enemies[i].invuln)
+    for (int i = 0; i < World[player.player_level].enemies.count; i++) {
+        if (!World[player.player_level].enemies.data[i].invuln && World[player.player_level].enemies.data[i].attackable)
         {
             if (facing > 0) {
                 if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
-                    get_entity_rect(&World[player.player_level].enemies[i])) && World[player.player_level].enemies[i].alive) {
+                    get_entity_rect(&World[player.player_level].enemies.data[i])) && World[player.player_level].enemies.data[i].alive) {
 
-                    World[player.player_level].enemies[i].invuln = true;
+                    World[player.player_level].enemies.data[i].invuln = true;
 
-                if (World[player.player_level].enemies[i].has_hit) {
-                    World[player.player_level].enemies[i].state = HIT;
+                if (World[player.player_level].enemies.data[i].has_hit) {
+                    World[player.player_level].enemies.data[i].state = HIT;
                 }
                 
-                if (World[player.player_level].enemies[i].current_health <= damage) {
-                    World[player.player_level].enemies[i].current_health = 0;
-                    World[player.player_level].enemies[i].state = DYING;
-                    World[player.player_level].enemies[i].state_time = 0;
-                    player.exp_gained += World[player.player_level].enemies[i].enemy.exp_dropped;
+                if (World[player.player_level].enemies.data[i].current_health <= damage) {
+                    World[player.player_level].enemies.data[i].current_health = 0;
+                    World[player.player_level].enemies.data[i].state = DYING;
+                    World[player.player_level].enemies.data[i].state_time = 0;
+                    player.exp_gained += World[player.player_level].enemies.data[i].enemy.exp_dropped;
                     if (player.mp_cooldown <= 0) {
                         player.current_mp+=10;
                         player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
@@ -134,8 +140,8 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     }
                     
                 } else {
-                    World[player.player_level].enemies[i].current_health-=damage;
-                    World[player.player_level].enemies[i].invuln = true;
+                    World[player.player_level].enemies.data[i].current_health-=damage;
+                    World[player.player_level].enemies.data[i].invuln = true;
                     if (player.mp_cooldown <= 0) {
                         player.current_mp+=10;
                         player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
@@ -145,19 +151,19 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
             }
         } else {
             if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
-                get_entity_rect(&World[player.player_level].enemies[i])) && World[player.player_level].enemies[i].alive) {
+                get_entity_rect(&World[player.player_level].enemies.data[i])) && World[player.player_level].enemies.data[i].alive) {
 
-                World[player.player_level].enemies[i].invuln = true;
+                World[player.player_level].enemies.data[i].invuln = true;
 
-            if (World[player.player_level].enemies[i].has_hit) {
-                World[player.player_level].enemies[i].state = HIT;
+            if (World[player.player_level].enemies.data[i].has_hit) {
+                World[player.player_level].enemies.data[i].state = HIT;
             }
             
-            if (World[player.player_level].enemies[i].current_health <= damage) {
-                World[player.player_level].enemies[i].current_health = 0;
-                World[player.player_level].enemies[i].state = DYING;
-                World[player.player_level].enemies[i].state_time = 0;
-                player.exp_gained += World[player.player_level].enemies[i].enemy.exp_dropped;
+            if (World[player.player_level].enemies.data[i].current_health <= damage) {
+                World[player.player_level].enemies.data[i].current_health = 0;
+                World[player.player_level].enemies.data[i].state = DYING;
+                World[player.player_level].enemies.data[i].state_time = 0;
+                player.exp_gained += World[player.player_level].enemies.data[i].enemy.exp_dropped;
                 if (player.mp_cooldown <= 0) {
                     player.current_mp+=10;
                     player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
@@ -165,8 +171,8 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                 }
                 
             } else {
-                World[player.player_level].enemies[i].current_health-=damage;
-                World[player.player_level].enemies[i].invuln = true;
+                World[player.player_level].enemies.data[i].current_health-=damage;
+                World[player.player_level].enemies.data[i].invuln = true;
                 if (player.mp_cooldown <= 0) {
                     player.current_mp+=10;
                     player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
@@ -203,7 +209,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.check_point = v2(8449, 476);//v2(672, out->height - 244);
+    player.check_point = v2(480, 524);//v2(8449, 476);//v2(672, out->height - 244);
+    player.check_point_level = 1;
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
@@ -216,7 +223,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_mp = player.max_mp;
     player.mp_cooldown = 0;
     player.shield_hit = 0;
-    player.fairy_uses = 0;
+    player.fairy_uses = 3;
     player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
@@ -225,9 +232,10 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.size = v2(40, 52);
     player.exp_gained = 0;
     player.exp_to_level = 600;
-    player.level = 0;
+    player.level = 1;
     player.type = 0;
-    player.player_level = VILLAGE;
+    player.player_level = SCRAMSEWERSENTRY;
+    player.acting_cd = 0;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -270,6 +278,7 @@ void GameStart(Game_Input *input, Game_Output *out)
 void reset_vars() {
     TimeFunction;
     player.position = player.check_point;
+    player.player_level = player.check_point_level;
     player.current_health = player.max_health;
     player.current_stamina = player.max_stamina;
     player.current_mp = player.max_mp;
@@ -278,6 +287,7 @@ void reset_vars() {
     player.velocity = v2(0, 0);
     player.facing = -1;
     player.state = NEUTRAL;
+    player.current_fairy_uses = player.fairy_uses;
 
     camera_pos = player.position;
 
@@ -389,24 +399,22 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     {
         create_levels();
         GameStart(input, out);
-        set_world(false, village);
+        set_world(false, World[0]);
         initted = true;
     }
 
     Controller CC = input->controllers[0];
 
-    if (menu_open) {
+    if (in_menu) {
         if (ControllerReleased(0, Button_Start)) {
-            if (menu_open) {
-                menu_open = false;
-            } else {
-                menu_open = true;
-            }
+            in_menu = false;
         }
 
         draw_menu(out, &player, screen);
     } else if (player.alive) {
         //DrawClear(v4(0.2, 0.2, 0.2, 1));
+
+        Level *level = &World[player.player_level];
 
         draw_background();
 
@@ -423,65 +431,75 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         update_projectiles(input, &player);
 
-        for (int i = 0; i < World[player.player_level].interactible_count; i++)
+        for (int i = 0; i < World[player.player_level].interactible.count; i++)
         {
-            if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible[i])) && !World[player.player_level].interactible[i].acting 
-                && World[player.player_level].interactible[i].actable)
+            if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible.data[i])) && !World[player.player_level].interactible.data[i].acting 
+                && World[player.player_level].interactible.data[i].actable)
             {
-                Rectangle2 text_box = r2_bounds(v2(World[player.player_level].interactible[i].position.x-28-camera_pos.x+out->width*.5, World[player.player_level].interactible[i].position.y-28),
+                Rectangle2 text_box = r2_bounds(v2(World[player.player_level].interactible.data[i].position.x-28-camera_pos.x+out->width*.5, World[player.player_level].interactible.data[i].position.y-28),
                     v2(104, 20), v2_zero, v2_one);
 
                 DrawRect(text_box, v4_black);
 
-                DrawTextExt(font_hellomyoldfriend, S("Press U."), v2(World[player.player_level].interactible[i].position.x-24-camera_pos.x+out->width*.5,
-                    World[player.player_level].interactible[i].position.y-24), v4_white, v2_zero, 1.0);
+                DrawTextExt(font_hellomyoldfriend, S("Press U."), v2(World[player.player_level].interactible.data[i].position.x-24-camera_pos.x+out->width*.5,
+                    World[player.player_level].interactible.data[i].position.y-24), v4_white, v2_zero, 1.0);
 
                 if ((player.state == NEUTRAL || player.state == MOVE) && player.acting)
                 {
-                    World[player.player_level].interactible[i].acting = true;
+                    World[player.player_level].interactible.data[i].acting = true;
                 }
+            } else if (World[player.player_level].interactible.data[i].action_id == 4 && r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible.data[i])) && !World[player.player_level].interactible.data[i].acting 
+                && World[player.player_level].interactible.data[i].actable) {
+
             }
             
-            if (World[player.player_level].interactible[i].acting)
+            if (World[player.player_level].interactible.data[i].acting)
             {
-                interact(&World[player.player_level].interactible[i], input, camera_pos);
+                interact(&World[player.player_level].interactible.data[i], input, camera_pos);
+            } else if (World[player.player_level].interactible.data[i].action_id == 4)
+            {
+                draw_fire(&World[player.player_level].interactible.data[i], input);
             } else
             {
-                DrawImage(World[player.player_level].interactible[i].image[0], 
-                    v2(World[player.player_level].interactible[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].interactible[i].position.y));
+                DrawImage(World[player.player_level].interactible.data[i].image[0], 
+                    v2(World[player.player_level].interactible.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].interactible.data[i].position.y));
             }
         }
 
-        for (int i = 0; i < World[player.player_level].bgnd_count; i++) {
-            DrawImage(World[player.player_level].backgrounds[i].image[0], v2(World[player.player_level].backgrounds[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds[i].position.y));
+        for (int i = 0; i < World[player.player_level].liquid.count; i++) {
+            liquid_do_liquid(&World[player.player_level].liquid.data[i], input, i);
         }
 
-        for (int i = 0; i < World[player.player_level].wall_count; i++) {
-            DrawImage(World[player.player_level].wall[i].image[0], v2(World[player.player_level].wall[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].wall[i].position.y));
+        for (int i = 0; i < World[player.player_level].backgrounds.count; i++) {
+            DrawImage(World[player.player_level].backgrounds.data[i].image[0], v2(World[player.player_level].backgrounds.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds.data[i].position.y));
         }
 
-        if (player.player_level == 0 && abs_i32(World[player.player_level].fire[0].position.x - player.position.x) < 1200) {
+        for (int i = 0; i < World[player.player_level].wall.count; i++) {
+            DrawImage(World[player.player_level].wall.data[i].image[0], v2(World[player.player_level].wall.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].wall.data[i].position.y));
+        }
+
+        /*if (World[player.player_level].fire_count != 0 && abs_i32(World[player.player_level].fire[0].position.x - player.position.x) < 1200) {
             draw_fire(input->dt);
-        }
+        }*/
 
-        for (int i = 0; i < World[player.player_level].house_count; i++) {
-            if (abs_i32(World[player.player_level].housing[i].position.x - player.position.x) < 1200 && abs_i32(World[player.player_level].housing[i].position.y - player.position.y) < 500) {
-                World[player.player_level].housing[i].state_time+=input->dt;
-                draw_house(&World[player.player_level].housing[i]);
-                if (World[player.player_level].housing[i].state_time*60 > 180) {
-                    World[player.player_level].housing[i].state_time = 0;
+        for (int i = 0; i < World[player.player_level].housing.count; i++) {
+            if (abs_i32(World[player.player_level].housing.data[i].position.x - player.position.x) < 1200 && abs_i32(World[player.player_level].housing.data[i].position.y - player.position.y) < 500) {
+                World[player.player_level].housing.data[i].state_time+=input->dt;
+                draw_house(&World[player.player_level].housing.data[i]);
+                if (World[player.player_level].housing.data[i].state_time*60 > 180) {
+                    World[player.player_level].housing.data[i].state_time = 0;
                 }
             }
         }
 
-        for (int i = 0; i < World[player.player_level].npc_count; i++) {
-            if (abs_i32(World[player.player_level].npcs[i].position.x - player.position.x) < 1200) {
-                npc_action(&World[player.player_level].npcs[i], &player);
+        for (int i = 0; i < World[player.player_level].npcs.count; i++) {
+            if (abs_i32(World[player.player_level].npcs.data[i].position.x - player.position.x) < 1200) {
+                npc_action(&World[player.player_level].npcs.data[i], &player);
             }
         }
 
-        for (int i = 0; i < World[player.player_level].enemy_count; i++) {
-            if (World[player.player_level].enemies[i].enemy.type == 1 && World[player.player_level].enemies[i].alive) seal_action(&World[player.player_level].enemies[i], input, &player);
+        for (int i = 0; i < World[player.player_level].enemies.count; i++) {
+            if (World[player.player_level].enemies.data[i].enemy.type == 1 && World[player.player_level].enemies.data[i].alive) seal_action(&World[player.player_level].enemies.data[i], input, &player);
         }
 
         f32 dt = input->dt;
@@ -516,30 +534,30 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawRect(r2_bounds(v2(70, 48), v2(20+player.max_mp, 12), v2_zero, v2_one), v4_black);
         DrawRect(r2_bounds(v2(72, 50), v2(16+player.current_mp, 8), v2_zero, v2_one), v4_blue);
         
-        for (int i = 0; i < World[player.player_level].enemy_count; i++) {
-            if (World[player.player_level].enemies[i].alive) {
+        for (int i = 0; i < World[player.player_level].enemies.count; i++) {
+            if (World[player.player_level].enemies.data[i].alive) {
 
-                if (World[player.player_level].enemies[i].enemy.type == 1) {
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies[i].position.y-2-12), v2(World[player.player_level].enemies[i].size.x+4+World[player.player_level].enemies[i].enemy.offset.x, 12),
+                if (World[player.player_level].enemies.data[i].enemy.type == 1) {
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4+World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies[i].position.y-12), v2(World[player.player_level].enemies[i].current_health/World[player.player_level].enemies[i].max_health*(World[player.player_level].enemies[i].size.x+4+World[player.player_level].enemies[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4+World[player.player_level].enemies.data[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
-                    if (World[player.player_level].enemies[i].facing > 0) 
+                    if (World[player.player_level].enemies.data[i].facing > 0) 
                     {
-                        DrawImageMirrored(World[player.player_level].enemies[i].enemy.image[0], v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5 + World[player.player_level].enemies[i].enemy.offset.x,
-                           World[player.player_level].enemies[i].position.y+World[player.player_level].enemies[i].enemy.offset.y), true, false);
+                        DrawImageMirrored(World[player.player_level].enemies.data[i].image[0], v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5 + World[player.player_level].enemies.data[i].enemy.offset.x,
+                           World[player.player_level].enemies.data[i].position.y+World[player.player_level].enemies.data[i].enemy.offset.y), true, false);
                     } else 
                     {
-                        DrawImage(World[player.player_level].enemies[i].enemy.image[0], v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5 + World[player.player_level].enemies[i].enemy.offset.x,
-                           World[player.player_level].enemies[i].position.y+World[player.player_level].enemies[i].enemy.offset.y));
+                        DrawImage(World[player.player_level].enemies.data[i].image[0], v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5 + World[player.player_level].enemies.data[i].enemy.offset.x,
+                           World[player.player_level].enemies.data[i].position.y+World[player.player_level].enemies.data[i].enemy.offset.y));
                     }
-                } else if (World[player.player_level].enemies[i].enemy.type == 4 && abs_f32(player.position.x - World[player.player_level].enemies[i].position.x) < 900 && abs_i32(player.position.y - World[player.player_level].enemies[i].position.y) < 700) {
-                    p_soldier_action(&World[player.player_level].enemies[i], input->dt, &player, invuln_time, input);
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies[i].position.y-2-12), v2(World[player.player_level].enemies[i].size.x+4-World[player.player_level].enemies[i].enemy.offset.x, 12),
+                } else if (World[player.player_level].enemies.data[i].enemy.type == 4 && abs_f32(player.position.x - World[player.player_level].enemies.data[i].position.x) < 900 && abs_i32(player.position.y - World[player.player_level].enemies.data[i].position.y) < 700) {
+                    p_soldier_action(&World[player.player_level].enemies.data[i], input->dt, &player, invuln_time, input);
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies[i].position.y-12), v2(World[player.player_level].enemies[i].current_health/World[player.player_level].enemies[i].max_health*(World[player.player_level].enemies[i].size.x+4-World[player.player_level].enemies[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
-                } else if (!bosses_killed[0] && World[player.player_level].enemies[i].enemy.type == 3 && player.position.x > 8400 && player.position.x < 9504) {
+                } else if (!bosses_killed[0] && World[player.player_level].enemies.data[i].enemy.type == 3 && player.position.x > 8400 && player.position.x < 9504) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(8880, out->height);
 
@@ -568,14 +586,22 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
                     
 
-                    penguin_king_action(&World[player.player_level].enemies[i], &player, input->dt, out);
+                    penguin_king_action(&World[player.player_level].enemies.data[i], &player, input->dt, out);
 
-                } else if (World[player.player_level].enemies[i].type == 6 && abs_i32(World[player.player_level].enemies[i].position.x - player.position.x) < 1200) {
-                    slime_action(&World[player.player_level].enemies[i], &player, input);
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies[i].position.y-2-12), v2(World[player.player_level].enemies[i].size.x+4-World[player.player_level].enemies[i].enemy.offset.x, 12),
+                } else if (World[player.player_level].enemies.data[i].type == 6 && abs_i32(World[player.player_level].enemies.data[i].position.x - player.position.x) < 1200) {
+                    slime_action(&World[player.player_level].enemies.data[i], &player, input);
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
-                    DrawRect(r2_bounds(v2(World[player.player_level].enemies[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies[i].position.y-12), v2(World[player.player_level].enemies[i].current_health/World[player.player_level].enemies[i].max_health*(World[player.player_level].enemies[i].size.x+4-World[player.player_level].enemies[i].enemy.offset.x),
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
                         8), v2_zero, v2_one), v4_red);
+                } else if (World[player.player_level].enemies.data[i].type == 7 && abs_i32(World[player.player_level].enemies.data[i].position.x - player.position.x) < 1200) {
+                    eye_monster_action(&World[player.player_level].enemies.data[i], input);
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
+                     v2_zero, v2_one), v4_black);
+                    DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
+                        8), v2_zero, v2_one), v4_red);
+                } else if (level->enemies.data[i].type == 8 && entity_get_distance_x(&player, &level->enemies.data[i]) < 500) {
+                    ooze_action(&level->enemies.data[i], input);
                 }
 
             }
@@ -587,21 +613,21 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
 
 
-        if (ControllerReleased(0, Button_Start)) {
+        /*if (ControllerReleased(0, Button_Start)) {
             if (menu_open) {
                 menu_open = false;
             } else {
                 menu_open = true;
             }
-        }
+        }*/
 
 
 
            
         /*
-        for (int i = 0; i < World[player.player_level].enemy_count; i++) {
+        for (int i = 0; i < World[player.player_level].enemies.count; i++) {
 
-            draw_bound_box(&World[player.player_level].enemies[i]);
+            draw_bound_box(&World[player.player_level].enemies.data[i]);
         }
 
         draw_bound_box(&player);
@@ -610,7 +636,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         particle_update(input->dt);
 
-        if (menu_open) {
+        if (in_menu) {
             screen = MakeScreenImage(out);
             draw_menu(out, &player, screen);
         }
@@ -622,10 +648,10 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         DrawClear(v4(0.2, 0.2, 0.2, 1));
 
         DrawTextExt(font_hellomyoldfriend, S("You Died"), v2(out->width/2 - 144, out->height/2-18), v4_red, v2_zero, 3.0);
-        DrawTextExt(font_hellomyoldfriend, S("Press Q to Respawn"), v2(out->width/2 - 324, out->height/2+54), v4_red, v2_zero, 3.0);
+        DrawTextExt(font_hellomyoldfriend, S("Press I to Respawn"), v2(out->width/2 - 324, out->height/2+54), v4_red, v2_zero, 3.0);
 
         if (ControllerReleased(0, Button_A)) {
-            set_world(true, village);
+            set_world(true, World[player.check_point_level]);
         }
 
         /*Image you_died = LoadImage(S("you_died.png"));
