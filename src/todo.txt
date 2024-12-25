@@ -9,6 +9,9 @@ Dialogue box can write 35 char.
 
 boss wall types is 2
 
+angle_between
+v2_arm
+
 Todo:
 
 -Sound
@@ -25,6 +28,8 @@ Todo:
 --button mapping
 --More intuitive shield
 --dynamic attacking/movement?
+--Fix mirroredX draw code.
+--liquid levels
 
 
 

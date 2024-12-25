@@ -71,11 +71,17 @@ struct Entity
     f32 current_health;
     f32 min_health;
 
+    //Bools
     bool invuln;
     bool attackable;
     bool alive;
     bool has_hit;
     bool poisoned;
+    bool assymetric;
+
+    //Sounds
+    Sound jumpies;
+    Sound hit;
 
     f32 max_stamina;
     f32 current_stamina;
@@ -97,6 +103,8 @@ struct Entity
 
     Vector2 size;
     Vector2 anchor;
+    Vector2 offset;
+    Rectangle2 hitbox;
 
     i32 facing;
     i32 type;
@@ -219,7 +227,7 @@ struct Fire {
 //Functions
 //Levels
 void create_levels();
-void make_interactible(Vector2 position, i32 id, i32 level_id);
+void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type);
 void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos);
 void create_level_entries();
 
@@ -231,6 +239,7 @@ i32 get_open_snowflake();
 void spawn_initial_snowflakes(Game_Output *out, Game_Input *input);
 void spawn_snowflakes(Game_Output *out, Game_Input *input);
 void update_snowflakes(Game_Output *out, i32 offset);
+void generate_drips(Vector2 pos, Image drip, Game_Input *input);
 
 //Dialogue
 void load_fairy_dialogue(Entity *fairy);
@@ -245,22 +254,28 @@ void make_npcs(Vector2 pos, i32 type);
 void make_wall(Vector2 pos, u32 pixel, String image);
 void make_world(Level level);
 EntityArray make_entity_array(i32 size);
+EntityArray make_entity_array_two(Arena *arena, i32 size);
 Entity make_liquid(Vector2 pos, i32 id);
 void liquid_do_liquid(Entity *liquid, Game_Input *input, i32 count);
 Entity get_wall_at(Vector2 pos);
+void reset_enemies();
 bool enemy_on_enemy(Entity *entity_one);
 bool entity_on_wall(Entity *entity_one);
 bool wall_intersects(Entity *entity);
 bool wall_intersects_rec(Rectangle2 rec);
 bool wall_ahead(Entity *entity);
 bool entity_in_air(Entity *entity_one);
-i32 entity_get_distance_x(Entity *one, Entity *two);
+f32 entity_get_distance_x(Entity *one, Entity *two);
+f32 entity_get_distance_y(Entity *one, Entity *two);
+f32 entity_get_anchor_distance_direct(Entity *one, Entity *two);
 i32 get_entity_direction(Entity *entity);
+void reset_particles();
 void particle_create(Vector2 pos, Vector2 velocity, f32 lifetime, /*Vector4 color, Vector2 accel,*/ Image image);
 void particle_emit(Particle_Parameters min, Particle_Parameters max, Image image);
 void particle_update(f32 dt);
 void make_boss_walls(Vector2 *pos, i32 count);
 void destroy_boss_walls();
+void draw_boss_health_bar(Entity *boss);
 void draw_enemy(Entity *nme, i32 frame);
 void move_enemy(Entity *nme, f32 dt);
 i32 get_prejectile_slot();
@@ -283,6 +298,9 @@ void lazer_attack(Entity *monster);
 
 //Slime
 void slime_action(Entity *slime, Entity *player, Game_Input *input);
+void ooze_action(Entity *ooze, Game_Input *input);
+void raise_water();
+void draw_super_lazer(Vector2 point_one, Vector2 point_two);
 
 //Menu
 i32 mouse_over_rec(Rectangle2 rec1, Rectangle2 rec2);
@@ -310,5 +328,7 @@ void player_action(Game_Input *input);
 void check_level();
 void set_enemy_vuln();
 void player_hit(Entity *entity, Game_Input *input);
+void draw_player(i32 frame);
 void player_move(Game_Input *input);
 b32 player_in_poison();
+void draw_hook_shot(Entity *target);

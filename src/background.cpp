@@ -60,3 +60,25 @@ void update_snowflakes(Game_Output *out, i32 offset) {
 		}
 	}
 }
+
+void generate_drips(Vector2 pos, Image drip, Game_Input *input) {
+	Particle_Parameters min = {};
+	Particle_Parameters max = {};
+
+	min.position.x = pos.x;
+	min.position.y = pos.y;
+
+	max.position.x = pos.x+12;
+	max.position.y = pos.y+12;
+
+	min.velocity.x = 0;
+	min.velocity.y = 150;
+
+	max.velocity.x = 0;
+	max.velocity.y = 200;
+
+	min.life_time = 40*input->dt;
+	max.life_time = 50*input->dt;
+
+	particle_emit(min, max, drip);
+}

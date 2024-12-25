@@ -918,6 +918,14 @@ void DrawImageColumn(Image image, Vector2 pos, Vector2 size, i32 offset) {
     DrawImageExt(image, dest, v4_white, uv);
 }
 
+void DrawImageRow(Image image, Vector2 pos, Vector2 size, i32 offset) {
+    Rectangle2 dest = r2_bounds(pos, size, v2_zero, v2_one);
+    Vector2 scale = v2(1.0/image.size.width, 1.0/image.size.height);
+    Rectangle2 uv = r2_from_f32(0, offset*scale.y, 1, (size.y+offset)*scale.y);
+
+    DrawImageExt(image, dest, v4_white, uv);
+}
+
 void DrawImageMirrored(Image image, Vector2 pos, b32 flip_x, b32 flip_y)
 {
     Rectangle2 dest = r2(pos, pos + v2_from_v2i(image.size));

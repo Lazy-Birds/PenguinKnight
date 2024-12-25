@@ -249,6 +249,9 @@ void lazer_attack(Entity *monster) {
     Vector2 size = v2(monster->sprite_index*monster->projectile[0].size.width, monster->projectile[0].size.height);
 
     Rectangle2 rec = r2_bounds(pos, size, v2_zero, v2_one);
+    Rectangle2 rec_out = r2_shift(rec, v2(-camera_pos.x+out->width*.5, 0));
+
+    DrawRectOutline(rec_out, v4_red, 2);
 
     for (int i = 0; i < monster->sprite_index; i++)
     {

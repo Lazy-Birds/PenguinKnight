@@ -13,6 +13,8 @@ const i32 SCRAMSEWERSENTRY = 1;
 
 Level World[world_size] = {};
 
+Arena *pengu_arena = NULL;
+
 void create_levels() {
 
     World[0].name = S("Village");
@@ -30,21 +32,27 @@ void create_levels() {
     World[4].name = S("SCRAM_Interway_two");
     World[4].scale = 3;
     World[4].region = v2i(0, 1);
-    World[4].name = S("Boss_Room");
-    World[4].scale = 3;
-    World[4].region = v2i(0, 1);
+    World[5].name = S("Boss_Room");
+    World[5].scale = 3;
+    World[5].region = v2i(0, 1);
 
+    if (!pengu_arena){
+        pengu_arena = arena_alloc(Gigabytes(1));
+    } else {
+        arena_reset(pengu_arena);
+    }
+    
     for (int i = 0; i < world_size; i++) {
         World[i].id = i;
         World[i].world = LoadImage(sprint("level%d.png", i));
         World[i].background = LoadImage(string_concat(sprint("region%d", World[i].region.x), sprint("area%d.png", World[i].region.y)));
-        World[i].wall = make_entity_array(wall_unit*World[i].scale);
-        World[i].interactible = make_entity_array(interactible_unit*World[i].scale);
-        World[i].enemies = make_entity_array(enemy_unit*World[i].scale);;
-        World[i].npcs = make_entity_array(npc_unit*World[i].scale);
-        World[i].backgrounds = make_entity_array(bgnd_unit*World[i].scale);
-        World[i].housing = make_entity_array(house_unit*World[i].scale);
-        World[i].liquid = make_entity_array(liquid_unit*World[i].scale);
+        World[i].wall = make_entity_array_two(pengu_arena, wall_unit*World[i].scale);
+        World[i].interactible = make_entity_array_two(pengu_arena, interactible_unit*World[i].scale);
+        World[i].enemies = make_entity_array_two(pengu_arena, enemy_unit*World[i].scale);;
+        World[i].npcs = make_entity_array_two(pengu_arena, npc_unit*World[i].scale);
+        World[i].backgrounds = make_entity_array_two(pengu_arena, bgnd_unit*World[i].scale);
+        World[i].housing = make_entity_array_two(pengu_arena, house_unit*World[i].scale);
+        World[i].liquid = make_entity_array_two(pengu_arena, liquid_unit*World[i].scale);
         World[i].initialized = false;
     }
 
@@ -56,8 +64,9 @@ const i32 GATE = 1;
 const i32 GATETOO = 2;
 const i32 DOOR = 3;
 const i32 FIRE = 4;
+const i32 HOOK = 5;
 
-void make_interactible(Vector2 position, i32 id, i32 level_id) {
+void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
     switch (id)
     {
     case LEVER:
@@ -81,28 +90,35 @@ void make_interactible(Vector2 position, i32 id, i32 level_id) {
         } break;
     case GATE:
         {
-            static Image image[] = {
+            static Image bot[] = {
                 LoadImage(S("gate1.png")),
             };
 
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].image = image;
-            World[level_id].interactible.data[World[level_id].interactible.count].type = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
-
-            World[level_id].interactible.count++;
-        } break;
-    case GATETOO:
-        {
-            static Image image[] = {
+            static Image top[] = {
                 LoadImage(S("gate2.png")),
             };
 
+            if (type == 0) {
+                World[level_id].interactible.data[World[level_id].interactible.count].image = bot;
+            } else {
+                World[level_id].interactible.data[World[level_id].interactible.count].image = top;
+            }
+
+            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
+            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
+            World[level_id].interactible.data[World[level_id].interactible.count].type = type;
+            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 1;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
+            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
+            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
+
+            World[level_id].interactible.count++;
+        } break;
+    /*case GATETOO:
+        {
+            
+
             World[level_id].interactible.data[World[level_id].interactible.count].position = position;
             World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
             World[level_id].interactible.data[World[level_id].interactible.count].image = image;
@@ -114,7 +130,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id) {
             World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
 
             World[level_id].interactible.count++;
-        } break;
+        } break;*/
     case DOOR:
         {
             static Image image[] = {
@@ -163,6 +179,34 @@ void make_interactible(Vector2 position, i32 id, i32 level_id) {
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 4;
             World[level_id].interactible.data[World[level_id].interactible.count].id = 4;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
+            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+
+            World[level_id].interactible.count++;
+        } break;
+    case HOOK:
+        {
+            static Image right[] = {
+                LoadImage(S("hook_right.png")),
+            };
+
+            static Image left[] = {
+                LoadImage(S("hook_left.png")),
+            };
+
+            if (type == 0) {
+                World[level_id].interactible.data[World[level_id].interactible.count].image = right;
+                World[level_id].interactible.data[World[level_id].interactible.count].anchor = v2(position.x+48, position.y);
+            } else {
+                World[level_id].interactible.data[World[level_id].interactible.count].image = left;
+                World[level_id].interactible.data[World[level_id].interactible.count].anchor = v2(position.x, position.y);
+            }
+
+            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
+            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
+            World[level_id].interactible.data[World[level_id].interactible.count].type = type;
+            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 5;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = 5;
+            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
 
             World[level_id].interactible.count++;
@@ -313,10 +357,10 @@ void create_level_entries() {
     tele[8].actable = false;
     tele_count++;
 
-    tele[9].entry = r2_bounds(v2(1104, 48), v2(48, 96), v2_zero, v2_one);
+    tele[9].entry = r2_bounds(v2(1056, 48), v2(48, 96), v2_zero, v2_one);
     tele[9].link_id = 8;
     tele[9].level_id = 5;
-    tele[9].landing_pos = v2(1152, 92);
+    tele[9].landing_pos = v2(1104, 92);
     tele[9].actable = false;
     tele_count++;
 }

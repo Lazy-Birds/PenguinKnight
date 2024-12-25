@@ -6,20 +6,7 @@ void make_guards(Vector2 positions) {
     World[player.player_level].enemies.count++;
 }
 
-const i32 KINGNEUTRAL = 0;
-const i32 KINGSTOMPING = 1;
-const i32 KINGJUMPING = 2;
-const i32 KINGLEAPING = 3;
-const i32 KINGLANDING = 4;
-const i32 KINGGUARDBREAK = 5;
-const i32 KINGCOMMAND = 6;
-const i32 KINGWAIT = 7;
-const i32 KINGCHALLENGE = 20;
 
-const i32 PHASEONE = 0;
-const i32 PHASETWO = 1;
-
-i32 king_phase = PHASEONE;
 
 
 Vector2 stage_size = v2(8496, 9168);
@@ -66,8 +53,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
             pengu_king->state_prev = pengu_king->state;
         }
     } else {
-        DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50), v2(604, 12), v2_zero, v2_one), v4_black);
-        DrawRect(r2_bounds(v2(out->width*.5-300, out->height-48), v2((pengu_king->current_health/pengu_king->max_health)*600, 8), v2_zero, v2_one), v4_red);
+        draw_boss_health_bar(pengu_king);
     }
 
 
