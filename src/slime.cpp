@@ -115,33 +115,33 @@ case SHOOT:
             slime->state_time = 0;
             slime->projectile_launched = false;
 
-            if (random_f32_between(0, 1) < .25) {
-                slime->state = SHOOT;
-            } else {
-                slime->state = MOVE;
+                if (random_f32_between(0, 1) < .25) {
+                    slime->state = SHOOT;
+                } else {
+                    slime->state = MOVE;
+                }
             }
-        }
-    } break;
-case HIT:
-    {
-        if (slime->state_time*60 <= 6) {
-            draw_enemy(slime, 4);
-            if (slime->position.x > player->position.x)
-            {
-               slime->velocity.x = 8000*input->dt;
-               slime->velocity.y -= 6000*input->dt;
-           } else
-           {
-               slime->velocity.x = -8000*input->dt;
-               slime->velocity.y -= 6000*input->dt;
-           }
-       }
+        } break;
+    case HIT:
+        {
+            if (slime->state_time*60 <= 6) {
+                draw_enemy(slime, 4);
+                if (slime->position.x > player->position.x)
+                {
+                    slime->velocity.x = 8000*input->dt;
+                    slime->velocity.y -= 6000*input->dt;
+                } else
+                {
+                    slime->velocity.x = -8000*input->dt;
+                     slime->velocity.y -= 6000*input->dt;
+                 }
+            }
 
-       slime->enemy.sleep_time=20*input->dt;
+            slime->enemy.sleep_time=20*input->dt;
 
-       slime->state = MOVE;
-   } break;
-case DYING:
+            slime->state = MOVE;
+        } break;
+    case DYING:
     {
         Particle_Parameters min = {};
         Particle_Parameters max = {};
@@ -181,20 +181,20 @@ case DYING:
                 slime->alive = false;
             }*/
     } break;
-case DEAD:
-    {
-        slime->alive = false;
-    } break;
-}
-
-if (invuln_time <= 0){
-    if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(slime->position, slime->size, v2_zero, v2_one)))
-    {
-        player_hit(slime, input);
+    case DEAD:
+        {
+            slime->alive = false;
+        } break;
     }
-}
 
-move_enemy(slime, input->dt);
+    if (invuln_time <= 0){
+        if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(slime->position, slime->size, v2_zero, v2_one)))
+        {
+            player_hit(slime, input);
+        }   
+    }
+
+    move_enemy(slime, input->dt);
 }
 
 void ooze_action(Entity *ooze, Game_Input *input) {

@@ -55,6 +55,9 @@ Entity player = {};
 Entry_Points tele[100] = {};
 i32 tele_count = 0;
 
+EntityArray draw_last = {};
+i32 last_count = 0;
+
 bool swing_weapon;
 bool charging_weapon;
 bool on_cooldown;
@@ -65,6 +68,7 @@ bool bosses_killed[48] = {};
 bool gate_scene;
 
 f32 invuln_time = 0;
+f32 group_time = 0;
 
 Vector2 camera_pos;
 Vector2 camera_pos_target;
@@ -123,6 +127,10 @@ void draw_bound_box(Entity *entity) {
 
 void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 attack_type) {
     i32 damage = 0;
+
+    Rectangle2 sword_box_right = r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one);
+    Rectangle2 sword_box_left = r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one);
+
     switch (attack_type)
     {
     case 0: 
@@ -144,8 +152,8 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
         if (!World[player.player_level].enemies.data[i].invuln && World[player.player_level].enemies.data[i].attackable)
         {
             if (facing > 0) {
-                if (r2_intersects(r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one),
-                    World[player.player_level].enemies.data[i].hitbox) && World[player.player_level].enemies.data[i].alive) {
+                if (r2_intersects(sword_box_right, World[player.player_level].enemies.data[i].hitbox) 
+                    && World[player.player_level].enemies.data[i].alive) {
 
                     World[player.player_level].enemies.data[i].invuln = true;
 
@@ -174,9 +182,13 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     }
                 } 
             }
+
+            Rectangle2 draw_box = r2_shift(sword_box_right, v2(camera_offset, 0));
+
+            DrawRectOutline(draw_box, v4_red, 2);
         } else {
-            if (r2_intersects(r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one),
-                World[player.player_level].enemies.data[i].hitbox) && World[player.player_level].enemies.data[i].alive) {
+            if (r2_intersects(sword_box_left, World[player.player_level].enemies.data[i].hitbox) 
+                && World[player.player_level].enemies.data[i].alive) {
 
                 World[player.player_level].enemies.data[i].invuln = true;
 
@@ -203,8 +215,12 @@ void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 att
                     player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
                     player.mp_cooldown+=.5;
                 }
-            } 
+            }
         }
+
+        Rectangle2 draw_box = r2_shift(sword_box_left, v2(camera_offset, 0));
+
+        DrawRectOutline(draw_box, v4_red, 2);
     }
 }
 }
@@ -234,8 +250,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.dexterity = 10;
     player.mental = 10;
 
-    player.check_point = /*v2(1298, 524);*/v2(480, 524);//v2(8449, 476);/v2(672, out->height - 244);
-    player.check_point_level = 1;
+    player.check_point = /*v2(1298, 524);v2(480, 524);//v2(8449, 476);*/v2(672, out->height - 244);
+    player.check_point_level = 0;
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
@@ -427,11 +443,14 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     static b32 menu_open = false;
     static Image screen = {};
 
+
+
     if (!initted)
     {
         create_levels();
         GameStart(input, out);
         set_world(false, World[0]);
+        draw_last = make_entity_array_two(pengu_arena, 100);
         initted = true;
     }
 
@@ -445,9 +464,11 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         draw_menu(out, &player, screen);
     } else if (player.alive) {
+        MixerOutputPlayingSounds();
         //DrawClear(v4(0.2, 0.2, 0.2, 1));
 
         Level *level = &World[player.player_level];
+        group_time+=input->dt;
 
         draw_background();
 
@@ -466,7 +487,20 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         update_projectiles(input, &player);
 
         for (int i = 0; i < World[player.player_level].backgrounds.count; i++) {
-            DrawImage(World[player.player_level].backgrounds.data[i].image[0], v2(World[player.player_level].backgrounds.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds.data[i].position.y));
+
+            if (level->backgrounds.data[i].id == 7) {
+                draw_last.data[last_count] = level->backgrounds.data[i];
+                if (group_time*60 < 45) {
+                    draw_last.data[last_count].sprite_index = 0;
+                } else {
+                    draw_last.data[last_count].sprite_index = 1;
+                }
+                
+                last_count++;
+            } else {
+                DrawImage(World[player.player_level].backgrounds.data[i].image[0], v2(World[player.player_level].backgrounds.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].backgrounds.data[i].position.y));
+            }
+            
 
             if (level->backgrounds.data[i].id == 6) {
                 level->backgrounds.data[i].state_time+=input->dt;
@@ -550,9 +584,6 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             if (abs_i32(World[player.player_level].housing.data[i].position.x - player.position.x) < 1200 && abs_i32(World[player.player_level].housing.data[i].position.y - player.position.y) < 500) {
                 World[player.player_level].housing.data[i].state_time+=input->dt;
                 draw_house(&World[player.player_level].housing.data[i]);
-                if (World[player.player_level].housing.data[i].state_time*60 > 180) {
-                    World[player.player_level].housing.data[i].state_time = 0;
-                }
             }
         }
 
@@ -670,6 +701,11 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
             }
         }
+
+        for (int i = 0; i < last_count; i++) {
+            DrawImage(draw_last.data[i].image[draw_last.data[i].sprite_index], v2(draw_last.data[i].position.x+camera_offset, draw_last.data[i].position.y));
+        }
+        last_count = 0;
 
 
         player_action(input);

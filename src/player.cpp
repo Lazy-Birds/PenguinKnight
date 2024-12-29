@@ -29,7 +29,6 @@ void player_action(Game_Input *input) {
 
 	if (invuln_time > 0){
 		invuln_time-=dt;
-		PlaySoundStream(player.hit, 1.0);
 	}
 
 	if (heal_cd > 0) {
@@ -219,17 +218,13 @@ void player_action(Game_Input *input) {
 					player.velocity.y-=240;
 					player.current_stamina-=20;
 
-					SoundSeek(player.jumpies, 0);
-
-					PlaySoundStream(player.jumpies, 0.8);
+					MixerPlaySound(player.jumpies, 1.0);
 
 				} else if (player.velocity.y < 0) {
 					draw_player(player.weapon.jump.y);
-					PlaySoundStream(player.jumpies, 0.8);
 				} else {
 					draw_player(0);
 					player.state = NEUTRAL;
-					PlaySoundStream(player.jumpies, 0.8);
 				}
 			} else {
 				draw_player( 
@@ -385,12 +380,8 @@ void player_action(Game_Input *input) {
 
 				draw_player(player.weapon.frame_hit);
 
-				SoundSeek(player.hit, 0);
-
-				PlaySoundStream(player.hit, 1.0);
-
+				MixerPlaySound(player.hit, 1.0);
 			} else {
-				PlaySoundStream(player.hit, 1.0);
 				draw_player(player.weapon.frame_hit);
 				player.state = NEUTRAL;
 

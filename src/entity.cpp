@@ -215,8 +215,8 @@ Entity load_enemy(Vector2 pos, i32 type) {
             slim.position = pos;
             slim.check_point = pos;
             slim.size = v2(48, 37);
-            slim.hitbox = r2_bounds(v2(pos.x, pos.y+11), slim.size, v2_zero, v2_one);
-            slim.invuln = true;
+            slim.hitbox = get_entity_rect(&slim);
+            slim.invuln = false;
             slim.attackable = true;
             slim.facing = 1;
             slim.image = image;
@@ -355,8 +355,12 @@ Entity load_enemy(Vector2 pos, i32 type) {
 
 const i32 fairy = 0;
 const i32 lil_pengu = 1;
+const i32 mayor_snoresly = 2;
+const i32 pengu_pullers = 3;
 
 void make_npcs(Vector2 pos, i32 type) {
+    Level *level = &World[player.player_level];
+
     switch (type)
     {
     case fairy:
@@ -380,17 +384,47 @@ void make_npcs(Vector2 pos, i32 type) {
             static Image image[3] = {LoadImage(S("lil_pengu1.png")),
             LoadImage(S("lil_pengu2.png")),
             LoadImage(S("lil_pengu3.png")),
-        };
+            };
 
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].position = pos;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].image = image;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].alive = true;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].state_time = 0;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].animation_time = 0;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].dialogue_time = 0;
-        World[player.player_level].npcs.data[World[player.player_level].npcs.count].type = lil_pengu;
-    } break;
-}
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].position = pos;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].image = image;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].alive = true;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].state_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].animation_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].dialogue_time = 0;
+            World[player.player_level].npcs.data[World[player.player_level].npcs.count].type = lil_pengu;
+        } break;
+    case mayor_snoresly:
+        {
+            static Image image[] = {
+                LoadImage(S("mayor_snoresly1.png")),
+                LoadImage(S("mayor_snoresly2.png")),
+            };
+
+            level->npcs.data[level->npcs.count].position = pos;
+            level->npcs.data[level->npcs.count].image = image;
+            level->npcs.data[level->npcs.count].alive = true;
+            level->npcs.data[level->npcs.count].state_time = 0;
+            level->npcs.data[level->npcs.count].animation_time = 0;
+            level->npcs.data[level->npcs.count].dialogue_time = 0;
+            level->npcs.data[level->npcs.count].type = mayor_snoresly;
+        } break;
+    case pengu_pullers:
+        {
+            static Image image[] = {
+                LoadImage(S("pengu_puller1.png")),
+                LoadImage(S("pengu_puller2.png")),
+            };
+
+            level->npcs.data[level->npcs.count].position = pos;
+            level->npcs.data[level->npcs.count].image = image;
+            level->npcs.data[level->npcs.count].alive = true;
+            level->npcs.data[level->npcs.count].state_time = 0;
+            level->npcs.data[level->npcs.count].animation_time = 0;
+            level->npcs.data[level->npcs.count].dialogue_time = 0;
+            level->npcs.data[level->npcs.count].type = pengu_pullers;
+        } break;
+    }
 }
 
 void make_wall(Vector2 pos, u32 pixel, Image *image) {
@@ -400,6 +434,16 @@ void make_wall(Vector2 pos, u32 pixel, Image *image) {
     World[player.player_level].wall.data[World[player.player_level].wall.count].image = image;
 
     World[player.player_level].wall.count++;
+}
+
+void make_custom_wall(Vector2 pos, u32 pixel, Image *image, Vector2 size) {
+    Level *level = &World[player.player_level];
+    level->wall.data[level->wall.count].position = pos;
+    level->wall.data[level->wall.count].size = size;
+    level->wall.data[level->wall.count].wall_type.pixel = pixel;
+    level->wall.data[level->wall.count].image = image;
+
+    level->wall.count++;
 }
 
 void make_world(Level level) {
@@ -488,6 +532,16 @@ void make_world(Level level) {
                         make_npcs(v2(i, k), lil_pengu);
                         World[player.player_level].npcs.count++;
                     } break;
+                case 1803064575:
+                    {
+                        make_npcs(v2(i, k), mayor_snoresly);
+                        World[player.player_level].npcs.count++;
+                    } break;
+                case -327140609:
+                    {
+                        make_npcs(v2(i, k), pengu_pullers);
+                        World[player.player_level].npcs.count++;
+                    } break; 
                 case 1059599103:
                     {
                         static Image image[3] = {
@@ -499,6 +553,19 @@ void make_world(Level level) {
                         World[player.player_level].housing.data[World[player.player_level].housing.count].position = v2(i, k);
                         World[player.player_level].housing.data[World[player.player_level].housing.count].size = v2(192, 202);
                         World[player.player_level].housing.data[World[player.player_level].housing.count].image = image;
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].type = 0;
+                        World[player.player_level].housing.count++;
+                    } break;
+                case 659922687:
+                    {
+                        static Image image[] = {
+                            LoadImage(S("clock_tower.png")),
+                        };
+
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].position = v2(i, k);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].size = v2(64, 240);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].image = image;
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].type = 1;
                         World[player.player_level].housing.count++;
                     } break;
                 case -1017357057:
@@ -580,6 +647,34 @@ void make_world(Level level) {
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 6;
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].projectile = drip;
                         World[player.player_level].backgrounds.count++;
+                    } break;
+                case 2102019327:
+                    {
+                        //7d4a44
+                        static Image image[] = {
+                            LoadImage(S("work_rope1.png")),
+                            LoadImage(S("work_rope2.png")),
+                    };
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(288, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 7;
+                        World[player.player_level].backgrounds.count++;
+                    } break;
+                case -372160769:
+                    {
+                        static Image image[] = {
+                            LoadImage(S("street_lamp1.png")),
+                            LoadImage(S("street_lamp2.png")),
+                        };
+
+                        //e9d146
+
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].position = v2(i, k);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].size = v2(48, 96);
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].image = image;
+                        World[player.player_level].housing.data[World[player.player_level].housing.count].type = 2;
+                        World[player.player_level].housing.count++;
                     } break;
                 case 1050692607:
                     {
@@ -848,11 +943,18 @@ void make_world(Level level) {
                         //525458
                         make_wall(v2(i, k), pixel, image);
                     } break;
+                case -1751011073:
+                    {
+                        static Image image[] = {LoadImage(S("broken_beam.png"))};
+                        //525458
+                        make_custom_wall(v2(i, k), pixel, image, v2(96, 192));
+
+                    } break;
                 default:
                     {
                         static Image image[] = {LoadImage(S("penguin_idle.png"))};
                         make_wall(v2(i, k), pixel, image);
-                        Dump(pixel);
+                        Dump((u32)pixel);
                     } break;
                 }; 
                 
@@ -1329,6 +1431,9 @@ void draw_enemy(Entity *nme, i32 frame) {
 }
 
 void move_enemy(Entity *nme, f32 dt) {
+    f32 y_moved = 0;
+    f32 x_moved = 0;
+
     if (nme->enemy.type != 7) {
         nme->velocity.y+=496*input->dt;
     } else {
@@ -1340,22 +1445,32 @@ void move_enemy(Entity *nme, f32 dt) {
 
     for (int i = 0; i < abs_f32(dy); i++) {
         nme->position.y+=sign_f32(dy);
+        y_moved +=sign_f32(dy);
         if (wall_intersects(nme) /*|| enemy_overlap(nme)*/) {
         nme->position.y-=sign_f32(dy);
+        y_moved-=sign_f32(dy);
         nme->velocity.y=0;
         break;
     }
 }
 
 
-for (int i = 0; i < abs_f32(dx); i++) {
-    nme->position.x+=sign_f32(dx);
+    for (int i = 0; i < abs_f32(dx); i++) {
+        nme->position.x+=sign_f32(dx);
+        x_moved += sign_f32(dx);
         if (wall_intersects(nme) /*|| enemy_overlap(nme)*/) {
-    nme->position.x-=sign_f32(dx);
-    nme->velocity.x=0;
-    break;
-}
-}
+            nme->position.x-=sign_f32(dx);
+            x_moved -= sign_f32(dx);
+            nme->velocity.x=0;
+            break;
+        }
+    }
+
+    nme->hitbox = r2_shift(nme->hitbox, v2(x_moved, y_moved));
+
+    Rectangle2 draw_box = r2_shift(nme->hitbox, v2(camera_offset, 0));
+
+    DrawRectOutline(draw_box, v4_red, 2);
 }
 
 Entity projectiles[1000] = {};
@@ -1480,12 +1595,49 @@ void draw_fire(Entity *interactible, Game_Input *input) {
 }
 
 void draw_house(Entity *house) {
-    if (house->state_time*60 < 60) {
-        DrawImage(house->image[0], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
-    } else if (house->state_time*60 < 120) {
-        DrawImage(house->image[1], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
-    } else {
-        DrawImage(house->image[2], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+
+    switch (house->type)
+    {
+    case 0:
+        {
+            if (house->state_time*60 < 60) {
+                DrawImage(house->image[0], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+            } else if (house->state_time*60 < 120) {
+                DrawImage(house->image[1], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+            } else {
+                DrawImage(house->image[2], v2(house->position.x - camera_pos.x+out->width*.5, house->position.y));
+            }
+            
+            if (house->state_time*60 > 180) {
+                    house->state_time = 0;
+            }
+        } break;
+    case 1:
+        {
+            DrawImage(house->image[0], v2(house->position.x+camera_offset, house->position.y));
+        } break;
+    case 2:
+        {
+            if (house->sprite_index == 1 && house->state_time*60 < 20) {
+                DrawImage(house->image[1], v2(house->position.x+camera_offset, house->position.y));
+            } else if (house->sprite_index == 1 && house->state_time*60 > 20) {
+                DrawImage(house->image[1], v2(house->position.x+camera_offset, house->position.y));
+                house->sprite_index = 0;
+                house->state_time = 0;
+            } else if (house->state_time*60 > 120) {
+                if (random_f32_between(0, 1) < .01) {
+                    DrawImage(house->image[1], v2(house->position.x+camera_offset, house->position.y));
+                    house->state_time = 0;
+                    house->sprite_index = 1;
+                } else {
+                    DrawImage(house->image[0], v2(house->position.x+camera_offset, house->position.y));
+                }
+
+                
+            } else {
+                DrawImage(house->image[0], v2(house->position.x+camera_offset, house->position.y));
+            }
+        } break;
     }
 }
 
@@ -1493,66 +1645,112 @@ void npc_action(Entity *npc, Entity *player) {
     npc->animation_time+=input->dt;
     npc->state_time+=input->dt;
     npc->dialogue_time+=input->dt;
-    
-    if (npc->type == fairy && player->fairy_uses == 0) {
-        if (i32(npc->animation_time*60)%60 < 30) {
-            DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
-        } else {
-            DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
-        }
 
-        if (abs_i32(npc->position.x-player->position.x) < 200 && abs_i32(npc->position.y-player->position.y) < 300) {
-            if (!npc->talking) {
-                npc->talking = draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2);
+    switch (npc->type) {
+    case fairy:
+        {
+            if (player->fairy_uses == 0) {
+                if (i32(npc->animation_time*60)%60 < 30) {
+                    DrawImage(npc->image[0], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
+                } else {
+                    DrawImage(npc->image[1], v2(npc->position.x-camera_pos.x+out->width*.5, npc->position.y));
+                }
+
+                if (abs_i32(npc->position.x-player->position.x) < 200 && abs_i32(npc->position.y-player->position.y) < 300) {
+                    if (!npc->talking) {
+                        npc->talking = draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2);
+                    } else {
+                        player->fairy_uses = 3;
+                        player->current_fairy_uses = player->fairy_uses;
+
+                }
+
+                    /*if (npc->state_time*60.0 < 400) {
+                        draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2, npc->dialogue_time*60.0);
+                    }
+
+                    if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 402 ) {
+                        npc->dialogue_time = 0;
+                    }
+
+
+                    if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 800) {
+                        draw_dialogue_box(npc->dialogue[1], out, npc->portrait, 2, npc->dialogue_time*60.0);
+                    }
+
+                    if (npc->state_time*60.0 > 800 && npc->state_time*60.0 < 802 ) {
+                        npc->dialogue_time = 0;
+                    }
+
+
+                    if (npc->state_time*60.0 > 800) {
+                        draw_dialogue_box(npc->dialogue[2], out, npc->portrait, 2, npc->dialogue_time*60.0);
+                    }*/
+                } else {
+                    npc->dialogue_time = 0;
+                    npc->state_time = 0;
+                    npc->talking = false;
+                    for (int i = 0; i < line_count; i++) {
+                        lines_to_speak[i] = {};
+                    }
+                    line_count = 0;
+                    box_count = 0;
+                    lines_generated = false;
+                }
+            }
+        } break;
+    case lil_pengu:
+        {
+            if (npc->state_time*60 < 60) {
+                DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
+            } else if (npc->state_time*60 < 120) {
+                DrawImage(npc->image[1], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
             } else {
-                player->fairy_uses = 3;
-                player->current_fairy_uses = player->fairy_uses;
-
+                DrawImage(npc->image[2], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
             }
 
-            /*if (npc->state_time*60.0 < 400) {
-                draw_dialogue_box(npc->dialogue[0], out, npc->portrait, 2, npc->dialogue_time*60.0);
+            if (npc->state_time*60 > 180) {
+                npc->state_time = 0;
+            }
+        } break;
+    case mayor_snoresly:
+        {
+            if (group_time*60 < 45) {
+                DrawImage(npc->image[0], v2(npc->position.x+camera_offset, npc->position.y));
+            } else {
+                DrawImage(npc->image[1], v2(npc->position.x+camera_offset, npc->position.y));
+
+                String heave = S("HEAVE!!!");
+                
+                String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
+                Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
+
+                /*Rectangle2 text_rec = r2_bounds(v2(npc->position.x-2+camera_offset, npc->position.y-28), v2(186, 28), v2_zero, v2_one);
+
+                DrawRect(text_rec, v4_black);*/
+
+                DrawTextExt(font_hellomyoldfriend, heave, v2(npc->position.x+camera_offset-48, npc->position.y-26), v4_white, v2_zero, 2.0);
             }
 
-            if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 402 ) {
-                npc->dialogue_time = 0;
+            if (group_time*60 >= 90) {
+                group_time = 0;
+            }
+        } break;
+    case pengu_pullers:
+        {
+            draw_last.data[last_count] = *npc;
+
+            if (group_time*60 < 45) {
+                draw_last.data[last_count].sprite_index = 0;
+            } else if (group_time*60 < 90) {
+                draw_last.data[last_count].sprite_index = 1;
+            } else {
+                draw_last.data[last_count].sprite_index = 0;
             }
 
 
-            if (npc->state_time*60.0 > 400 && npc->state_time*60.0 < 800) {
-                draw_dialogue_box(npc->dialogue[1], out, npc->portrait, 2, npc->dialogue_time*60.0);
-            }
 
-            if (npc->state_time*60.0 > 800 && npc->state_time*60.0 < 802 ) {
-                npc->dialogue_time = 0;
-            }
-
-
-            if (npc->state_time*60.0 > 800) {
-                draw_dialogue_box(npc->dialogue[2], out, npc->portrait, 2, npc->dialogue_time*60.0);
-            }*/
-        } else {
-            npc->dialogue_time = 0;
-            npc->state_time = 0;
-            npc->talking = false;
-            for (int i = 0; i < line_count; i++) {
-                lines_to_speak[i] = {};
-            }
-            line_count = 0;
-            box_count = 0;
-            lines_generated = false;
-        }
-    } else if (npc->type == lil_pengu) {
-        if (npc->state_time*60 < 60) {
-            DrawImage(npc->image[0], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
-        } else if (npc->state_time*60 < 120) {
-            DrawImage(npc->image[1], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
-        } else {
-            DrawImage(npc->image[2], v2(npc->position.x - camera_pos.x+out->width*.5, npc->position.y));
-        }
-
-        if (npc->state_time*60 > 180) {
-            npc->state_time = 0;
-        }
+            last_count++;
+        } break;
     }
 }
