@@ -243,15 +243,21 @@ void bosses_alive() {
 void GameStart(Game_Input *input, Game_Output *out)
 {
     load_weapon();
+    static Image chargey_attack[] = {
+        LoadImage(S("charged_attack1.png")),
+        LoadImage(S("charged_attack2.png")),
+    };
 
     player.constitution = 10;
     player.rigour = 10;
     player.strength = 10;
     player.dexterity = 10;
     player.mental = 10;
-
-    player.check_point = /*v2(1298, 524);v2(480, 524);//v2(8449, 476);*/v2(672, out->height - 244);
+    //player.check_point = /*v2(1298, 524);*/v2(480, 524);//v2(8449, 476);v2(6000, out->height - 244);
+    //player.check_point_level = 1;
+    player.check_point = /*v2(1298, 524);v2(480, 524);//v2(8449, 476);*/v2(6000, out->height - 244);
     player.check_point_level = 0;
+
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
     player.facing = -1;
@@ -279,6 +285,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.acting_cd = 0;
     player.jumpies = LoadSound(S("Jump.wav"));
     player.hit = LoadSound(S("pengu_hurt.wav"));
+    player.projectile = chargey_attack;
 
     static Image img[] = {
         LoadImage(S("charge_left1.png")),
@@ -467,6 +474,10 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         MixerOutputPlayingSounds();
         //DrawClear(v4(0.2, 0.2, 0.2, 1));
 
+        check_level();
+        set_camera_pos();
+        camera_offset = -camera_pos.x+out->width*.5;
+
         Level *level = &World[player.player_level];
         group_time+=input->dt;
 
@@ -480,14 +491,22 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             update_snowflakes(out, camera_pos.x);
         }
 
-        check_level();
-        set_camera_pos();
-        camera_offset = -camera_pos.x+out->width*.5;
-
         update_projectiles(input, &player);
 
         for (int i = 0; i < World[player.player_level].backgrounds.count; i++) {
+            //spike trap
+            if (level->backgrounds.data[i].id == 8) {
+                if (r2_intersects(get_entity_rect(&player), get_entity_rect(&level->backgrounds.data[i]))) {
+                    player.current_health = 0;
+                    player.alive = false;
+                }
 
+                DrawImage(level->backgrounds.data[i].image[0], v2(level->backgrounds.data[i].position.x+camera_offset, level->backgrounds.data[i].position.y));
+
+                continue;
+            }
+
+            //Work Rope
             if (level->backgrounds.data[i].id == 7) {
                 draw_last.data[last_count] = level->backgrounds.data[i];
                 if (group_time*60 < 45) {
@@ -524,6 +543,19 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         for (int i = 0; i < World[player.player_level].interactible.count; i++)
         {
+            //code for Laddy Daddies
+            if (level->interactible.data[i].action_id == 6) {
+                if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible.data[i]))
+                    && player.can_climb) {
+
+                    interact(&World[player.player_level].interactible.data[i], input, camera_pos);
+                }
+
+                DrawImage(level->interactible.data[i].image[0], v2(level->interactible.data[i].position.x+camera_offset, level->interactible.data[i].position.y));
+
+                continue;
+            }
+
             if (r2_intersects(get_entity_rect(&player), get_entity_rect(&World[player.player_level].interactible.data[i])) && !World[player.player_level].interactible.data[i].acting 
                 && World[player.player_level].interactible.data[i].actable)
             {
@@ -571,7 +603,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
             } else
             {
                 DrawImage(level->interactible.data[i].image[0], v2(level->interactible.data[i].position.x+camera_offset, level->interactible.data[i].position.y));
-                if (level->interactible.data[i].id == 5) {
+                if (level->interactible.data[i].action_id == 5) {
                 }
             }
         }
@@ -600,7 +632,6 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         f32 dt = input->dt;
 
         Image icon = LoadImage(S("icon.png"));
-        Image weapon_icon = LoadImage(S("Excalibrrr_icon.png"));
         Image fairy_icon[] = {LoadImage(S("fairy_icon1.png")), LoadImage(S("fairy_icon2.png"))};
 
         DrawImage(icon, v2(16, 16));
@@ -697,6 +728,8 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                         8), v2_zero, v2_one), v4_red);
                 } else if (level->enemies.data[i].type == 8 && entity_get_distance_x(&player, &level->enemies.data[i]) < 700) {
                     ooze_action(&level->enemies.data[i], input);
+                } else if (level->enemies.data[i].type == 9) {
+                    coyote_action(&level->enemies.data[i], input);
                 }
 
             }

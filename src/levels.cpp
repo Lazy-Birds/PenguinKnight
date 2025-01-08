@@ -1,4 +1,4 @@
-const i32 world_size = 6;
+const i32 world_size = 7;
 
 const i32 wall_unit = 1000;
 const i32 interactible_unit = 5;
@@ -35,6 +35,9 @@ void create_levels() {
     World[5].name = S("Boss_Room");
     World[5].scale = 3;
     World[5].region = v2i(0, 1);
+    World[6].name = S("Dogland");
+    World[6].region = v2i(0, 1);
+    World[6].scale = 6;
 
     if (!pengu_arena){
         pengu_arena = arena_alloc(Gigabytes(1));
@@ -65,8 +68,10 @@ const i32 GATETOO = 2;
 const i32 DOOR = 3;
 const i32 FIRE = 4;
 const i32 HOOK = 5;
+const i32 LADDER = 6;
 
 void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
+    Level *level = &World[level_id];
     switch (id)
     {
     case LEVER:
@@ -82,7 +87,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
             World[level_id].interactible.data[World[level_id].interactible.count].image = image;
             World[level_id].interactible.data[World[level_id].interactible.count].type = 0;
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 0;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 0;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
 
@@ -108,7 +113,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
             World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
             World[level_id].interactible.data[World[level_id].interactible.count].type = type;
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
             World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
@@ -142,7 +147,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
             World[level_id].interactible.data[World[level_id].interactible.count].image = image;
             World[level_id].interactible.data[World[level_id].interactible.count].type = 3;
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 3;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 3;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
 
@@ -177,7 +182,7 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
             World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
             World[level_id].interactible.data[World[level_id].interactible.count].type = 4;
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 4;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 4;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
 
@@ -205,11 +210,28 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
             World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
             World[level_id].interactible.data[World[level_id].interactible.count].type = type;
             World[level_id].interactible.data[World[level_id].interactible.count].action_id = 5;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 5;
+            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
             World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
             World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
 
             World[level_id].interactible.count++;
+        } break;
+    case LADDER:
+        {
+            static Image laddy_daddy[] = {
+                LoadImage(S("ladder.png")),
+            };
+
+            level->interactible.data[level->interactible.count].image = laddy_daddy;
+
+            level->interactible.data[level->interactible.count].position = position;
+            level->interactible.data[level->interactible.count].size = v2(48, 48);
+            level->interactible.data[level->interactible.count].type = type;
+            level->interactible.data[level->interactible.count].action_id = 6;
+            level->interactible.data[level->interactible.count].id = level->interactible.count;
+            level->interactible.data[level->interactible.count].actable = true;
+            level->interactible.data[level->interactible.count].acting = false;
+            level->interactible.count++;
         } break;
     }
 }
@@ -290,6 +312,12 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
             player.velocity = v2_zero;
             camera_pos = player.position;
         } break;
+    case LADDER:
+        {
+            player.velocity.y = -200;
+
+            player.acting = false;
+        } break;
     }
 }
 
@@ -362,5 +390,19 @@ void create_level_entries() {
     tele[9].level_id = 5;
     tele[9].landing_pos = v2(1104, 92);
     tele[9].actable = false;
+    tele_count++;
+
+    tele[10].entry = r2_bounds(v2(7248, -96), v2(48, 96), v2_zero, v2_one);
+    tele[10].link_id = 11;
+    tele[10].level_id = 0;
+    tele[10].landing_pos = v2(7248, 0);
+    tele[10].actable = false;
+    tele_count++;
+
+    tele[11].entry = r2_bounds(v2(4320, 720), v2(48, 96), v2_zero, v2_one);
+    tele[11].link_id = 10;
+    tele[11].level_id = 6;
+    tele[11].landing_pos = v2(4320, 668);
+    tele[11].actable = false;
     tele_count++;
 }

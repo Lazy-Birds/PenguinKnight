@@ -331,6 +331,45 @@ Entity load_enemy(Vector2 pos, i32 type) {
 
             return ooze;
         } break;
+    case 8:
+        {
+            Entity nick = {};
+
+            static Image snick[] = {
+                LoadImage(S("nick1.png")),
+                LoadImage(S("nick2.png")),
+                LoadImage(S("nick3.png")),
+                LoadImage(S("nick4.png")),
+                LoadImage(S("nick5.png")),
+                LoadImage(S("nick6.png")),
+                LoadImage(S("nick7.png")),
+                LoadImage(S("nick8.png")),
+                LoadImage(S("nick9.png")),
+            };
+
+            nick.image = snick;
+            nick.max_health = 800;
+            nick.current_health = nick.max_health;
+            nick.enemy.offset = v2_zero;
+            nick.position = pos;
+            nick.check_point = pos;
+            nick.size = v2(72, 81);
+            nick.hitbox = r2_bounds(pos, v2(54, 81), v2_zero, v2_one);
+            nick.invuln = false;
+            nick.attackable = true;
+            nick.facing = 1;
+            nick.type = 9;
+            nick.enemy.anchor_pos = pos;
+            nick.enemy.id = World[player.player_level].enemies.count;
+            nick.enemy.damage = 40;
+            nick.state = NEUTRAL;
+            nick.enemy.exp_dropped = 2000;
+            nick.has_hit = false;
+            nick.alive = true;
+            nick.assymetric = false;
+
+            return nick;
+        } break;
     default:
         {
             static Image image[1] = {LoadImage(S("penguin_idle.png"))};
@@ -521,6 +560,12 @@ void make_world(Level level) {
                         World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 7);
                         World[player.player_level].enemies.count++;
                     } break;
+                case 1748528383:
+                    {
+                        //68386c
+                        World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(i, k), 8);
+                        World[player.player_level].enemies.count++;
+                    } break;
                 case -1562516993:
                     {
                         make_npcs(v2(i, k), fairy);
@@ -661,6 +706,30 @@ void make_world(Level level) {
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 7;
                         World[player.player_level].backgrounds.count++;
                     } break;
+                case -1229075457:
+                    {
+                        //b6bdcb
+                        static Image image[] = {
+                            LoadImage(S("spikes.png")),
+                    };
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 8;
+                        World[player.player_level].backgrounds.count++;
+                    } break;
+                case 2033857535:
+                    {
+                        //
+                        static Image image[] = {
+                            LoadImage(S("badger_tent.png")),
+                    };
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(96, 96);
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
+                        World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 9;
+                        World[player.player_level].backgrounds.count++;
+                    } break;
                 case -372160769:
                     {
                         static Image image[] = {
@@ -717,6 +786,11 @@ void make_world(Level level) {
                     {
                         //
                         make_interactible(v2(i, k), 5, level.id, 2);
+                    } break;
+                case -982528769:
+                    {
+                        //
+                        make_interactible(v2(i, k), 6, level.id, 0);
                     } break;
                 case 842807807:
                     {
@@ -847,22 +921,46 @@ void make_world(Level level) {
                         //4e6b99
                         make_wall(v2(i, k), pixel, image);
                     } break;
-                case 574383871:
+                case -1834428929:
                     {
                         static Image image[] = {LoadImage(S("factory_walls7.png"))};
                         //223c66d
                         make_wall(v2(i, k), pixel, image);
                     } break;
-                case 557010943:
+                case -1951998721:
                     {
                         static Image image[] = {LoadImage(S("factory_walls8.png"))};
-                        //81858b
+                        //8ba6dc
                         make_wall(v2(i, k), pixel, image);
                     } break;
-                case 523457535:
+                case -2103254529:
                     {
                         static Image image[] = {LoadImage(S("factory_walls9.png"))};
-                        //787f8b
+                        //82a2e1
+                        make_wall(v2(i, k), pixel, image);
+                    } break;
+                case 1047046655:
+                    {
+                        static Image image[] = {LoadImage(S("factory_walls10.png"))};
+                        //3e68a9
+                        make_wall(v2(i, k), pixel, image);
+                    } break;
+                case 744335871:
+                    {
+                        static Image image[] = {LoadImage(S("factory_walls11.png"))};
+                        //2c5da9
+                        make_wall(v2(i, k), pixel, image);
+                    } break;
+                case 593013247:
+                    {
+                        //2358a9
+                        static Image image[] = {LoadImage(S("factory_walls12.png"))};
+                        make_wall(v2(i, k), pixel, image);
+                    } break;
+                case 408005119:
+                    {
+                        //1851a9
+                        static Image image[] = {LoadImage(S("factory_walls13.png"))};
                         make_wall(v2(i, k), pixel, image);
                     } break;
                 case -1128283137:
@@ -949,6 +1047,12 @@ void make_world(Level level) {
                         //525458
                         make_custom_wall(v2(i, k), pixel, image, v2(96, 192));
 
+                    } break;
+                case 979781887:
+                    {
+                        static Image image[] = {LoadImage(S("factory_grate.png"))};
+                        //3a6648
+                        make_wall(v2(i, k), pixel, image);
                     } break;
                 default:
                     {
@@ -1178,10 +1282,24 @@ bool entity_on_wall(Entity *entity_one) {
         if (r2_intersects(r2_bounds(v2(entity_one->position.x, entity_one->position.y+1), entity_one->size, v2_zero, v2_one),
             r2_bounds(v2(World[player.player_level].wall.data[i].position.x, World[player.player_level].wall.data[i].position.y), World[player.player_level].wall.data[i].size, v2_zero, v2_one))) {
             return true;
-    } 
+        } 
+    }
+
+    return false;
 }
 
-return false;
+bool entity_against_wall(Entity *ent) {
+    Level *level = &World[player.player_level];
+
+    for (int i = 0; i < level->wall.count; i++)
+    {
+        if (r2_intersects(get_entity_rect(&level->wall.data[i]), r2_bounds(v2(ent->position.x+sign_f32(ent->facing), ent->position.y), ent->size, v2_zero, v2_one)))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool wall_intersects(Entity *entity) {
@@ -1495,12 +1613,16 @@ i32 get_prejectile_slot() {
     return proj_count;
 }
 
-void make_projectile(Image *image, Vector2 pos, Vector2 vel) {
+void make_projectile(Image *image, Vector2 pos, Vector2 vel, i32 sprite_index, i32 id) {
 
     i32 slot = get_prejectile_slot();
 
+    projectiles[slot].id = id;
     projectiles[slot].image = image;
+    projectiles[slot].sprite_index = sprite_index;
+    projectiles[slot].state_time = 0;
     projectiles[slot].position = pos;
+    projectiles[slot].size = v2(image[0].size.x, image[0].size.y);
     projectiles[slot].velocity = vel;
     projectiles[slot].alive = true;
     projectiles[slot].enemy.offset = v2_zero;
@@ -1512,9 +1634,12 @@ void make_projectile(Image *image, Vector2 pos, Vector2 vel) {
         projectiles[slot].facing = -1;
     }
     proj_count++;
+    draw_enemy(projectiles, 0);
 }
 
 void update_projectiles(Game_Input *input, Entity *player) {
+    Level *level = &World[player->player_level];
+
     for (int i = 0; i < 1000; i++) {
         if (projectiles[i].alive) {
             draw_bound_box(&projectiles[i]);
@@ -1523,19 +1648,57 @@ void update_projectiles(Game_Input *input, Entity *player) {
             f32 dx = projectiles[i].velocity.x*input->dt;
 
             projectiles[i].state_time+=input->dt;
-            if (projectiles[i].state_time*60 >= 600)
+            if (projectiles[i].state_time*60 >= 200)
             {
                 projectiles[i].alive = false;
                 proj_count--;
             }
 
             move_enemy(&projectiles[i], input->dt);
-            draw_enemy(&projectiles[i], 0);
 
-            if (wall_intersects(&projectiles[i])) {
+            //Draw based on sprite frames
+            if (projectiles[i].sprite_index == 0) {
+                draw_enemy(&projectiles[i], 0);
+            } else {
+                emit_backwards_particles(&projectiles[i], input);
+                draw_enemy(&projectiles[i], 1);
+            }
+
+            if (entity_against_wall(&projectiles[i])) {
                 projectiles[i].alive = false;
                 proj_count--;
             }
+
+            if (projectiles[i].id == 1){ 
+                    for (int k = 0; k < level->enemies.count; k++) {
+                        if (r2_intersects(get_entity_rect(&level->enemies.data[k]), get_entity_rect(&projectiles[i])))
+                        {
+                            projectiles[i].alive = false;
+                            proj_count--;
+
+                            i32 damage = 40;
+
+                            level->enemies.data[k].current_health-=damage;
+
+                            if (World[player->player_level].enemies.data[k].has_hit) {
+                                World[player->player_level].enemies.data[k].state = HIT;
+                            }
+                            
+                            if (level->enemies.data[k].current_health <= damage) {
+                                level->enemies.data[k].current_health = 0;
+                                level->enemies.data[k].state = DYING;
+                                level->enemies.data[k].state_time = 0;
+                                player->exp_gained += level->enemies.data[k].enemy.exp_dropped;
+                                if (player->mp_cooldown <= 0) {
+                                    player->current_mp+=10;
+                                    player->current_mp = clamp_f32(player->current_mp, 0, player->max_mp);
+                                    player->mp_cooldown+=.5;
+                                }
+                                
+                            }
+                        }
+                    }
+                }
 
             if (invuln_time <= 0){
                 if (r2_intersects(r2_bounds(player->position, player->size, v2_zero, v2_one), r2_bounds(projectiles[i].position, projectiles[i].size, v2_zero, v2_one)))
@@ -1549,9 +1712,31 @@ void update_projectiles(Game_Input *input, Entity *player) {
     }
 }
 
+void emit_backwards_particles(Entity *ent, Game_Input *input) {
+    /*Particle_Parameters min = {};
+    Particle_Parameters max = {};
+
+    min.position = v2(ent->position.x+10, ent->position.y+10);
+    min.velocity = v2(-ent->velocity.x, ent->velocity.y);
+    min.life_time = 30*input->dt;
+
+    max.position = v2(ent->position.x+15, ent->position.y+30);
+    max.velocity = v2(-(ent->velocity.x+sign_f32(ent->velocity.x)*200*input->dt), ent->velocity.y);
+    max.life_time = 45*input->dt;
+
+    Image snow = LoadImage(S("snow_flake.png"));
+
+    particle_emit(min, max, snow);*/
+
+    static Image lazer_ball_stripped = LoadImage(S("trail.png"));
+
+    particle_create(v2(ent->position.x+ent->size.x/2+random_f32_between(0, 10), ent->position.y+ent->size.y/2), v2(400, 0), 15*input->dt, lazer_ball_stripped);
+}
+
 #include "enemy_pengus.cpp"
 #include "misc_enemies.cpp"
 #include "slime.cpp"
+#include "coyote.cpp"
 
 void draw_fire(Entity *interactible, Game_Input *input) {
     interactible->state_time+=input->dt;
@@ -1747,8 +1932,6 @@ void npc_action(Entity *npc, Entity *player) {
             } else {
                 draw_last.data[last_count].sprite_index = 0;
             }
-
-
 
             last_count++;
         } break;

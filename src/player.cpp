@@ -7,10 +7,11 @@ f32 heal_cd = 0;
 void player_action(Game_Input *input) {
 	f32 max_speed = 600.0;
 	i32 weapon_cooldown = 2;
-	Controller c0 = input->controllers[0];
 	f32 dt = input->dt;
+	Controller c0 = input->controllers[0];
 	i32 offset = camera_pos.x-player.position.x;
 	Level *level = &World[player.player_level];
+	player.can_climb = false;
 	
 	player.state_time+=dt;
 	state_time+=dt;
@@ -58,6 +59,7 @@ void player_action(Game_Input *input) {
 		} else if (c0.up) {
 			player.state = JUMP;
 			state_time = 0;
+			player.can_climb = true;
 
 		} else if (c0.bumper && entity_in_air(&player)) {
 			player.state = STATEJUMPATTACK;
@@ -120,7 +122,7 @@ void player_action(Game_Input *input) {
 			if (c0.right)
 			{
 				
-				player.velocity.x = move_f32(player.velocity.x, 350, 350 * dt);
+				player.velocity.x = move_f32(player.velocity.x, 350, 1000 * dt);
 				
 
 				if (player.facing < 0) {
@@ -139,7 +141,7 @@ void player_action(Game_Input *input) {
 			else if (c0.left)
 			{
 				
-				player.velocity.x = move_f32(player.velocity.x, -350, 350 * dt);
+				player.velocity.x = move_f32(player.velocity.x, -350, 1000 * dt);
 				
 				if (player.facing > 0) {
 					player.facing = -1;
@@ -187,7 +189,10 @@ void player_action(Game_Input *input) {
 		} break;
 	case JUMP:
 		{
-			if (player.current_stamina > 20) {
+			if (!entity_on_wall(&player)) {
+				draw_player(0);
+				player.state = NEUTRAL;
+			} else if (player.current_stamina > 20) {
 				if (c0.right)
 				{
 					player.velocity.x = move_f32(player.velocity.x, 250, 250 * dt);
@@ -227,8 +232,7 @@ void player_action(Game_Input *input) {
 					player.state = NEUTRAL;
 				}
 			} else {
-				draw_player( 
-					0);
+				draw_player(0);
 				player.state = NEUTRAL;
 			}
 		} break;
@@ -298,11 +302,10 @@ void player_action(Game_Input *input) {
 			{
 				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
 				sleep += 45;
-				draw_player(
-					player.weapon.charged_frames.y-1);
+				draw_player(player.weapon.charged_frames.y-1);
+				//make_projectile(player.projectile, v2(player.position.x+100*sign_f32(player.facing), player.position.y-14), v2(player.facing*400, 0), 1, 1);
 			} else {
-				draw_player(
-					0);
+				draw_player(0);
 				player.state = NEUTRAL;
 				set_enemy_vuln();
 			}

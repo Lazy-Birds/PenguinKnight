@@ -114,6 +114,7 @@ struct Entity
     bool acting;
     f32 acting_cd;
     bool actable;
+    bool can_climb;
 
     i32 sprite_index;
     f32 state_time;
@@ -261,6 +262,7 @@ Entity get_wall_at(Vector2 pos);
 void reset_enemies();
 bool enemy_on_enemy(Entity *entity_one);
 bool entity_on_wall(Entity *entity_one);
+bool entity_against_wall(Entity *ent);
 bool wall_intersects(Entity *entity);
 bool wall_intersects_rec(Rectangle2 rec);
 bool wall_ahead(Entity *entity);
@@ -279,8 +281,9 @@ void draw_boss_health_bar(Entity *boss);
 void draw_enemy(Entity *nme, i32 frame);
 void move_enemy(Entity *nme, f32 dt);
 i32 get_prejectile_slot();
-void make_projectile(Image *image, Vector2 pos, Vector2 vel);
+void make_projectile(Image *image, Vector2 pos, Vector2 vel, i32 sprite_index);
 void update_projectiles(Game_Input *input, Entity *player);
+void emit_backwards_particles(Entity *ent, Game_Input *input);
 void draw_fire(Entity *interactible, Game_Input *input);
 void draw_house(Housing *house);
 void npc_action(Entity *npc, Entity *player);
@@ -332,3 +335,6 @@ void draw_player(i32 frame);
 void player_move(Game_Input *input);
 b32 player_in_poison();
 void draw_hook_shot(Entity *target);
+
+//Coyote
+void coyote_action(Entity *coyote);

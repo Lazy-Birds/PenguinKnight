@@ -3,7 +3,7 @@ Weapon cleaver = {};
 
 void load_weapon() {
 
-    static Image sword_image[] = {
+    /*static Image sword_image[] = {
         LoadImage(S("Excalibrrr_left1.png")),
         LoadImage(S("Excalibrrr_left2.png")),
         LoadImage(S("Excalibrrr_left3.png")),
@@ -22,7 +22,7 @@ void load_weapon() {
     sword.weapon_frames = v2(2, 6);
     String sname = S("Excalibrrr");
     sword.name = sname;
-
+    */
     static Image cleaver_image[] = {
         LoadImage(S("cleaver1.png")),
         LoadImage(S("cleaver2.png")),

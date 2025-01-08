@@ -54,7 +54,11 @@ Todo:
 -Boss Ideas:
 --Piranna plant
 ---Spits poison
----sends out root 
+---sends out root
+--Brain
+---Lightning strikes
+
+---Hovers around
 
 
 

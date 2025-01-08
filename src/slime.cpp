@@ -103,7 +103,7 @@ case SHOOT:
             DrawImage(dart, v2(slime->position.x-camera_pos.x+out->width*.5, slime->position.y + 17));
         } else if (slime->state_time*60 < 60) {
             if (!slime->projectile_launched) {
-                make_projectile(slime->projectile, v2(slime->position.x, slime->position.y+17), v2(8000*input->dt*sign_f32(player->position.x-slime->position.x), 0));
+                make_projectile(slime->projectile, v2(slime->position.x, slime->position.y+17), v2(8000*input->dt*sign_f32(player->position.x-slime->position.x), 0), 0, 1);
                 slime->projectile_launched = true;
             }
 
