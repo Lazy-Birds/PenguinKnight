@@ -255,8 +255,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.mental = 10;
     //player.check_point = /*v2(1298, 524);*/v2(480, 524);//v2(8449, 476);v2(6000, out->height - 244);
     //player.check_point_level = 1;
-    player.check_point = /*v2(1298, 524);v2(480, 524);//v2(8449, 476);*/v2(6000, out->height - 244);
-    player.check_point_level = 0;
+    player.check_point = /*v2(1298, 524);v2(480, 524);//v2(8449, 476);v2(6000, out->height - 244)*/v2(9024, 524);;
+    player.check_point_level = 7;
 
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
@@ -663,7 +663,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         for (int i = 0; i < World[player.player_level].enemies.count; i++) {
             if (World[player.player_level].enemies.data[i].alive) {
 
-                if (World[player.player_level].enemies.data[i].enemy.type == 1) {
+                if (World[player.player_level].enemies.data[i].enemy.type == et_seal) {
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4+World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4+World[player.player_level].enemies.data[i].enemy.offset.x),
@@ -677,13 +677,13 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
                         DrawImage(World[player.player_level].enemies.data[i].image[0], v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5 + World[player.player_level].enemies.data[i].enemy.offset.x,
                            World[player.player_level].enemies.data[i].position.y+World[player.player_level].enemies.data[i].enemy.offset.y));
                     }
-                } else if (World[player.player_level].enemies.data[i].enemy.type == 4 && abs_f32(player.position.x - World[player.player_level].enemies.data[i].position.x) < 900 && abs_i32(player.position.y - World[player.player_level].enemies.data[i].position.y) < 700) {
+                } else if (World[player.player_level].enemies.data[i].enemy.type == et_penguin_soldier && abs_f32(player.position.x - World[player.player_level].enemies.data[i].position.x) < 900 && abs_i32(player.position.y - World[player.player_level].enemies.data[i].position.y) < 700) {
                     p_soldier_action(&World[player.player_level].enemies.data[i], input->dt, &player, invuln_time, input);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
                      8), v2_zero, v2_one), v4_red);
-                } else if (!bosses_killed[0] && World[player.player_level].enemies.data[i].enemy.type == 3 && player.position.x > 8400 && player.position.x < 9504) {
+                } else if (!bosses_killed[0] && World[player.player_level].enemies.data[i].enemy.type == et_penguin_king && player.position.x > 8400 && player.position.x < 9504) {
                     camera_state = CAMERALOCKED;
                     camera_pos_target = v2(8880, out->height);
 
@@ -714,22 +714,24 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
                     penguin_king_action(&World[player.player_level].enemies.data[i], &player, input->dt, out);
 
-                } else if (World[player.player_level].enemies.data[i].type == 6 && abs_i32(World[player.player_level].enemies.data[i].position.x - player.position.x) < 1200) {
+                } else if (World[player.player_level].enemies.data[i].type == et_slime && abs_i32(World[player.player_level].enemies.data[i].position.x - player.position.x) < 1200) {
                     slime_action(&World[player.player_level].enemies.data[i], &player, input);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
                         8), v2_zero, v2_one), v4_red);
-                } else if (World[player.player_level].enemies.data[i].type == 7 && entity_get_distance_x(&level->enemies.data[i], &player) < 1200 && entity_get_distance_y(&level->enemies.data[i], &player) < 300) {
+                } else if (World[player.player_level].enemies.data[i].type == et_eye_monster && entity_get_distance_x(&level->enemies.data[i], &player) < 1200 && entity_get_distance_y(&level->enemies.data[i], &player) < 300) {
                     eye_monster_action(&World[player.player_level].enemies.data[i], input);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5-2, World[player.player_level].enemies.data[i].position.y-2-12), v2(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x, 12),
                      v2_zero, v2_one), v4_black);
                     DrawRect(r2_bounds(v2(World[player.player_level].enemies.data[i].position.x-camera_pos.x+out->width*.5, World[player.player_level].enemies.data[i].position.y-12), v2(World[player.player_level].enemies.data[i].current_health/World[player.player_level].enemies.data[i].max_health*(World[player.player_level].enemies.data[i].size.x+4-World[player.player_level].enemies.data[i].enemy.offset.x),
                         8), v2_zero, v2_one), v4_red);
-                } else if (level->enemies.data[i].type == 8 && entity_get_distance_x(&player, &level->enemies.data[i]) < 700) {
+                } else if (level->enemies.data[i].type == et_ooze && entity_get_distance_x(&player, &level->enemies.data[i]) < 700) {
                     ooze_action(&level->enemies.data[i], input);
-                } else if (level->enemies.data[i].type == 9) {
+                } else if (level->enemies.data[i].type == et_coyote_nick) {
                     coyote_action(&level->enemies.data[i], input);
+                } else if (level->enemies.data[i].type == et_robo_pup && entity_get_distance_x(&player, &level->enemies.data[i]) < 900) {
+                    robo_pup_action(&level->enemies.data[i], input);
                 }
 
             }

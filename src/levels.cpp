@@ -1,4 +1,4 @@
-const i32 world_size = 7;
+const i32 world_size = 8;
 
 const i32 wall_unit = 1000;
 const i32 interactible_unit = 5;
@@ -38,6 +38,9 @@ void create_levels() {
     World[6].name = S("Dogland");
     World[6].region = v2i(0, 1);
     World[6].scale = 6;
+    World[7].name = S("BlackPowder Forest");
+    World[7].region = v2i(0, 0);
+    World[7].scale = 8;
 
     if (!pengu_arena){
         pengu_arena = arena_alloc(Gigabytes(1));
@@ -399,10 +402,24 @@ void create_level_entries() {
     tele[10].actable = false;
     tele_count++;
 
-    tele[11].entry = r2_bounds(v2(4320, 720), v2(48, 96), v2_zero, v2_one);
+    tele[11].entry = r2_bounds(v2(4416, 720), v2(48, 96), v2_zero, v2_one);
     tele[11].link_id = 10;
     tele[11].level_id = 6;
-    tele[11].landing_pos = v2(4320, 668);
+    tele[11].landing_pos = v2(4416, 668);
     tele[11].actable = false;
+    tele_count++;
+
+    tele[12].entry = r2_bounds(v2(432, 480), v2(48, 96), v2_zero, v2_one);
+    tele[12].link_id = 13;
+    tele[12].level_id = 6;
+    tele[12].landing_pos = v2(480, 524);
+    tele[12].actable = false;
+    tele_count++;
+
+    tele[13].entry = r2_bounds(v2(9072, 480), v2(48, 96), v2_zero, v2_one);
+    tele[13].link_id = 12;
+    tele[13].level_id = 7;
+    tele[13].landing_pos = v2(9024, 524);
+    tele[13].actable = false;
     tele_count++;
 }

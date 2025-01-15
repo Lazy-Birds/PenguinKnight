@@ -109,6 +109,7 @@ struct Entity
     i32 facing;
     i32 type;
     i32 id;
+    i32 movement_chks;
 
     i32 action_id;
     bool acting;
@@ -266,6 +267,8 @@ bool entity_against_wall(Entity *ent);
 bool wall_intersects(Entity *entity);
 bool wall_intersects_rec(Rectangle2 rec);
 bool wall_ahead(Entity *entity);
+bool point_in_wall(Vector2 point);
+bool ledge_ahead(Entity *ent);
 bool entity_in_air(Entity *entity_one);
 f32 entity_get_distance_x(Entity *one, Entity *two);
 f32 entity_get_distance_y(Entity *one, Entity *two);
