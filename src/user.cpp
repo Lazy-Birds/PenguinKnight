@@ -63,6 +63,7 @@ bool charging_weapon;
 bool on_cooldown;
 bool charged_attack;
 bool in_menu = false;
+bool at_bonfire = false;
 bool in_cinematic = false;
 bool bosses_killed[48] = {};
 bool gate_scene;
@@ -80,12 +81,15 @@ f32 attack_frame = 0;
 i32 charging = 0;
 i32 weapon_cooldown = 0;
 
+Arena *inv_arena = NULL;
+
 #include "levels.cpp"
 #include "weapon.cpp"
 #include "background.cpp"
 #include "dialogue.cpp"
 #include "entity.cpp"
 #include "menu.cpp"
+#include "inventory.cpp"
 
 void set_camera_pos() {
     if (camera_state == CAMERAFOLLOW) {
@@ -276,6 +280,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.alive = true;
     player.weapon = cleaver;
     player.weapon.position = player.position;
+    player.inventory = make_inventory(100, pengu_arena);
     player.size = v2(40, 52);
     player.exp_gained = 0;
     player.exp_to_level = 600;
@@ -321,6 +326,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     bosses_alive();
 
     spawn_initial_snowflakes(out, input);
+
+    gen_test_items(&player, pengu_arena);
 
     font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
     font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
@@ -466,10 +473,11 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     if (in_menu) {
         if (ControllerReleased(0, Button_Start)) {
             in_menu = false;
+            at_bonfire = false;
             set_world(true, World[player.player_level]);
         }
 
-        draw_menu(out, &player, screen);
+        draw_menu(out, &player, screen, at_bonfire);
     } else if (player.alive) {
         MixerOutputPlayingSounds();
         //DrawClear(v4(0.2, 0.2, 0.2, 1));
@@ -752,13 +760,9 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
     DrawRectOutline(player_rec, v4_red, 2);
 
 
-        /*if (ControllerReleased(0, Button_Start)) {
-            if (menu_open) {
-                menu_open = false;
-            } else {
-                menu_open = true;
-            }
-        }*/
+        if (ControllerReleased(0, Button_Start) && !in_menu) {
+            in_menu = true;
+        }
 
 
 
@@ -777,7 +781,7 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
 
         if (in_menu) {
             screen = MakeScreenImage(out);
-            draw_menu(out, &player, screen);
+            draw_menu(out, &player, screen, at_bonfire);
         }
         
     } else {

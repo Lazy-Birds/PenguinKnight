@@ -39,7 +39,7 @@ void create_levels() {
     World[6].region = v2i(0, 1);
     World[6].scale = 6;
     World[7].name = S("BlackPowder Forest");
-    World[7].region = v2i(0, 0);
+    World[7].region = v2i(0, 2);
     World[7].scale = 8;
 
     if (!pengu_arena){
@@ -175,10 +175,20 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
                 LoadImage(S("fire_sewers5.png")),
             };
 
-            if (level_id == 0) {
+            static Image fire_no_bg[] = {
+                LoadImage(S("fire_no_bg1.png")),
+                LoadImage(S("fire_no_bg2.png")),
+                LoadImage(S("fire_no_bg3.png")),
+                LoadImage(S("fire_no_bg4.png")),
+                LoadImage(S("fire_no_bg5.png")),
+            };
+
+            if (type == 0) {
                 World[level_id].interactible.data[World[level_id].interactible.count].image = village_fire;
-            } else if (level_id == 2) {
+            } else if (type == 1) {
                 World[level_id].interactible.data[World[level_id].interactible.count].image = sewer_fire;
+            } else if (type == 2) {
+                World[level_id].interactible.data[World[level_id].interactible.count].image = fire_no_bg;
             }
             
             World[level_id].interactible.data[World[level_id].interactible.count].position = position;
@@ -305,6 +315,7 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
     case FIRE:
         {
             in_menu = true;
+            at_bonfire = true;
             draw_fire(interactible, input);
 
             interactible->acting = false;

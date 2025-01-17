@@ -688,7 +688,12 @@ void make_world(Level level) {
                 case -465877761:
                     {
                         //e43b44
-                        make_interactible(v2(i, k), 4, level.id, 0);
+                        make_interactible(v2(i, k), 4, level.id, 1);
+                    } break;
+                case -332843777:
+                    {
+                        //e43b44
+                        make_interactible(v2(i, k), 4, level.id, 2);
                     } break;
                 case 403973631:
                     {
@@ -825,17 +830,25 @@ void make_world(Level level) {
                     {
                         //173063
                         static Image image[] = {
-                            LoadImage(S("pointed_fir.png")),
+                            LoadImage(S("large_pointed_fir.png")),
                     };
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].position = v2(i, k);
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].size = v2(48, 48);
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].image = image;
                         World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].id = 12;
+                        if (random_f32_between(0, 1) < .1)
+                        {
+                            World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].type = 1;
+                        } else 
+                        {
+                            World[player.player_level].backgrounds.data[World[player.player_level].backgrounds.count].type = 0;
+                        }
                         World[player.player_level].backgrounds.count++;
                     } break;
                 case 455097855:
                     {
-                           //173063
+                    
+                    //173063
                     static Image image[] = {
                         LoadImage(S("factory_walls16.png")),
                     };

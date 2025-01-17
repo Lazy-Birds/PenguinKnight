@@ -59,6 +59,28 @@ struct Enemy {
     i32 exp_dropped;
 };
 
+//Items
+struct Item {
+    Image *icon;
+    String name;
+    String description;
+    i32 type;
+};
+
+//Array of Items
+struct ItemArray {
+    Item *data;
+    i32 count;
+    i32 capacity;
+};
+
+//Array of Item arrays, aka an inventory
+struct InventoryArray {
+    ItemArray *data;
+    i32 count;
+    i32 capacity;
+};
+
 struct Entity
 {
     i32 constitution;
@@ -122,6 +144,8 @@ struct Entity
     f32 animation_time;
 
     Weapon weapon;
+    InventoryArray inventory;
+
     Image *projectile;
     b32 projectile_launched;
 
@@ -144,6 +168,8 @@ struct Entity
 
     i32 player_level;
 };
+
+
 
 //Generic
 struct EntityArray {
@@ -311,7 +337,11 @@ void draw_super_lazer(Vector2 point_one, Vector2 point_two);
 //Menu
 i32 mouse_over_rec(Rectangle2 rec1, Rectangle2 rec2);
 void level_char_up(Entity *player, i32 stat);
-void draw_menu(Game_Output *out, Entity *player, Image screen);
+void draw_menu(Game_Output *out, Entity *player, Image screen, bool at_bonfire);
+
+//Inventory
+ItemArray stack_maker(i32 capacity);
+InventoryArray make_inventory(i32 capacity);
 
 //User
 void set_camera_pos();

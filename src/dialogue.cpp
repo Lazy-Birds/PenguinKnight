@@ -23,24 +23,24 @@ void load_penguin_king_dialogue(Entity *pengu) {
 	pengu->dialogue = dialogue;
 }
 
-void clip_strings(String words) {
+void clip_strings(String words, i32 length) {
 	i32 char_at[10] = {};
 	i32 lines = 0;
 
 	i32 count = 0;
 
 
-	if (words.count <=35) {
+	if (words.count <= length) {
 		lines_to_speak[0] = words;
 		line_count = 0;
 	} else {
 		for (int i = 0; i < words.count; i++) {
 			if (words.data[i] == ' ') {
-				if (i > lines*35+35) {
+				if (i > lines*length+length) {
 					lines++;
 				}
 
-				if (lines >= 1 && words.count-char_at[lines-1] < 35) 
+				if (lines >= 1 && words.count-char_at[lines-1] < length) 
 				{
 					char_at[lines] = words.count;
 					break;
@@ -71,7 +71,7 @@ b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) 
     Vector2 size = MeasureText(font_hellomyoldfriend, words);
 
     if (!lines_generated) {
-    	clip_strings(words);
+    	clip_strings(words, 35);
     }
 
     Rectangle2 box1 = r2_bounds(v2(96, out->height-96), v2(out->width-96, 96), v2_zero, v2_one);
