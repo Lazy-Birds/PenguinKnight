@@ -1,9 +1,11 @@
 void make_guards(Vector2 positions) {
-    World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(positions.x, 0), 3);
-    World[player.player_level].enemies.count++;
+    World[player.player_level].entities.data[World[player.player_level].entities.count] = load_npc(v2(positions.x, 0), et_penguin_soldier);
+    World[player.player_level].entities.count++;
 
-    World[player.player_level].enemies.data[World[player.player_level].enemies.count] = load_enemy(v2(positions.y, 0), 3);
-    World[player.player_level].enemies.count++;
+    World[player.player_level].entities.data[World[player.player_level].entities.count] = load_npc(v2(positions.y, 0), et_penguin_soldier);
+    World[player.player_level].entities.count++;
+
+    Dump("Spawned");
 }
 
 
@@ -20,6 +22,11 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
     if (pengu_king->state != HIT && pengu_king->state != pengu_king->state_prev) {
         pengu_king->state_prev = pengu_king->state;
         pengu_king->state_time = 0;
+    }
+
+    if (pengu_king->alive)
+    {
+        pengu_king->hitbox = get_entity_rect(pengu_king);
     }
 
     if (pengu_king->state == KINGNEUTRAL){
@@ -334,7 +341,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
             draw_enemy(pengu_king, 0);
 
             if (!pengu_king->talking) {
-                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue[0], out, pengu_king->portrait, 2);
+                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue.data[0], out, pengu_king->portrait, 2);
             }
 
             /*if (pengu_king->state_time*60 < 220) {
@@ -361,7 +368,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case KINGWAIT:
         {
-            if (World[player->player_level].enemies.data[World[player->player_level].enemies.count-1].alive || World[player->player_level].enemies.data[World[player->player_level].enemies.count-2].alive) {
+            if (World[player->player_level].entities.data[World[player->player_level].entities.count-1].alive || World[player->player_level].entities.data[World[player->player_level].entities.count-2].alive) {
                 draw_enemy(pengu_king, 0);
             } else {
                 draw_enemy(pengu_king, 0);
@@ -376,7 +383,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
             draw_enemy(pengu_king, 0);
 
             if (!pengu_king->talking) {
-                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue[1], out, pengu_king->portrait, 2);
+                pengu_king->talking = draw_dialogue_box(pengu_king->dialogue.data[1], out, pengu_king->portrait, 2);
             }
 
             if (pengu_king->talking) {
@@ -403,31 +410,7 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
         } break;
     case DYING:
         {
-            Particle_Parameters min = {};
-            Particle_Parameters max = {};
-
-            min.velocity.x = 400*dt;
-            min.velocity.y = 400*dt;
-
-            max.velocity.x = 400*dt;
-            max.velocity.y = 400*dt;
-
-            min.position.x = pengu_king->position.x;
-            min.position.y = pengu_king->position.y;
-
-            max.position.x = pengu_king->position.x + pengu_king->size.x;
-            max.position.y = pengu_king->position.y+pengu_king->size.y;
-
-            min.life_time = 120*dt;
-            max.life_time = 90*dt;
-
-            min.magnet = player;
-
-            Image image = LoadImage(S("exp.png"));
-
-            for (int i = 0; i < i32(pengu_king->enemy.exp_dropped/10); i++) {
-                particle_emit(min, max, image);
-            }
+            emit_death_particles(pengu_king, input->dt);
 
             pengu_king->state = DEAD;
         } break;
@@ -446,11 +429,11 @@ void penguin_king_action(Entity *pengu_king, Entity *player, f32 dt, Game_Output
 
             pengu_king->alive = false;
 
-            for (int i = 0; i < World[player->player_level].interactible.count; i++) {
-                if (World[player->player_level].interactible.data[i].action_id == 1) {
-                    World[player->player_level].interactible.data[i].acting = true;
+            for (int i = 0; i < World[player->player_level].entities.count; i++) {
+                if (World[player->player_level].entities.data[i].type == et_gate) {
+                    World[player->player_level].entities.data[i].acting = true;
                     camera_state = CAMERALOCKED;
-                    camera_pos_target = World[player->player_level].interactible.data[i].position;
+                    camera_pos_target = World[player->player_level].entities.data[i].position;
                 }
             }
         } break;
@@ -533,6 +516,10 @@ void pengu_attack(Entity *pengu, Entity *player, f32 invuln_time, Game_Input *in
 
 void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, Game_Input *input) {
     soldier->state_time+=dt;
+
+    if (soldier->alive) {
+        draw_normal_enemy_health(soldier);
+    }
 
     if (soldier->enemy.sleep_time > 0) {
         move_enemy(soldier, input->dt);
@@ -658,31 +645,7 @@ void p_soldier_action(Entity *soldier, f32 dt, Entity *player, f32 invuln_time, 
         } break;
     case DYING:
         {
-            Particle_Parameters min = {};
-            Particle_Parameters max = {};
-
-            min.velocity.x = 400*dt;
-            min.velocity.y = 400*dt;
-
-            max.velocity.x = 400*dt;
-            max.velocity.y = 400*dt;
-
-            min.position.x = soldier->position.x;
-            min.position.y = soldier->position.y;
-
-            max.position.x = soldier->position.x + soldier->size.x;
-            max.position.y = soldier->position.y+soldier->size.y;
-
-            min.life_time = 120*dt;
-            max.life_time = 90*dt;
-
-            min.magnet = player;
-
-            Image image = LoadImage(S("exp.png"));
-
-            for (int i = 0; i < i32(soldier->enemy.exp_dropped/10); i++) {
-                particle_emit(min, max, image);
-            }
+            emit_death_particles(soldier, input->dt);
 
             soldier->state = DEAD;
 

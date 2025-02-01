@@ -12,39 +12,38 @@ boss wall types is 2
 angle_between
 v2_arm
 
+Credits:
+Lou Bagel Itch.io
+
 Todo:
 
 -Sound
 --Learn Reaper
 
--general code
+-CODE
 --Camera Shake
 --Jump Vibes
---Character Menu
---rewrite pixel code
 --Dodge code
---Change layers to levels, each level should have a distinct x,y axis.
---Sprint()
 --button mapping
 --More intuitive shield
---dynamic attacking/movement?
---Fix mirroredX draw code.
---liquid levels
-
-
-
+--dynamic attacking/movements
 --Overfit screen
-
-
--attack code
 --Make other Weapons
 --Fix cleaver jump attack animation
-
-
--enemies
+-Enemies
 --Put pengu kings title above health bar
---slimes stop fire darts after a while for some reason.
 --make better slime darts
+-Marmosets
+--Quick shooter
+--Travels in a pair with a hedgehog
+-Hedgehog
+--Curls up in a ball and rolls at the player
+--Travels in a pair with a marmoset
+-Menu
+--Equipment tab
+--NPC Page
+--Settings tab
+--Skills Page
 
 -Peoples todo:
 --Nick: attack combos
@@ -57,7 +56,6 @@ Todo:
 ---sends out root
 --Brain
 ---Lightning strikes
-
 ---Hovers around
 
 
@@ -89,6 +87,13 @@ Completed Code:
 --Make character menu pause
 --fix pengu_king
 --fairy healing
+--Sprint()
+--Change layers to levels, each level should have a distinct x,y axis.
+--slimes stop fire darts after a while for some reason.
+--Fix mirroredX draw code.
+--liquid levels
+--Character Menu
+--rewrite pixel code
 
 Completed Sprites:
 --cleaver

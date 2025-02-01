@@ -3,7 +3,40 @@ i32 line_count = 0;
 
 b32 lines_generated = false;
 
-void load_fairy_dialogue(Entity *fairy) {
+String_Array load_dialogue(Entity *ent) {
+	switch (ent->type)
+	{
+	case et_fairy:
+		{
+			String_Array logus = string_array_make(pengu_arena, 100);
+
+			logus.data[0] = S("I haven't seen you around here lately penguin knight. You finally gonna fight the Pengu King?");
+			logus.data[1] = S("Hey Penguin Knight Listen!");
+			logus.data[2] = S("The Penguin King seeks the great");
+			logus.data[3] = S("power, and only you can stop him!");
+
+			logus.count = 4;
+
+			return logus;
+		} break;
+	case et_penguin_king:
+		{
+			String_Array logus = string_array_make(pengu_arena, 100);
+
+			logus.data[0] = S(" You dare approach me, Guards! Execute him.");
+			logus.data[1] = S(" Fine, I'll do it myself!");
+
+			logus.count = 2;
+
+			return logus;
+		} break;
+	}
+
+	return {};
+}
+
+/*void load_fairy_dialogue(Entity *fairy) {
+	String_Array npc
 	static String dialogue[4] = {
 		S("I haven't seen you around here lately penguin knight. You finally gonna fight the Pengu King?"),
 		S("Hey Penguin Knight Listen!"),
@@ -21,10 +54,10 @@ void load_penguin_king_dialogue(Entity *pengu) {
 	};
 
 	pengu->dialogue = dialogue;
-}
+}*/
 
 void clip_strings(String words, i32 length) {
-	i32 char_at[10] = {};
+	i32 char_at[100] = {};
 	i32 lines = 0;
 
 	i32 count = 0;
@@ -40,7 +73,7 @@ void clip_strings(String words, i32 length) {
 					lines++;
 				}
 
-				if (lines >= 1 && words.count-char_at[lines-1] < length) 
+				if (lines >= 1 && words.count-char_at[lines] < length) 
 				{
 					char_at[lines] = words.count;
 					break;
@@ -50,14 +83,14 @@ void clip_strings(String words, i32 length) {
 			}
 		}
 
-		for (int i = 0; i , 10; i++) {
+		for (int i = 0; i < 100; i++) {
 			if (char_at[i] == 0) break;
 			if (i == 0) {
 				lines_to_speak[i] = string_slice(words, 0, char_at[i]);
 			} else {
 				lines_to_speak[i] = string_slice(words, char_at[i-1] + 1, char_at[i]);
 			}
-			line_count = i;
+			line_count++;
 		}
 	}
 	lines_generated = true;
@@ -71,7 +104,7 @@ b32 draw_dialogue_box(String words, Game_Output *out, Image *image, i32 frames) 
     Vector2 size = MeasureText(font_hellomyoldfriend, words);
 
     if (!lines_generated) {
-    	clip_strings(words, 35);
+    	clip_strings(words, 50);
     }
 
     Rectangle2 box1 = r2_bounds(v2(96, out->height-96), v2(out->width-96, 96), v2_zero, v2_one);

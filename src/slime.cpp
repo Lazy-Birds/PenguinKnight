@@ -1,6 +1,8 @@
 void slime_action(Entity *slime, Entity *player, Game_Input *input) {
   slime->state_time+=input->dt;
 
+  if (slime->alive) draw_normal_enemy_health(slime);
+
   if (slime->enemy.sleep_time > 0) {
     move_enemy(slime, input->dt);
     slime->enemy.sleep_time-=input->dt;
@@ -73,7 +75,7 @@ case MOVE:
     } else if (slime->velocity.y < 0)
     {
      draw_enemy(slime, 2);
- } else if (!entity_on_wall(slime) && !enemy_on_enemy(slime))
+ } else if (!entity_on_wall(slime))
  {
      draw_enemy(slime, 1);
  } else 
@@ -143,31 +145,7 @@ case SHOOT:
         } break;
     case DYING:
     {
-        Particle_Parameters min = {};
-        Particle_Parameters max = {};
-
-        min.velocity.x = 400*input->dt;
-        min.velocity.y = 400*input->dt;
-
-        max.velocity.x = 400*input->dt;
-        max.velocity.y = 400*input->dt;
-
-        min.position.x = slime->position.x;
-        min.position.y = slime->position.y;
-
-        max.position.x = slime->position.x + slime->size.x;
-        max.position.y = slime->position.y+slime->size.y;
-
-        min.life_time = 120*input->dt;
-        max.life_time = 90*input->dt;
-
-        min.magnet = player;
-
-        Image image = LoadImage(S("exp.png"));
-
-        for (int i = 0; i < i32(slime->enemy.exp_dropped/10); i++) {
-            particle_emit(min, max, image);
-        }
+        emit_death_particles(slime, input->dt);
 
         slime->state = DEAD;
 

@@ -15,10 +15,7 @@ void robo_pup_action(Entity *pup, Game_Input *input) {
     }
 
     if (pup->alive) {
-    	DrawRect(r2_bounds(v2(pup->position.x-camera_pos.x+out->width*.5-2, pup->position.y-2-12), v2(pup->size.x+4-pup->enemy.offset.x, 12),
-            v2_zero, v2_one), v4_black);
-        DrawRect(r2_bounds(v2(pup->position.x-camera_pos.x+out->width*.5, pup->position.y-12), v2(pup->current_health/pup->max_health*(pup->size.x+4-pup->enemy.offset.x),
-            8), v2_zero, v2_one), v4_red);
+    	draw_normal_enemy_health(pup);
     }
 
     if (pup->facing > 0 && (ledge_ahead(pup) || wall_ahead(pup)) && !entity_in_air(pup))
@@ -73,31 +70,7 @@ void robo_pup_action(Entity *pup, Game_Input *input) {
    	 	} break;
    	 	case DYING:
     {
-        Particle_Parameters min = {};
-        Particle_Parameters max = {};
-
-        min.velocity.x = 400*input->dt;
-        min.velocity.y = 400*input->dt;
-
-        max.velocity.x = 400*input->dt;
-        max.velocity.y = 400*input->dt;
-
-        min.position.x = pup->position.x;
-        min.position.y = pup->position.y;
-
-        max.position.x = pup->position.x + pup->size.x;
-        max.position.y = pup->position.y+pup->size.y;
-
-        min.life_time = 120*input->dt;
-        max.life_time = 90*input->dt;
-
-        min.magnet = &player;
-
-        Image image = LoadImage(S("exp.png"));
-
-        for (int i = 0; i < i32(pup->enemy.exp_dropped/10); i++) {
-            particle_emit(min, max, image);
-        }
+        emit_death_particles(pup, input->dt);
 
         pup->state = DEAD;
     } break;

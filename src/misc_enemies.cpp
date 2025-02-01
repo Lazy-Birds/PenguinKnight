@@ -3,6 +3,8 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
         if (seal->alive) {
             seal->state = MOVE;
         }
+
+        draw_normal_enemy_health(seal);
     }
 
     seal->enemy.enemy_time++;
@@ -56,31 +58,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
         } break;
     case DYING:
         {
-            Particle_Parameters min = {};
-            Particle_Parameters max = {};
-
-            min.velocity.x = 400*input->dt;
-            min.velocity.y = 400*input->dt;
-
-            max.velocity.x = 400*input->dt;
-            max.velocity.y = 400*input->dt;
-
-            min.position.x = seal->position.x;
-            min.position.y = seal->position.y;
-
-            max.position.x = seal->position.x + seal->size.x;
-            max.position.y = seal->position.y + seal->size.y;
-
-            min.life_time = 120*input->dt;
-            max.life_time = 90*input->dt;
-
-            min.magnet = player;
-
-            Image image = LoadImage(S("exp.png"));
-
-            for (int i = 0; i < i32(seal->enemy.exp_dropped/10); i++) {
-                particle_emit(min, max, image);
-            }
+            emit_death_particles(seal, input->dt);
 
             seal->state = DEAD;
         } break;
@@ -102,6 +80,8 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
 
 void eye_monster_action(Entity *monster, Game_Input *input) {
     monster->state_time+=input->dt;
+
+    if (monster->alive) draw_normal_enemy_health(monster);
 
     if (monster->enemy.sleep_time > 0) {
         move_enemy(monster, input->dt);
@@ -198,31 +178,7 @@ void eye_monster_action(Entity *monster, Game_Input *input) {
         } break;
     case DYING:
         {
-            Particle_Parameters min = {};
-            Particle_Parameters max = {};
-
-            min.velocity.x = 400*input->dt;
-            min.velocity.y = 400*input->dt;
-
-            max.velocity.x = 400*input->dt;
-            max.velocity.y = 400*input->dt;
-
-            min.position.x = monster->position.x;
-            min.position.y = monster->position.y;
-
-            max.position.x = monster->position.x + monster->size.x;
-            max.position.y = monster->position.y+monster->size.y;
-
-            min.life_time = 120*input->dt;
-            max.life_time = 90*input->dt;
-
-            min.magnet = &player;
-
-            Image image = LoadImage(S("exp.png"));
-
-            for (int i = 0; i < i32(monster->enemy.exp_dropped/10); i++) {
-                particle_emit(min, max, image);
-            }
+            emit_death_particles(monster, input->dt);
 
             monster->state = DEAD;
 
@@ -275,3 +231,4 @@ void lazer_attack(Entity *monster) {
         monster->sprite_index = 0;
     }
 }
+

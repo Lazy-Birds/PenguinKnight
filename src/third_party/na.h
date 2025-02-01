@@ -995,6 +995,9 @@ function String string_list_print(Arena *arena, String_List *list, char *fmt, ..
 function String string_list_to_string(Arena *arena, String_List *list);
 function String_Array string_array_from_list(Arena *arena, String_List list);
 
+// String Arrays
+function String_Array string_array_make(Arena *arena, i32 capacity);
+
 // Misc Helpers
 function String string_concat2(Arena *arena, String a, String b);
 function String string_concat3(Arena *arena, String a, String b, String c);
@@ -3284,6 +3287,18 @@ function String_Array string_array_from_list(Arena *arena, String_List list)
         result.data[index] = str;
         index += 1;
     }
+
+    return result;
+}
+
+//
+// String Arrays
+//
+
+function String_Array string_array_make(Arena *arena, i32 capacity) {
+    String_Array result = {};
+    result.data = PushArrayZero(arena, String, capacity);
+    result.count = 0;
 
     return result;
 }

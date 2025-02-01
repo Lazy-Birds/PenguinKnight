@@ -107,30 +107,53 @@ void level_char_up(Entity *player, i32 stat) {
 
 i32 box_selected = 0;
 i32 start_select = 0;
-Vector2 set_select = v2(0, 16);
+Vector2 set_select = v2(0, 10);
 
 
 void item_menu() {
 	for (int i = set_select.x; i < set_select.y; i++) {
 
-		Rectangle2 it_box = r2_bounds(v2(320, 80+36*(i-start_select)), v2(96, 32), v2_zero, v2_one);
+		Rectangle2 it_box = r2_bounds(v2(322, 82+56*(i-start_select)), v2(92, 48), v2_zero, v2_one);
 
 		if (box_selected == i) {
-			DrawRectOutline(it_box, v4_white, 2);
+			DrawRect(it_box, rgb(58, 68, 102));
+			
+			DrawTextExt(font_hellomyoldfriend, player.inventory.data[i].data[0].name, v2(436, 84), v4_white, v2_zero, 2.0);
+			if (player.inventory.data[i].data[0].consumable)
+			{
+				DrawTextExt(font_hellomyoldfriend, string_concat(S("Consumable x "), sprint("%d", player.inventory.data[i].count)), v2(768, 90), v4_white, v2_zero, 1.5);
+			} else
+			{
+				DrawTextExt(font_hellomyoldfriend, S("Non-Consumable"), v2(768, 90), v4_white, v2_zero, 1.5);
+			}
+			
+
+			if (!lines_generated) {
+		    	clip_strings(player.inventory.data[i].data[0].description, 40);
+		    }
+
+		    
+		    for (int i = 0; i < line_count; i++) {
+		    	DrawTextExt(font_hellomyoldfriend, lines_to_speak[i], v2(436, 112+28*i), v4_white, v2_zero, 1.5);
+		    }
+
 		} else {
-			DrawRectOutline(it_box, rgb(139, 155, 180), 2);
+			DrawRect(it_box, rgb(90, 105, 136));
 		}
+
+		DrawImage(player.inventory.data[i].data[0].icon[0], v2(344, 82+56*(i-start_select)));
 	}
+}
 
-	String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
-    Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
-
+void npc_menu() {
 	for (int i = set_select.x; i < set_select.y; i++) {
+		Rectangle2 it_box = r2_bounds(v2(322, 82+56*(i-start_select)), v2(92, 48), v2_zero, v2_one);
 
-		//Dump(player.inventory.data[i].data[0].name);
-		DrawTextExt(font_hellomyoldfriend, player.inventory.data[i].data[0].name, v2(324, 88+36*(i-start_select)), v4_white, v2_zero, 1.0);
-
-		clip_strings(player.inventory.data[i].data[0].description, 41);
+		if (box_selected == i) {
+			DrawRect(it_box, rgb(58, 68, 102));
+		} else {
+			DrawRect(it_box, rgb(90, 105, 136));
+		}
 	}
 }
 
@@ -178,9 +201,6 @@ void draw_menu(Game_Output *out, Entity *player, Image screen, bool at_bonfire) 
 	static Image big_icon_bonfire = LoadImage(S("sleeping_bag_pengu.png"));
 	static Image big_icon_out = LoadImage(S("menu_sprite.png"));
 
-	String font_chars = S(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$ €£¥¤+-*/÷=%‰\"'#@&_(),.;:¿?¡!\\|{}<>[]§¶µ`^~©®™");
-    Font font_hellomyoldfriend = LoadFont(S("spr_font_hellomyoldfriend_12x12_by_lotovik_strip110.png"), font_chars, v2i(12, 12));
-
     String constitution = S("Constitution");
     String rigour = S("Rigour");
     String strength = S("Strength");
@@ -216,9 +236,15 @@ void draw_menu(Game_Output *out, Entity *player, Image screen, bool at_bonfire) 
     //Change box select with directional input
     if (ControllerReleased(0, Button_Up) && box_selected > 0) 
 	{
+		line_count = 0;
+		box_count = 0;
+		lines_generated = false;
 		box_selected--;
 	} else if (ControllerReleased(0, Button_Down) && box_selected < 99)
 	{
+		line_count = 0;
+		box_count = 0;
+		lines_generated = false;
 		box_selected++;
 	}
 
@@ -237,6 +263,8 @@ void draw_menu(Game_Output *out, Entity *player, Image screen, bool at_bonfire) 
 
     if (menu_at == 0) {
     	item_menu();
+    } else if (menu_at == 2) {
+    	npc_menu();
     }
 
     //Draw menu icons
@@ -295,6 +323,14 @@ void draw_menu(Game_Output *out, Entity *player, Image screen, bool at_bonfire) 
 	DrawRect(act_dex_bar, v4_red);
 	DrawRect(act_men_bar, v4_red);
 
+	//Menu select with direction input
+	if (ControllerReleased(0, Button_Left) && menu_at > 0) {
+		menu_at--;
+	} else if (ControllerReleased(0, Button_Right) && menu_at < 3) {
+		menu_at++;
+	}
+
+	//Menu select with Mouse
 	if (mouse_on_rec(first) == 1 && MouseReleased(Mouse_Left)) {
 		menu_at = 0;
 	} else if (mouse_on_rec(second) == 1 && MouseReleased(Mouse_Left)) {

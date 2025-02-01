@@ -1,11 +1,6 @@
 const i32 world_size = 8;
 
-const i32 wall_unit = 1000;
-const i32 interactible_unit = 5;
-const i32 enemy_unit = 5;
-const i32 npc_unit = 5;
-const i32 bgnd_unit = 50;
-const i32 house_unit = 5;
+const i32 entity_unit = 1250;
 const i32 liquid_unit = 10;
 
 const i32 VILLAGE = 0;
@@ -52,12 +47,7 @@ void create_levels() {
         World[i].id = i;
         World[i].world = LoadImage(sprint("level%d.png", i));
         World[i].background = LoadImage(string_concat(sprint("region%d", World[i].region.x), sprint("area%d.png", World[i].region.y)));
-        World[i].wall = make_entity_array_two(pengu_arena, wall_unit*World[i].scale);
-        World[i].interactible = make_entity_array_two(pengu_arena, interactible_unit*World[i].scale);
-        World[i].enemies = make_entity_array_two(pengu_arena, enemy_unit*World[i].scale);;
-        World[i].npcs = make_entity_array_two(pengu_arena, npc_unit*World[i].scale);
-        World[i].backgrounds = make_entity_array_two(pengu_arena, bgnd_unit*World[i].scale);
-        World[i].housing = make_entity_array_two(pengu_arena, house_unit*World[i].scale);
+        World[i].entities = make_entity_array_two(pengu_arena, entity_unit*World[i].scale);
         World[i].liquid = make_entity_array_two(pengu_arena, liquid_unit*World[i].scale);
         World[i].initialized = false;
     }
@@ -65,19 +55,12 @@ void create_levels() {
     create_level_entries();
 }
 
-const i32 LEVER = 0;
-const i32 GATE = 1;
-const i32 GATETOO = 2;
-const i32 DOOR = 3;
-const i32 FIRE = 4;
-const i32 HOOK = 5;
-const i32 LADDER = 6;
+Entity make_interactible(Vector2 position, i32 type, i32 sub_type) {
+    Level *level = &World[player.player_level];
 
-void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
-    Level *level = &World[level_id];
-    switch (id)
+    switch (type)
     {
-    case LEVER:
+    case et_lever:
         {
             static Image image[] = {
                 LoadImage(S("lever1.png")),
@@ -85,18 +68,22 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
                 LoadImage(S("lever3.png")),
             };
 
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].image = image;
-            World[level_id].interactible.data[World[level_id].interactible.count].type = 0;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 0;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            Entity ent = {};
 
-            World[level_id].interactible.count++;
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.image = image;
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = true;
+            ent.acting = false;
+
+            return ent;
+
         } break;
-    case GATE:
+    case et_gate:
         {
             static Image bot[] = {
                 LoadImage(S("gate1.png")),
@@ -106,57 +93,49 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
                 LoadImage(S("gate2.png")),
             };
 
-            if (type == 0) {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = bot;
+            Entity ent = {};
+
+            if (sub_type == st_gate_bot) {
+                ent.image = bot;
             } else {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = top;
+                ent.image = top;
             }
 
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].type = type;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = false;
+            ent.acting = false;
+            ent.state_time = 0;
 
-            World[level_id].interactible.count++;
+            return ent;
+
         } break;
-    /*case GATETOO:
-        {
-            
-
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].image = image;
-            World[level_id].interactible.data[World[level_id].interactible.count].type = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = 1;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].state_time = 0;
-
-            World[level_id].interactible.count++;
-        } break;*/
-    case DOOR:
+    case et_door:
         {
             static Image image[] = {
                 LoadImage(S("pipe_door.png")),
             };
 
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].image = image;
-            World[level_id].interactible.data[World[level_id].interactible.count].type = 3;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 3;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            Entity ent = {};
 
-            World[level_id].interactible.count++;
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.image = image;
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = true;
+            ent.acting = false;
+
+            return ent;
+
         } break;
-    case FIRE:
+    case et_fire:
         {
             
             static Image village_fire[] = {
@@ -183,25 +162,29 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
                 LoadImage(S("fire_no_bg5.png")),
             };
 
-            if (type == 0) {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = village_fire;
-            } else if (type == 1) {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = sewer_fire;
-            } else if (type == 2) {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = fire_no_bg;
+            Entity ent = {};
+
+            if (sub_type == st_village) {
+                ent.image = village_fire;
+            } else if (sub_type == st_sewer) {
+                ent.image = sewer_fire;
+            } else if (sub_type == st_no_bg) {
+                ent.image = fire_no_bg;
             }
             
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].type = 4;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 4;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = true;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = true;
+            ent.acting = false;
 
-            World[level_id].interactible.count++;
+            return ent;
+
         } break;
-    case HOOK:
+    case et_hook:
         {
             static Image right[] = {
                 LoadImage(S("hook_right.png")),
@@ -211,50 +194,61 @@ void make_interactible(Vector2 position, i32 id, i32 level_id, i32 type) {
                 LoadImage(S("hook_left.png")),
             };
 
-            if (type == 0) {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = right;
-                World[level_id].interactible.data[World[level_id].interactible.count].anchor = v2(position.x+48, position.y);
+            Entity ent = {};
+
+            if (sub_type == st_right) {
+                ent.image = right;
+                ent.anchor = v2(position.x+48, position.y);
             } else {
-                World[level_id].interactible.data[World[level_id].interactible.count].image = left;
-                World[level_id].interactible.data[World[level_id].interactible.count].anchor = v2(position.x, position.y);
+                ent.image = left;
+                ent.anchor = v2(position.x, position.y);
             }
 
-            World[level_id].interactible.data[World[level_id].interactible.count].position = position;
-            World[level_id].interactible.data[World[level_id].interactible.count].size = v2(48, 48);
-            World[level_id].interactible.data[World[level_id].interactible.count].type = type;
-            World[level_id].interactible.data[World[level_id].interactible.count].action_id = 5;
-            World[level_id].interactible.data[World[level_id].interactible.count].id = level->interactible.count;;
-            World[level_id].interactible.data[World[level_id].interactible.count].actable = false;
-            World[level_id].interactible.data[World[level_id].interactible.count].acting = false;
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = false;
+            ent.acting = false;
 
-            World[level_id].interactible.count++;
+            return ent;
+
         } break;
-    case LADDER:
+    case et_ladder:
         {
             static Image laddy_daddy[] = {
                 LoadImage(S("ladder.png")),
             };
 
-            level->interactible.data[level->interactible.count].image = laddy_daddy;
+            Entity ent = {};
 
-            level->interactible.data[level->interactible.count].position = position;
-            level->interactible.data[level->interactible.count].size = v2(48, 48);
-            level->interactible.data[level->interactible.count].type = type;
-            level->interactible.data[level->interactible.count].action_id = 6;
-            level->interactible.data[level->interactible.count].id = level->interactible.count;
-            level->interactible.data[level->interactible.count].actable = true;
-            level->interactible.data[level->interactible.count].acting = false;
-            level->interactible.count++;
+            ent.image = laddy_daddy;
+
+            ent.position = position;
+            ent.size = v2(48, 48);
+            ent.type = type;
+            ent.sub_type = sub_type;
+            ent.id = level->entities.count;
+            ent.alive = true;
+            ent.actable = true;
+            ent.acting = false;
+
+            return ent;
+
         } break;
     }
+
+    return {};
 }
 
 
 
 void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
-    switch (interactible->action_id)
+    switch (interactible->type)
     {
-    case LEVER:
+    case et_lever:
         {
             interactible->state_time+=input->dt;
 
@@ -273,11 +267,11 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
                 DrawImage(interactible->image[0], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
                 interactible->acting = false;
                 interactible->state_time = 0;
-                for (int i = 0; i < World[player.player_level].interactible.count; i++) {
-                    if (World[player.player_level].interactible.data[i].action_id == 1) {
-                        World[player.player_level].interactible.data[i].acting = true;
+                for (int i = 0; i < World[player.player_level].entities.count; i++) {
+                    if (World[player.player_level].entities.data[i].type == et_gate) {
+                        World[player.player_level].entities.data[i].acting = true;
                         camera_state = CAMERALOCKED;
-                        camera_pos_target = World[player.player_level].interactible.data[i].position;
+                        camera_pos_target = World[player.player_level].entities.data[i].position;
                     }
                 }
                 interactible->acting = false;
@@ -285,7 +279,7 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
             }
             player.acting = false;
         } break;
-    case GATE:
+    case et_gate:
         {
             interactible->state_time+=input->dt;
             if (i32(interactible->state_time*60)%4 == 0) {
@@ -305,14 +299,14 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
             }
             player.acting = false;
         } break;
-    case DOOR:
+    case et_door:
         {
             DrawImage(interactible->image[0], v2(interactible->position.x-camera_pos.x+out->width*.5, interactible->position.y));
             interactible->acting = false;
             interactible->actable = true;
             player.acting = false;
         } break;
-    case FIRE:
+    case et_fire:
         {
             in_menu = true;
             at_bonfire = true;
@@ -326,7 +320,7 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos) {
             player.velocity = v2_zero;
             camera_pos = player.position;
         } break;
-    case LADDER:
+    case et_ladder:
         {
             player.velocity.y = -200;
 
@@ -432,5 +426,19 @@ void create_level_entries() {
     tele[13].level_id = 7;
     tele[13].landing_pos = v2(9024, 524);
     tele[13].actable = false;
+    tele_count++;
+
+    tele[14].entry = r2_bounds(v2(5424, 672), v2(1200, 96), v2_zero, v2_one);
+    tele[14].link_id = 15;
+    tele[14].level_id = 6;
+    tele[14].landing_pos = v2(5376, 284);
+    tele[14].actable = false;
+    tele_count++;
+
+    tele[15].entry = r2_bounds(v2(8026, -96), v2(1200, 96), v2_zero, v2_one);
+    tele[15].link_id = 14;
+    tele[15].level_id = 0;
+    tele[15].landing_pos = v2(8026, 0);
+    tele[15].actable = false;
     tele_count++;
 }
