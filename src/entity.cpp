@@ -510,6 +510,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             snores.animation_time = 0;
             snores.dialogue_time = 0;
             snores.type = et_mayor_snoresly;
+            snores.id = World[player.player_level].entities.count;
 
             return snores;
         } break;
@@ -529,6 +530,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             puller.animation_time = 0;
             puller.dialogue_time = 0;
             puller.type = et_pengu_puller;
+            puller.id = World[player.player_level].entities.count;
 
             return puller;
         } break;
@@ -549,6 +551,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             idle_penguin.facing = -1;
             idle_penguin.enemy.offset = v2(0,0);
             idle_penguin.type = et_default;
+            idle_penguin.id = World[player.player_level].entities.count;
 
             return idle_penguin;
         } break;
@@ -595,6 +598,7 @@ Entity make_wall(Vector2 pos, u32 pixel, Image *image) {
     ent.wall_type.pixel = pixel;
     ent.image = image;
     ent.type = et_wall;
+    ent.id = World[player.player_level].entities.count;
 
     return ent;
 }
@@ -607,6 +611,7 @@ Entity make_custom_wall(Vector2 pos, u32 pixel, Image *image, Vector2 size) {
     ent.wall_type.pixel = pixel;
     ent.image = image;
     ent.type = et_wall;
+    ent.id = World[player.player_level].entities.count;
 
     return ent;
 }
@@ -1333,7 +1338,15 @@ EntityArrayP make_entity_array_three(Arena *arena, i32 size) {
     return arr;
 }
 
-/*EntityArray add_to_pos(EntityArray arr, Entity entity, i32 pos) {
+/*void remove_from_entities(Entity *ent) {
+    Level *level = &World[player.player_level];
+
+    level->entities[level->entities.count-1].id = ent.id;
+    level->entities.data[ent.id] = level->entities.data[level->entities.count-1];
+    level->entities.count--;
+}
+
+EntityArray add_to_pos(EntityArray arr, Entity entity, i32 pos) {
     EntityArray arr_ret = {};
     Entity ar_data[arr.capacity] = {};
 
@@ -1502,7 +1515,7 @@ Entity get_wall_at(Vector2 pos) {
         }
     }
 
-    return {};
+    return {NULL};
 }
 
 void set_entity_hit_box(Entity *ent) {
@@ -1971,7 +1984,7 @@ void draw_normal_enemy_health(Entity *ent) {
         v2(ent->current_health/ent->max_health*(ent->size.x+4)-ent->offset.x, 8), v2_zero, v2_one), v4_red);
 }
 
-void draw_enemy(Entity *nme, i32 frame) {
+void draw_entity(Entity *nme, i32 frame) {
     if (nme->assymetric){
         if (nme->facing > 0) {
             DrawImageMirrored(nme->image[frame], v2(nme->position.x-camera_pos.x+out->width*.5+nme->offset.x,
@@ -1991,7 +2004,7 @@ void draw_enemy(Entity *nme, i32 frame) {
     }
 }
 
-void move_enemy(Entity *nme, f32 dt) {
+void move_entity(Entity *nme, f32 dt) {
     f32 y_moved = 0;
     f32 x_moved = 0;
 
@@ -2042,6 +2055,69 @@ void move_enemy(Entity *nme, f32 dt) {
     DrawRectOutline(draw_box, v4_red, 2);
 }
 
+Rectangle2 hitbox_simple(Entity *ent) {
+    Rectangle2 hitbox = r2_bounds(ent->position, ent->size, v2_zero, v2_one);
+
+    return hitbox;
+}
+
+Entity* enemy_hit(Rectangle2 hitbox) {
+    Level *level = &World[player.player_level];
+    for (int i = 0; i < level->entities.count; i++) {
+        Entity *ent = &level->entities.data[i];
+        switch (ent->type)
+        {
+        case et_plant:
+        case et_seal:
+        case et_penguin_king:
+        case et_robo_pup:
+        case et_slime:
+        case et_eye_monster:
+        case et_ooze:
+        case et_coyote_nick:
+        case et_marmoset:
+        case et_hedgehog:
+            {
+                if (ent->alive && r2_intersects(hitbox, ent->hitbox)) return ent;
+            } break;
+        }
+    }
+
+    return {};
+}
+
+//Ent takes damage from ent_2
+void entity_take_damage(Entity *ent, Entity *ent_2) {
+    i32 damage = ent_2->damage;
+
+    ent->invuln = true;
+
+    if (ent->has_hit) {
+        ent->state = HIT;
+    }
+    
+    if (ent->current_health <= damage) {
+        ent->current_health = 0;
+        ent->state = DYING;
+        ent->state_time = 0;
+        player.exp_gained += ent->enemy.exp_dropped;
+        if (player.mp_cooldown <= 0) {
+            player.current_mp+=10;
+            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+            player.mp_cooldown+=.5;
+        }
+        
+    } else {
+        ent->current_health-=damage;
+        ent->invuln = true;
+        if (player.mp_cooldown <= 0) {
+            player.current_mp+=10;
+            player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
+            player.mp_cooldown+=.5;
+        }
+    }
+}
+
 Entity projectiles[1000] = {};
 i32 proj_count = 0;
 
@@ -2085,7 +2161,7 @@ void make_projectile(Image *image, Vector2 pos, Vector2 vel, i32 sprite_index, i
         projectiles[slot].facing = -1;
     }
     proj_count++;
-    draw_enemy(projectiles, 0);
+    draw_entity(projectiles, 0);
 }
 
 void update_projectiles(Game_Input *input, Entity *player) {
@@ -2105,14 +2181,14 @@ void update_projectiles(Game_Input *input, Entity *player) {
                 proj_count--;
             }
 
-            move_enemy(&projectiles[i], input->dt);
+            move_entity(&projectiles[i], input->dt);
 
             //Draw based on sprite frames
             if (projectiles[i].sprite_index == 0) {
-                draw_enemy(&projectiles[i], 0);
+                draw_entity(&projectiles[i], 0);
             } else {
                 emit_backwards_particles(&projectiles[i], input);
-                draw_enemy(&projectiles[i], 1);
+                draw_entity(&projectiles[i], 1);
             }
 
             if (entity_against_wall(&projectiles[i])) {
@@ -2467,7 +2543,10 @@ void interactible_actions(Entity *ent, Game_Input *input) {
 
                         Entity ent_2 = get_wall_at(ent->position);
 
-                        DrawImage(ent_2.image[0], v2(ent_2.position.x + camera_offset, ent_2.position.y));
+                        if (ent_2.image != NULL)
+                        {
+                            DrawImage(ent_2.image[0], v2(ent_2.position.x + camera_offset, ent_2.position.y));
+                        }
                     }
                 }
                 

@@ -4,17 +4,17 @@ void slime_action(Entity *slime, Entity *player, Game_Input *input) {
   if (slime->alive) draw_normal_enemy_health(slime);
 
   if (slime->enemy.sleep_time > 0) {
-    move_enemy(slime, input->dt);
+    move_entity(slime, input->dt);
     slime->enemy.sleep_time-=input->dt;
     if (slime->state_time*60 <= 20) {
-        draw_enemy(slime, 0);
+        draw_entity(slime, 0);
         if (slime->state_time*60 >= 10) {
             slime->velocity.x = 0;
         }
     } else if (slime->state_time*60 <= 40) {
-        draw_enemy(slime, 1);
+        draw_entity(slime, 1);
     } else {
-       draw_enemy(slime, 2);
+       draw_entity(slime, 2);
    }
 
    if (slime->enemy.sleep_time*60 <= 1) {
@@ -42,26 +42,26 @@ case NEUTRAL:
       if (abs_i32(slime->position.x - player->position.x) < 800)
       {
          slime->state = MOVE;
-         draw_enemy(slime, 0);
+         draw_entity(slime, 0);
      } else if (slime->state_time*60 < 20) 
      {
-         draw_enemy(slime, 0);
+         draw_entity(slime, 0);
      } else if (slime->state_time*60 < 40) 
      {
-         draw_enemy(slime, 1);
+         draw_entity(slime, 1);
      } else 
      {
-         draw_enemy(slime, 2);
+         draw_entity(slime, 2);
      }
  } break;
 case MOVE:
    {
       if (slime->state_time*60 < 30)
       {
-         draw_enemy(slime, 0);
+         draw_entity(slime, 0);
      } else if (slime->state_time*60 < 60)
      {
-         draw_enemy(slime, 1);
+         draw_entity(slime, 1);
      } else if (slime->state_time*60 < 62)
      {
         if (slime->velocity_prev.x == 0) {
@@ -71,16 +71,16 @@ case MOVE:
         }
         slime->velocity.x+=slime->velocity_prev.x;
         slime->velocity.y-=slime->velocity_prev.y;
-        draw_enemy(slime, 2);
+        draw_entity(slime, 2);
     } else if (slime->velocity.y < 0)
     {
-     draw_enemy(slime, 2);
+     draw_entity(slime, 2);
  } else if (!entity_on_wall(slime))
  {
-     draw_enemy(slime, 1);
+     draw_entity(slime, 1);
  } else 
  {
-     draw_enemy(slime, 0);
+     draw_entity(slime, 0);
      slime->enemy.sleep_time+=60*input->dt;
      slime->velocity.x = 0;
      slime->state_time = 0;
@@ -98,10 +98,10 @@ case SHOOT:
     {
         if (slime->state_time*60 < 20) {
             slime->projectile_launched = false;
-            draw_enemy(slime, 4);
+            draw_entity(slime, 4);
         } else if (slime->state_time*60 < 40) {
             Image dart = LoadImage(S("slime_dart.png"));
-            draw_enemy(slime, 5);
+            draw_entity(slime, 5);
             DrawImage(dart, v2(slime->position.x-camera_pos.x+out->width*.5, slime->position.y + 17));
         } else if (slime->state_time*60 < 60) {
             if (!slime->projectile_launched) {
@@ -109,9 +109,9 @@ case SHOOT:
                 slime->projectile_launched = true;
             }
 
-            draw_enemy(slime, 4);
+            draw_entity(slime, 4);
         } else {
-            draw_enemy(slime, 0);
+            draw_entity(slime, 0);
             slime->enemy.sleep_time+=60*input->dt;
             slime->velocity.x = 0;
             slime->state_time = 0;
@@ -127,7 +127,7 @@ case SHOOT:
     case HIT:
         {
             if (slime->state_time*60 <= 6) {
-                draw_enemy(slime, 4);
+                draw_entity(slime, 4);
                 if (slime->position.x > player->position.x)
                 {
                     slime->velocity.x = 8000*input->dt;
@@ -150,11 +150,11 @@ case SHOOT:
         slime->state = DEAD;
 
             /*if (i32(slime->state_time*60) < 2) {
-                draw_enemy(slime, 4);
+                draw_entity(slime, 4);
             } else if (i32(slime->state_time*60) < 4) {
-                draw_enemy(slime, 5);
+                draw_entity(slime, 5);
             } else if (i32(slime->state_time*60) < 6) {
-                draw_enemy(slime, 6);
+                draw_entity(slime, 6);
             } else {
                 slime->alive = false;
             }*/
@@ -172,7 +172,7 @@ case SHOOT:
         }   
     }
 
-    move_enemy(slime, input->dt);
+    move_entity(slime, input->dt);
 }
 
 void ooze_action(Entity *ooze, Game_Input *input) {
@@ -193,13 +193,13 @@ void ooze_action(Entity *ooze, Game_Input *input) {
     }
 
     if (ooze->enemy.sleep_time > 0) {
-        move_enemy(ooze, input->dt);
+        move_entity(ooze, input->dt);
         ooze->enemy.sleep_time-=input->dt;
         if (ooze->state_time*60 <= 20) {
-            draw_enemy(ooze, 0);
+            draw_entity(ooze, 0);
             if (ooze->state_time*60 >= 10) ooze->velocity.x = 0;
         } else {
-            draw_enemy(ooze, 1);
+            draw_entity(ooze, 1);
         }
         
         if (ooze->enemy.sleep_time*60 <= 1) ooze->state_time = 0;
@@ -229,7 +229,7 @@ void ooze_action(Entity *ooze, Game_Input *input) {
     {
     case NEUTRAL:
         {
-            draw_enemy(ooze, 0);
+            draw_entity(ooze, 0);
             if (ooze->state_time*60 > 20 && ooze->sprite_index == 0 && entity_get_distance_x(ooze, &player) < 450) 
             {
                 ooze->state = SPYING;
@@ -253,27 +253,27 @@ void ooze_action(Entity *ooze, Game_Input *input) {
             }
 
             if (ooze->state_time*60 < 10) {
-                draw_enemy(ooze, 1);
+                draw_entity(ooze, 1);
             } else if (ooze->state_time*60 < 20) {
-                draw_enemy(ooze, 2);
+                draw_entity(ooze, 2);
             } else if (ooze->state_time*60 < 30) {
-                draw_enemy(ooze, 3);
+                draw_entity(ooze, 3);
             } else if (ooze->state_time*60 < 40) {
-                draw_enemy(ooze, 4);
+                draw_entity(ooze, 4);
             } else if (ooze->state_time*60 < 50) {
-                draw_enemy(ooze, 5);
+                draw_entity(ooze, 5);
             } else if (ooze->state_time*60 < 60) {
-                draw_enemy(ooze, 6);
+                draw_entity(ooze, 6);
             } else if (ooze->state_time*60 < 70) {
-                draw_enemy(ooze, 7);
+                draw_entity(ooze, 7);
             } else if (ooze->state_time*60 < 80) {
-                draw_enemy(ooze, 8);
+                draw_entity(ooze, 8);
             } else if (ooze->state_time*60 < 140) {
-                draw_enemy(ooze, 9);
+                draw_entity(ooze, 9);
             } else if (ooze->state_time*60 < 160) {
-                draw_enemy(ooze, 10);
+                draw_entity(ooze, 10);
             } else if (ooze->state_time*60 < 180) {
-                draw_enemy(ooze, 10);
+                draw_entity(ooze, 10);
                 ooze->state_time = 59*input->dt;
                 ooze->sprite_index = 1;
             }
@@ -281,39 +281,39 @@ void ooze_action(Entity *ooze, Game_Input *input) {
     case HAMMER:
         {
             if (ooze->state_time*60 < 5) {
-                draw_enemy(ooze, 11);
+                draw_entity(ooze, 11);
             } else if (ooze->state_time*60 < 10) {
-                draw_enemy(ooze, 12);
+                draw_entity(ooze, 12);
             } else if (ooze->state_time*60 < 15) {
-                draw_enemy(ooze, 13);
+                draw_entity(ooze, 13);
             } else if (ooze->state_time*60 < 20) {
-                draw_enemy(ooze, 14);
+                draw_entity(ooze, 14);
             } else if (ooze->state_time*60 < 25) {
-                draw_enemy(ooze, 15);
+                draw_entity(ooze, 15);
             } else if (ooze->state_time*60 < 30) {
-                draw_enemy(ooze, 16);
+                draw_entity(ooze, 16);
             } else if (ooze->state_time*60 < 35) {
-                draw_enemy(ooze, 17);
+                draw_entity(ooze, 17);
             } else if (ooze->state_time*60 < 40) {
-                draw_enemy(ooze, 18);
+                draw_entity(ooze, 18);
             } else if (ooze->state_time*60 < 45) {
-                draw_enemy(ooze, 19);
+                draw_entity(ooze, 19);
             } else if (ooze->state_time*60 < 50) {
-                draw_enemy(ooze, 20);
+                draw_entity(ooze, 20);
             } else if (ooze->state_time*60 < 60) {
-                draw_enemy(ooze, 21);
+                draw_entity(ooze, 21);
             } else if (ooze->state_time*60 < 65) {
-                draw_enemy(ooze, 22);
+                draw_entity(ooze, 22);
             } else if (ooze->state_time*60 < 75) {
-                draw_enemy(ooze, 23);
+                draw_entity(ooze, 23);
             } else if (ooze->state_time*60 < 80) {
-                draw_enemy(ooze, 24);
+                draw_entity(ooze, 24);
             }  else if (ooze->state_time*60 < 95) {
-                draw_enemy(ooze, 25);
+                draw_entity(ooze, 25);
             }  else if (ooze->state_time*60 < 100) {
-                draw_enemy(ooze, 26);
+                draw_entity(ooze, 26);
             } else {
-                draw_enemy(ooze, 0);
+                draw_entity(ooze, 0);
                 ooze->state = LAZER;
             }
         } break;
@@ -326,28 +326,28 @@ void ooze_action(Entity *ooze, Game_Input *input) {
             }
 
             if (ooze->state_time*60 < 10) {
-                draw_enemy(ooze, 1);
+                draw_entity(ooze, 1);
             } else if (ooze->state_time*60 < 20) {
-                draw_enemy(ooze, 2);
+                draw_entity(ooze, 2);
             } else if (ooze->state_time*60 < 30) {
-                draw_enemy(ooze, 3);
+                draw_entity(ooze, 3);
             } else if (ooze->state_time*60 < 40) {
-                draw_enemy(ooze, 4);
+                draw_entity(ooze, 4);
             } else if (ooze->state_time*60 < 50) {
-                draw_enemy(ooze, 5);
+                draw_entity(ooze, 5);
             } else if (ooze->state_time*60 < 60) {
-                draw_enemy(ooze, 6);
+                draw_entity(ooze, 6);
             } else if (ooze->state_time*60 < 70) {
-                draw_enemy(ooze, 7);
+                draw_entity(ooze, 7);
             } else if (ooze->state_time*60 < 80) {
-                draw_enemy(ooze, 8);
+                draw_entity(ooze, 8);
             } else if (ooze->state_time*60 < 140) {
-                draw_enemy(ooze, 9);
+                draw_entity(ooze, 9);
             } else if (ooze->state_time*60 < 160) {
-                draw_enemy(ooze, 10);
+                draw_entity(ooze, 10);
                 draw_super_lazer(ooze->position, player.position);
             } else if (ooze->state_time*60 < 180) {
-                draw_enemy(ooze, 10);
+                draw_entity(ooze, 10);
                 ooze->state_time = 59*input->dt;
                 ooze->sprite_index = 1;
             }        
@@ -364,7 +364,7 @@ void ooze_action(Entity *ooze, Game_Input *input) {
                         World[player.player_level].liquid.count++;
                     }
                     corruption_phase = 1;
-                    draw_enemy(ooze, 0);
+                    draw_entity(ooze, 0);
                 } 
                 
                 ooze->position = v2(1440, 192);

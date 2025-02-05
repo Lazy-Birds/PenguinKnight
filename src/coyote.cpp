@@ -1,5 +1,5 @@
 void coyote_action(Entity *coyote, Game_Input *input) {
-	draw_enemy(coyote, 0);
+	draw_entity(coyote, 0);
 	  coyote->state_time+=input->dt;
 
 	if (coyote->enemy.sleep_time > 0) {
@@ -22,8 +22,8 @@ void coyote_action(Entity *coyote, Game_Input *input) {
 	case NEUTRAL:
 	{
 		coyote->velocity.y = 3000;
-		move_enemy(coyote, input->dt);
-		draw_enemy(coyote, 0);
+		move_entity(coyote, input->dt);
+		draw_entity(coyote, 0);
 
 	} break;
 	case SHOOT:
@@ -33,7 +33,7 @@ void coyote_action(Entity *coyote, Game_Input *input) {
 	case HIT:
 	{
 	    if (coyote->state_time*60 <= 6) {
-	        draw_enemy(coyote, 0);	        
+	        draw_entity(coyote, 0);	        
 	    }
 
 	        coyote->enemy.sleep_time=20*input->dt;
@@ -47,11 +47,11 @@ void coyote_action(Entity *coyote, Game_Input *input) {
 	        coyote->state = DEAD;
 
 	            /*if (i32(coyote->state_time*60) < 2) {
-	                draw_enemy(coyote, 4);
+	                draw_entity(coyote, 4);
 	            } else if (i32(coyote->state_time*60) < 4) {
-	                draw_enemy(coyote, 5);
+	                draw_entity(coyote, 5);
 	            } else if (i32(coyote->state_time*60) < 6) {
-	                draw_enemy(coyote, 6);
+	                draw_entity(coyote, 6);
 	            } else {
 	                coyote->alive = false;
 	            }*/
@@ -92,7 +92,7 @@ void marmoset_action(Entity *marm) {
 	{
 	case NEUTRAL:
 		{
-			draw_enemy(marm, 0);
+			draw_entity(marm, 0);
 
 			marm->velocity = v2_zero;
 
@@ -100,30 +100,30 @@ void marmoset_action(Entity *marm) {
 		} break;
 	case SHOOT:
 		{
-			if (marm->state_time*60 < 15) {
-				draw_enemy(marm, 0);
+			if (marm->state_time*60 < 20) {
+				draw_entity(marm, 0);
 			} else if (marm->state_time*60 < 45) {
-				draw_enemy(marm, 1);
-			} else if (marm->state_time*60 < 75) {
-				draw_enemy(marm, 2);
-			} else if (marm->state_time*60 <= 76) {
-				draw_enemy(marm, 2);
+				draw_entity(marm, 1);
+			} else if (marm->state_time*60 < 85) {
+				draw_entity(marm, 2);
+			} else if (marm->state_time*60 <= 86) {
+				draw_entity(marm, 2);
 				make_projectile(marm->projectile, v2(marm->position.x+52, marm->position.y+42), v2(12000*input->dt*sign_f32(marm->facing), 0), 0, 0);
 			} else {
 				marm->state = NEUTRAL;
-				draw_enemy(marm, 0);
+				draw_entity(marm, 0);
 			}
 		} break;
 	case HIT:
 		{
 			if (marm->state_time*60 < 2) {
-				draw_enemy(marm, 0);
+				draw_entity(marm, 0);
 				marm->velocity.x-=8000*input->dt*sign_f32(marm->facing);
 				marm->velocity.y-=6000*input->dt;
 			} else if (entity_in_air(marm)) {
-				draw_enemy(marm, 0);
+				draw_entity(marm, 0);
 			} else {
-				draw_enemy(marm, 0);
+				draw_entity(marm, 0);
 				marm->state = NEUTRAL;
 			}
 		} break;
@@ -139,7 +139,7 @@ void marmoset_action(Entity *marm) {
 		} break;
 	}
 
-	move_enemy(marm, input->dt);
+	move_entity(marm, input->dt);
 
 	if (marm->facing > 0) {
 		marm->hitbox = r2_bounds(marm->position, marm->size, v2_zero, v2_one);
@@ -170,7 +170,7 @@ void hedgehog_actions(Entity *hedge) {
 	{
 	case NEUTRAL:
 		{
-			draw_enemy(hedge, 0);
+			draw_entity(hedge, 0);
 
 			if (entity_get_distance_x(&player, hedge) < 700) hedge->state = ATTACK;
 		} break;
@@ -191,20 +191,20 @@ void hedgehog_actions(Entity *hedge) {
 				hedge->velocity.x+=600*input->dt*sign_f32(hedge->facing);
 			}
 
-		draw_enemy(hedge, hedge->sprite_index);
+		draw_entity(hedge, hedge->sprite_index);
 		} break;
 	case HIT:
 		{
 			if (hedge->state_time*fps <= 1) hedge->velocity = v2_zero;
 
 			if (hedge->state_time*fps < 2) {
-				draw_enemy(hedge, 0);
+				draw_entity(hedge, 0);
 				hedge->velocity.x-=8000*input->dt*sign_f32(hedge->facing);
 				hedge->velocity.y-=6000*input->dt;
 			} else if (entity_in_air(hedge)) {
-				draw_enemy(hedge, hedge->sprite_index);
+				draw_entity(hedge, hedge->sprite_index);
 			} else {
-				draw_enemy(hedge, hedge->sprite_index);
+				draw_entity(hedge, hedge->sprite_index);
 				hedge->state = NEUTRAL;
 			}
 		} break;
@@ -227,7 +227,7 @@ void hedgehog_actions(Entity *hedge) {
         }   
     }
 
-	move_enemy(hedge, input->dt);
+	move_entity(hedge, input->dt);
 
 	//Hitbox
 	hedge->hitbox = r2_bounds(v2(hedge->position.x+12, hedge->position.y), hedge->size, v2_zero, v2_one);

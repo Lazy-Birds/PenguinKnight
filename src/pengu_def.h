@@ -61,6 +61,11 @@ enum entity_subtypes {
 
 enum player_weapons {
     pw_cleaver,
+    pw_staff,
+};
+
+enum magic_spell {
+    sp_magic_missile,
 };
 
 enum campfire_ids {
@@ -251,6 +256,7 @@ struct Entity
     i32 sub_type;
     i32 id;
     i32 movement_chks;
+    i32 damage;
 
     bool acting;
     f32 acting_cd;
@@ -382,6 +388,8 @@ void create_level_entries();
 //Weapon
 void load_weapon();
 void charged_projectile(Weapon *wep);
+void load_cleaver();
+void load_staff();
 
 //Background
 i32 get_open_snowflake();
@@ -429,8 +437,8 @@ void make_boss_walls(Vector2 *pos, i32 count);
 void destroy_boss_walls();
 void draw_boss_health_bar(Entity *boss);
 void draw_normal_enemy_health(Entity ent);
-void draw_enemy(Entity *nme, i32 frame);
-void move_enemy(Entity *nme, f32 dt);
+void draw_entity(Entity *nme, i32 frame);
+void move_entity(Entity *nme, f32 dt);
 i32 get_prejectile_slot();
 void make_projectile(Image *image, Vector2 pos, Vector2 vel, i32 sprite_index);
 void update_projectiles(Game_Input *input, Entity *player);
@@ -496,6 +504,11 @@ void draw_player(i32 frame);
 void player_move(Game_Input *input);
 b32 player_in_poison();
 void draw_hook_shot(Entity *target);
+
+//Player actions
+i32 get_spell_slot();
+void magic_emit(i32 spell_type);
+void update_spells();
 
 //Coyote
 void coyote_action(Entity *coyote);

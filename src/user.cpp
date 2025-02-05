@@ -14,6 +14,8 @@ enum general_states {
     EXHAUSTED,
     LANDED,
     HIT,
+    STATEDODGEDASH,
+    STATEDODGE,
     STATEDASH,
     TALKING,
     JUMP,
@@ -98,6 +100,7 @@ Arena *inv_arena = NULL;
 #include "entity.cpp"
 #include "menu.cpp"
 #include "character.cpp"
+#include "player_actions.cpp"
 
 void set_camera_pos() {
     if (camera_state == CAMERAFOLLOW) {
@@ -135,202 +138,6 @@ void draw_bound_box(Entity *entity) {
     DrawRectOutline(rec, v4_red, 1);
 }
 
-
-
-void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 attack_type) {
-    i32 damage = 0;
-
-    Rectangle2 sword_box_right = r2_bounds(v2(pos.x+weapon.hit_offset_right.x, pos.y-weapon.hit_offset_right.y), weapon.hit_size, v2_zero, v2_one);
-    Rectangle2 sword_box_left = r2_bounds(v2(pos.x-weapon.hit_offset_left.x, pos.y-weapon.hit_offset_left.y), weapon.hit_size, v2_zero, v2_one);
-
-    switch (attack_type)
-    {
-    case 0: 
-        {
-            damage = weapon.base_damage + (weapon.damage_multiplier*dmg_attr);
-        } break;
-    case 1: 
-        {
-            damage = 1.4*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
-        } break;
-    case 2: 
-        {
-            damage = 2.5*(weapon.base_damage + (weapon.damage_multiplier*dmg_attr));
-        } break;
-    }  
-
-
-    for (int i = 0; i < World[player.player_level].entities.count; i++) {
-        Entity *ent = &World[player.player_level].entities.data[i];
-
-        switch (ent->type)
-        {
-        case et_default:
-            {
-
-            } break;
-        case et_player:
-            {
-
-            } break;
-        case et_plant:
-        case et_seal:
-        case et_penguin_king:
-        case et_penguin_soldier:
-        case et_robo_pup:
-        case et_slime:
-        case et_eye_monster:
-        case et_ooze:
-        case et_coyote_nick:
-        case et_marmoset:
-        case et_hedgehog:
-            {
-                if (!ent->invuln && ent->attackable)
-                {
-                    if (facing > 0) {
-                        if (r2_intersects(sword_box_right, ent->hitbox) 
-                            && ent->alive) {
-
-                            ent->invuln = true;
-
-                            if (ent->has_hit) {
-                                ent->state = HIT;
-                            }
-                            
-                            if (ent->current_health <= damage) {
-                                ent->current_health = 0;
-                                ent->state = DYING;
-                                ent->state_time = 0;
-                                player.exp_gained += ent->enemy.exp_dropped;
-                                if (player.mp_cooldown <= 0) {
-                                    player.current_mp+=10;
-                                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                                    player.mp_cooldown+=.5;
-                                }
-                                
-                            } else {
-                                ent->current_health-=damage;
-                                ent->invuln = true;
-                                if (player.mp_cooldown <= 0) {
-                                    player.current_mp+=10;
-                                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                                    player.mp_cooldown+=.5;
-                                }
-                            } 
-                        }
-
-                        Rectangle2 draw_box = r2_shift(sword_box_right, v2(camera_offset, 0));
-
-                        DrawRectOutline(draw_box, v4_red, 2);
-                        } else {
-                            if (r2_intersects(sword_box_left, ent->hitbox) && ent->alive) {
-
-                                ent->invuln = true;
-
-                            if (ent->has_hit) {
-                                ent->state = HIT;
-                            }
-                            
-                            if (ent->current_health <= damage) {
-                                ent->current_health = 0;
-                                ent->state = DYING;
-                                ent->state_time = 0;
-                                player.exp_gained += ent->enemy.exp_dropped;
-                                if (player.mp_cooldown <= 0) {
-                                    player.current_mp+=10;
-                                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                                    player.mp_cooldown+=.5;
-                                }
-                                
-                            } else {
-                                ent->current_health-=damage;
-                                ent->invuln = true;
-                                if (player.mp_cooldown <= 0) {
-                                    player.current_mp+=10;
-                                    player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                                    player.mp_cooldown+=.5;
-                                }
-                            }
-                        }
-
-                        Rectangle2 draw_box = r2_shift(sword_box_left, v2(camera_offset, 0));
-
-                        DrawRectOutline(draw_box, v4_red, 2);
-
-                    } break;
-                }    
-            }
-        }
-    }
-}
-
-void weapon_charged_attack(Weapon *wep, Rectangle2 hit_box) {
-    i32 damage = 0;
-
-    switch (wep->damage_attribute)
-    {
-    case at_strength:
-        {
-            damage = wep->base_damage+(wep->damage_multiplier*player.strength);
-        } break;
-    case at_dexterity:
-        {
-            damage = wep->base_damage+(wep->damage_multiplier*player.dexterity);
-        } break;
-    case at_mental:
-        {
-            damage = wep->base_damage+(wep->damage_multiplier*player.dexterity);
-        } break;
-    }
-
-    Level *level = &World[player.player_level];
-
-    for (int i = 0; i < level->entities.count; i++) {
-        Entity *ent = &level->entities.data[i];
-
-        if (!ent->invuln)
-        {
-            if (r2_intersects(hit_box, ent->hitbox))
-            {
-                ent->invuln = true;
-
-                if (ent->has_hit) {
-                    ent->state = HIT;
-                }
-                
-                if (ent->current_health <= damage) {
-                    ent->current_health = 0;
-                    ent->state = DYING;
-                    ent->state_time = 0;
-                    player.exp_gained += ent->enemy.exp_dropped;
-                    if (player.mp_cooldown <= 0) {
-                        player.current_mp+=10;
-                        player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                        player.mp_cooldown+=.5;
-                    }
-                    
-                } else {
-                    ent->current_health-=damage;
-                    ent->invuln = true;
-                    if (player.mp_cooldown <= 0) {
-                        player.current_mp+=10;
-                        player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
-                        player.mp_cooldown+=.5;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void draw_charging(i32 frame) {
-    if (camera_pos.x != player.position.x) {
-        DrawImage(charge_meter[frame], v2(player.position.x-camera_pos.x+out->width*.5-16, player.position.y-16));
-    } else {
-        DrawImage(charge_meter[frame], v2(camera_pos.x-player.position.x+out->width*.5-16, player.position.y-16));
-    }
-}
-
 void bosses_alive() {
     for (int i = 0; i < 48; i++) {
         bosses_killed[i] = false;
@@ -339,7 +146,7 @@ void bosses_alive() {
 
 void GameStart(Game_Input *input, Game_Output *out)
 {
-    load_weapon();
+    load_weapon(pw_staff);
     static Image chargey_attack[] = {
         LoadImage(S("charged_attack1.png")),
         LoadImage(S("charged_attack2.png")),
@@ -355,8 +162,8 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.mental = 10;
     //player.check_point = /*v2(1298, 524);*/v2(480, 524);//v2(8449, 476);v2(6000, out->height - 244);
     //player.check_point_level = 1;
-    player.check_point = camps.data[cf_blackpowder_forest].position;
-    player.check_point_level = camps.data[cf_blackpowder_forest].level;
+    player.check_point = camps.data[cf_village].position;
+    player.check_point_level = camps.data[cf_village].level;
 
     player.position = player.check_point;
     player.anchor = v2(player.position.x+15, player.position.y+25);
@@ -374,7 +181,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
-    player.weapon = cleaver;
+    player.weapon = w_list[0];
     player.weapon.position = player.position;
     player.inventory = make_inventory(100, pengu_arena);
     player.size = v2(40, 52);

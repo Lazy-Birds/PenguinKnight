@@ -30,7 +30,7 @@ void robo_pup_action(Entity *pup, Game_Input *input) {
     case NEUTRAL:
     	{
     		pup->state = MOVE;
-    		draw_enemy(pup, pup->sprite_index);
+    		draw_entity(pup, pup->sprite_index);
     	} break;
     case MOVE:
     	{
@@ -43,9 +43,9 @@ void robo_pup_action(Entity *pup, Game_Input *input) {
     		pup->velocity.x = 4000*input->dt*sign_f32(pup->facing);
     		pup->velocity.y = 200;
 
-    		move_enemy(pup, input->dt);
+    		move_entity(pup, input->dt);
 
-    		draw_enemy(pup, pup->sprite_index);
+    		draw_entity(pup, pup->sprite_index);
     	} break;
     case HIT:
     	{
@@ -58,13 +58,13 @@ void robo_pup_action(Entity *pup, Game_Input *input) {
     		if (pup->state_time*60 < 1) {
     			pup->velocity.x = 16000*input->dt*-get_entity_direction(pup);
     			pup->velocity.y = -8000*input->dt;
-    			move_enemy(pup, input->dt);
-    			draw_enemy(pup, pup->sprite_index);
+    			move_entity(pup, input->dt);
+    			draw_entity(pup, pup->sprite_index);
     		} else if (!entity_on_wall(pup)) {
-    			move_enemy(pup, input->dt);
-    			draw_enemy(pup, pup->sprite_index);
+    			move_entity(pup, input->dt);
+    			draw_entity(pup, pup->sprite_index);
     		} else if (entity_on_wall(pup)) {
-    			draw_enemy(pup, pup->sprite_index);
+    			draw_entity(pup, pup->sprite_index);
     			pup->state = NEUTRAL;
     		}
    	 	} break;

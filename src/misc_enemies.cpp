@@ -11,7 +11,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
 
     if (seal->enemy.sleep_time > 0) {
         seal->enemy.sleep_time-=input->dt;
-        move_enemy(seal, input->dt);
+        move_entity(seal, input->dt);
         return;
     }
 
@@ -75,7 +75,7 @@ void seal_action(Entity *seal, Game_Input *input, Entity *player) {
         }
     }
 
-    move_enemy(seal, input->dt);
+    move_entity(seal, input->dt);
 }
 
 void eye_monster_action(Entity *monster, Game_Input *input) {
@@ -84,13 +84,13 @@ void eye_monster_action(Entity *monster, Game_Input *input) {
     if (monster->alive) draw_normal_enemy_health(monster);
 
     if (monster->enemy.sleep_time > 0) {
-        move_enemy(monster, input->dt);
+        move_entity(monster, input->dt);
         monster->enemy.sleep_time-=input->dt;
         if (monster->state_time*60 <= 20) {
-            draw_enemy(monster, 0);
+            draw_entity(monster, 0);
             if (monster->state_time*60 >= 10) monster->velocity.x = 0;
         } else {
-            draw_enemy(monster, 1);
+            draw_entity(monster, 1);
         }
         
         if (monster->enemy.sleep_time*60 <= 1) monster->state_time = 0;
@@ -118,18 +118,18 @@ void eye_monster_action(Entity *monster, Game_Input *input) {
             if (entity_get_distance_x(monster, &player) < 800)
             {
                 monster->state = ATTACK;
-                draw_enemy(monster, 0);
+                draw_entity(monster, 0);
             } else 
             {
                 if (monster->state_time*60 < 30) 
                 {
-                    draw_enemy(monster, 0);
+                    draw_entity(monster, 0);
                 } else if (monster->state_time*60 < 60) 
                 {
-                    draw_enemy(monster, 1);
+                    draw_entity(monster, 1);
                 } else
                 {
-                    draw_enemy(monster, 0);
+                    draw_entity(monster, 0);
                     monster->state_time = 0;
                 }
             }
@@ -138,29 +138,29 @@ void eye_monster_action(Entity *monster, Game_Input *input) {
         {
             if (monster->state_time*60 < 30)
             {
-                draw_enemy(monster, 0);
+                draw_entity(monster, 0);
             } else if (monster->state_time*60 < 60)
             {
-                draw_enemy(monster, 1);
+                draw_entity(monster, 1);
             } else if (monster->state_time*60 < 90)
             {
-                draw_enemy(monster, 2);
+                draw_entity(monster, 2);
                 monster->projectile_launched = true;
             } else if(monster->projectile_launched)
             {
-                draw_enemy(monster, 2);
+                draw_entity(monster, 2);
                 monster->sprite_index++;
                 lazer_attack(monster);
             } else
             {
-                draw_enemy(monster, 0);
+                draw_entity(monster, 0);
                 monster->state = NEUTRAL;
             }
         } break;
         case HIT:
         {
             if (monster->state_time*60 <= 6) {
-                draw_enemy(monster, 0);
+                draw_entity(monster, 0);
                 if (monster->position.x > player.position.x)
                 {
                     monster->velocity.x = 8000*input->dt;
@@ -183,11 +183,11 @@ void eye_monster_action(Entity *monster, Game_Input *input) {
             monster->state = DEAD;
 
             /*if (i32(monster->state_time*60) < 2) {
-                draw_enemy(monster, 4);
+                draw_entity(monster, 4);
             } else if (i32(monster->state_time*60) < 4) {
-                draw_enemy(monster, 5);
+                draw_entity(monster, 5);
             } else if (i32(monster->state_time*60) < 6) {
-                draw_enemy(monster, 6);
+                draw_entity(monster, 6);
             } else {
                 monster->alive = false;
             }*/

@@ -87,7 +87,7 @@ void player_action(Game_Input *input) {
 			player.state = CHARGING;
 			player.state_time = 0;
 		} else if (c0.b) {
-			player.state = STATEDASH;
+			player.state = STATEDODGEDASH;
 			player.state_time = 0;
 		} else if (c0.a) {
 			player.state = GUARD;
@@ -183,7 +183,7 @@ void player_action(Game_Input *input) {
 				draw_player(fr_neutral);
 			} else if (c0.b) {
 				state_time = 0;
-				player.state = STATEDASH;
+				player.state = STATEDODGEDASH;
 				draw_player(fr_neutral);
 			} else if (c0.up) {
 				player.state = JUMP;
@@ -252,144 +252,19 @@ void player_action(Game_Input *input) {
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 			
-			if (player.current_stamina > 20 && player.state_time*60 < 1)
-			{
-
-				draw_player(fr_atk_one);
-				player.current_stamina -=20;
-			} else if (player.state_time*60 < 6)
-			{
-				draw_player(fr_atk_one);
-			} else if (player.state_time*60 < 12)
-			{
-				draw_player(fr_atk_two);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*60 < 18)
-			{
-				draw_player(fr_atk_three);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			}  else if (player.state_time*60 < 24)
-			{
-				draw_player(fr_atk_four);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*60 < 30)
-			{
-				draw_player(fr_atk_five);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*60 < 42)
-			{
-				set_enemy_vuln();
-				draw_player(fr_atk_six);
-
-				if (player.state_time*60 > 34 && c0.bumper) {
-					player.state = ATTACKTWO;
-				}
-
-			} else
-			{
-				
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
-			}
-			
+			player_attack_one();
 		} break;
 	case ATTACKTWO:
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 
-			if (player.current_stamina > 20 && player.state_time*fps < 1)
-			{
-				player.velocity.x+=2000*input->dt*sign_f32(player.facing);
-				player.velocity.y-=800*input->dt;
-
-				draw_player(fr_atk_seven);
-				player.current_stamina -=20;
-			} else if (player.state_time*fps < 6)
-			{
-				player.velocity.x+=2000*input->dt*sign_f32(player.facing);
-				player.velocity.y-=800*input->dt;
-
-				draw_player(fr_atk_seven);
-			} else if (player.state_time*fps < 12)
-			{
-				draw_player(fr_atk_eight);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 18)
-			{
-				draw_player(fr_atk_nine);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 24)
-			{
-				draw_player(fr_atk_ten);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 36)
-			{
-				draw_player(fr_atk_eleven);
-
-				set_enemy_vuln();
-
-				if (player.state_time*fps > 30 && c0.bumper)
-				{
-					player.state = ATTACKTHREE;
-				}
-			} else
-			{
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
-			} 
+			player_attack_two(); 
 		} break;
 	case ATTACKTHREE:
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 
-			if (player.current_stamina > 20 && player.state_time*fps < 1)
-			{
-				player.velocity.x+=1000*input->dt*sign_f32(player.facing);
-
-				draw_player(fr_atk_eleven);
-				player.current_stamina -=20;
-			} else if (player.state_time*fps < 6)
-			{
-				player.velocity.x+=1000*input->dt*sign_f32(player.facing);
-
-				draw_player(fr_atk_eleven);
-			} else if (player.state_time*fps < 12)
-			{
-				draw_player(fr_atk_twelve);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 18)
-			{
-				draw_player(fr_atk_thirteen);
-			
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 24)
-			{
-				draw_player(fr_atk_fourteen);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 30)
-			{
-				draw_player(fr_atk_fifteen);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 0);
-			} else if (player.state_time*fps < 42)
-			{
-				draw_player(fr_atk_sixteen);
-
-				set_enemy_vuln();
-			} else
-			{
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
-			} 
+			player_attack_three();
 		} break;
 	case CHARGING:
 		{
@@ -560,6 +435,80 @@ void player_action(Game_Input *input) {
 		{
 
 		} break;
+	case STATEDODGEDASH:
+		Dump(ControllerDown(0, Button_B));
+
+		{
+			if (player.state_time*fps < 12 && ControllerReleased(0, Button_B))
+			{
+				draw_player(fr_neutral);
+				player.state = STATEDODGE;
+			} else if (player.state_time*fps < 12 && ControllerDown(0, Button_B))
+			{
+				Dump("Sitting Here");
+				draw_player(fr_neutral);
+			} else if (player.state_time*fps >= 12 && ControllerDown(0, Button_B))
+			{
+				Dump("Got Here");
+				draw_player(fr_neutral);
+				player.state = STATEDASH;
+			} else
+			{
+				Dump("Why are we here?");
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
+			}
+		} break;
+	case STATEDODGE:
+		{
+			f32 dodgespeed = 600*input->dt*sign_f32(player.facing);
+
+
+
+			if (player.current_stamina > 20 && player.state_time*fps < 1)
+			{
+				draw_player(fr_dodge_one);
+				player.current_stamina-=20;
+				invuln_time+=24*input->dt;
+
+				if (c0.right)
+				{
+					player.facing = 1;
+				} else if (c0.left)
+				{
+					player.facing = -1;
+				}
+			} else if (player.state_time*fps < 4)
+			{
+				player.velocity.x+=dodgespeed;
+				draw_player(fr_dodge_one);
+			} else if (player.state_time*fps < 8)
+			{
+				
+				player.velocity.x+=dodgespeed;
+				draw_player(fr_dodge_two);
+			} else if (player.state_time*fps < 12)
+			{
+				player.velocity.x+=dodgespeed;
+				draw_player(fr_dodge_three);
+			} else if (player.state_time*fps < 16)
+			{
+				player.velocity.x+=dodgespeed;
+				draw_player(fr_dodge_four);
+			} else if (player.state_time*fps < 20)
+			{
+				player.velocity.x+=dodgespeed;
+				draw_player(fr_dodge_five);
+			} else if (player.state_time*fps < 24)
+			{
+				player.velocity.x-=dodgespeed;
+				draw_player(fr_dodge_six);
+			} else
+			{
+				player.state = NEUTRAL;
+				draw_player(fr_neutral);
+			}
+		} break;
 	case STATEDASH:
 		{
 			if (player.current_stamina < 1) {
@@ -695,6 +644,13 @@ void check_level() {
 		}
 	}
 }
+
+/*void change_player_velocity(i32 left, i32 up, i32 right) {
+	if (left > 0)
+	{
+		player.velocity.x-=
+	}
+}*/
 
 void set_enemy_vuln() {
 	for (int i = 0; i < World[player.player_level].entities.count; i++) {
