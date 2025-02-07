@@ -1,4 +1,4 @@
-Weapon *w_list = {};
+WeaponArray w_list = {};
 
 enum fr_cleaver {
     fr_neutral,
@@ -44,7 +44,17 @@ enum fr_cleaver {
     fr_dodge_six,
 };
 
-void load_weapon(i32 weapon) {
+WeaponArray make_weapon_array(Arena *arena, i32 capacity) {
+    WeaponArray arr = {};
+
+    arr.data = PushArrayZero(arena, Weapon, capacity);
+    arr.capacity = capacity;
+    arr.count = 0;
+
+    return arr;
+}
+
+void load_weapon() {
 
     /*static Image sword_image[] = {
         LoadImage(S("Excalibrrr_left1.png")),
@@ -66,21 +76,15 @@ void load_weapon(i32 weapon) {
     String sname = S("Excalibrrr");
     sword.name = sname;
     */
-    switch (weapon)
-    {
-    case pw_cleaver:
-        {
-            load_cleaver();
-        } break;
-    case pw_staff:
-        {
-            load_staff();
-        } break;
-   }
+
+    w_list = make_weapon_array(pengu_arena, 100);
+
+    load_cleaver();
+    load_staff();
 }
 
 void load_cleaver() {
-    Weapon *cleaver = &w_list[pw_cleaver];
+    Weapon *cleaver = &w_list.data[pw_cleaver];
 
      static Image cleaver_image[] = {
         LoadImage(S("cleaver1.png")),
@@ -218,14 +222,14 @@ void load_staff() {
     Image icon = LoadImage(S("staff_icon.png"));
 
 
-    Weapon *staff = &w_list[pw_staff];
+    Weapon *staff = &w_list.data[pw_staff];
 
     staff->image = staff_image;
     staff->icon = icon;
-    staff->size = v2(142, 88);
+    staff->size = v2(106, 88);
     staff->weapon_frames = v2(4, 9);
     staff->type = pw_staff;
-    staff->offset_right = v2(-42, -36);
+    staff->offset_right = v2(-6, -36);
     staff->offset_left = v2(-60, -36);
     staff->hit_size = v2(76, 81);
     staff->hit_offset_right = v2(20, 30);

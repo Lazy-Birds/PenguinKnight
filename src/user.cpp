@@ -146,7 +146,7 @@ void bosses_alive() {
 
 void GameStart(Game_Input *input, Game_Output *out)
 {
-    load_weapon(pw_staff);
+    load_weapon();
     static Image chargey_attack[] = {
         LoadImage(S("charged_attack1.png")),
         LoadImage(S("charged_attack2.png")),
@@ -181,7 +181,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
-    player.weapon = w_list[0];
+    player.weapon = w_list.data[pw_staff];
     player.weapon.position = player.position;
     player.inventory = make_inventory(100, pengu_arena);
     player.size = v2(40, 52);

@@ -19,6 +19,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             enemy_plant.position = pos,
             enemy_plant.size = v2(48, 48),
             enemy_plant.invuln = false,
+            enemy_plant.affected_by_gravity = true;
             enemy_plant.alive = true,
             enemy_plant.image = image;
             enemy_plant.facing = 1;
@@ -45,6 +46,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             enemy_seal.hitbox = r2_bounds(pos, enemy_seal.size, v2_zero, v2_one);
             enemy_seal.invuln = false;
             enemy_seal.attackable = true;
+            enemy_seal.affected_by_gravity = true;
             enemy_seal.alive = true;
             enemy_seal.image = image;
             enemy_seal.enemy.frames = v2(0,1);
@@ -94,6 +96,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             big_papa.hitbox = r2_bounds(big_papa.position, big_papa.size, v2_zero, v2_one);
             big_papa.invuln = false;
             big_papa.attackable = true;
+            big_papa.affected_by_gravity = true;
             big_papa.alive = true;
             big_papa.facing = -1;
             big_papa.image = image;
@@ -140,6 +143,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             penguin_soldier.hitbox = r2_bounds(pos, v2(42, 48), v2_zero, v2_one);
             penguin_soldier.invuln = false;
             penguin_soldier.attackable = true;
+            penguin_soldier.affected_by_gravity = true;
             penguin_soldier.alive = true;
             penguin_soldier.facing = -1;
             penguin_soldier.image = image;
@@ -182,6 +186,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             pup.hitbox = r2_bounds(pos, v2(39, 96), v2_zero, v2_one);
             pup.invuln = false;
             pup.attackable = true;
+            pup.affected_by_gravity = true;
             pup.alive = true;
             pup.facing = 1;
             pup.image = image;
@@ -221,6 +226,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             slim.hitbox = get_entity_rect(&slim);
             slim.invuln = false;
             slim.attackable = true;
+            slim.affected_by_gravity = true;
             slim.facing = 1;
             slim.image = image;
             slim.type = et_slime;
@@ -259,6 +265,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             stalker.hitbox = r2_bounds(stalker.position, stalker.size, v2_zero, v2_one);
             stalker.invuln = false;
             stalker.attackable = true;
+            stalker.affected_by_gravity = true;
             stalker.facing = 1;
             stalker.image = image;
             stalker.type = et_eye_monster;
@@ -320,6 +327,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             ooze.hitbox = r2_bounds(v2(pos.x+144, pos.y+48), v2(48, 96), v2_zero, v2_one);
             ooze.invuln = false;
             ooze.attackable = false;
+            ooze.affected_by_gravity = false;
             ooze.facing = 1;
             ooze.type = et_ooze;
             ooze.enemy.anchor_pos = pos;
@@ -361,6 +369,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             nick.hitbox = r2_bounds(pos, v2(54, 81), v2_zero, v2_one);
             nick.invuln = false;
             nick.attackable = true;
+            nick.affected_by_gravity = true;
             nick.facing = 1;
             nick.type = et_coyote_nick;
             nick.enemy.anchor_pos = pos;
@@ -398,6 +407,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             marm.hitbox = r2_bounds(pos, v2(30, 81), v2_zero, v2_one);
             marm.invuln = false;
             marm.attackable = true;
+            marm.affected_by_gravity = true;
             marm.facing = 1;
             marm.type = et_marmoset;
             marm.enemy.anchor_pos = pos;
@@ -439,6 +449,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             hed.hitbox = r2_bounds(v2(hed.position.x+12, hed.position.y), hed.size, v2_zero, v2_one);
             hed.invuln = false;
             hed.attackable = true;
+            hed.affected_by_gravity = true;
             hed.facing = 1;
             hed.type = et_hedgehog;
             hed.enemy.anchor_pos = pos;
@@ -2008,10 +2019,8 @@ void move_entity(Entity *nme, f32 dt) {
     f32 y_moved = 0;
     f32 x_moved = 0;
 
-    if (nme->enemy.type != 7) {
+    if (nme->affected_by_gravity) {
         nme->velocity.y+=496*input->dt;
-    } else {
-        nme->velocity.y = 0;
     }
 
     f32 dy = nme->velocity.y*dt;
@@ -2070,6 +2079,7 @@ Entity* enemy_hit(Rectangle2 hitbox) {
         case et_plant:
         case et_seal:
         case et_penguin_king:
+        case et_penguin_soldier:
         case et_robo_pup:
         case et_slime:
         case et_eye_monster:
@@ -2083,7 +2093,7 @@ Entity* enemy_hit(Rectangle2 hitbox) {
         }
     }
 
-    return {};
+    return nullptr;
 }
 
 //Ent takes damage from ent_2

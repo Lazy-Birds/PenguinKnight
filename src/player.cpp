@@ -16,6 +16,8 @@ void player_action(Game_Input *input) {
 	player.state_time+=dt;
 	state_time+=dt;
 
+	update_spells();
+
 	if (player.weapon.sprite_index > 0) {
 		charged_projectile(&player.weapon);
 	}
@@ -436,8 +438,6 @@ void player_action(Game_Input *input) {
 
 		} break;
 	case STATEDODGEDASH:
-		Dump(ControllerDown(0, Button_B));
-
 		{
 			if (player.state_time*fps < 12 && ControllerReleased(0, Button_B))
 			{
@@ -445,16 +445,13 @@ void player_action(Game_Input *input) {
 				player.state = STATEDODGE;
 			} else if (player.state_time*fps < 12 && ControllerDown(0, Button_B))
 			{
-				Dump("Sitting Here");
 				draw_player(fr_neutral);
 			} else if (player.state_time*fps >= 12 && ControllerDown(0, Button_B))
 			{
-				Dump("Got Here");
 				draw_player(fr_neutral);
 				player.state = STATEDASH;
 			} else
 			{
-				Dump("Why are we here?");
 				draw_player(fr_neutral);
 				player.state = NEUTRAL;
 			}

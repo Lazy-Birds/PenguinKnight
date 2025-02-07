@@ -55,13 +55,21 @@ void player_attack_one() {
 			{
 				draw_player(fr_atk_one);
 				player.current_stamina-=20;
-			} else if (player.state_time*fps < 6)
+			} else if (player.state_time*fps < 10)
 			{
 				draw_player(fr_atk_one);
-			} else if (player.state_time*fps < 12)
+			} else if (player.state_time*fps < 11)
 			{
 				draw_player(fr_atk_two);
-
+				magic_emit(sp_magic_missile);
+				player.current_mp-=5;
+			} else if (player.state_time*fps < 20)
+			{
+				draw_player(fr_atk_two);
+			} else
+			{
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
 			}
 		} break;
 	}
@@ -206,15 +214,22 @@ void magic_emit(i32 spell_type) {
 	spell->sprite_index = 0;
 	spell->type = spell_type;
 	spell->id = spell_count;
+	spell->facing = player.facing;
 
 	switch (spell_type)
 	{
 	case sp_magic_missile:
 		{
-			spell->position = v2(player.position.x + 47*sign_f32(player.facing), player.position.y+36);
+			static Image image[] = {
+				LoadImage(S("magic_missile1.png")),
+				LoadImage(S("magic_missile2.png")),
+			};
+
+			spell->image = image;
+			spell->position = v2(player.position.x + 47*sign_f32( player.facing), player.position.y+36);
 			spell->size = v2(16, 9);
 			spell->hitbox = hitbox_simple(spell);
-			spell->velocity = v2(8000*input->dt, 0);
+			spell->velocity = v2(20000*input->dt*sign_f32(player.facing), 0);
 			spell->damage = 15;
 			draw_entity(spell, spell->sprite_index);
 			spell_count++;
@@ -233,6 +248,8 @@ void update_spells() {
 		{
 		case sp_magic_missile:
 			{
+				spell->state_time+=input->dt;
+
 				if (mod_f32(spell->state_time*fps, 6) == 0)
 				{
 					spell->sprite_index == 0 ? spell->sprite_index = 1 : spell->sprite_index = 0;
@@ -245,12 +262,14 @@ void update_spells() {
 
 				Entity *enemy = enemy_hit(spell->hitbox);
 
-				if (enemy->alive != NULL)
+				if (enemy!=nullptr)
 				{
 					entity_take_damage(enemy, spell);
 					enemy->invuln = false;
 					spell->alive = false;
 				}
+
+				if (wall_ahead(spell) || spell->state_time*fps > 80) spell->alive = false;
 			} break;
 		}
 	}

@@ -127,6 +127,12 @@ struct Weapon {
     i32 frame_hit;
 };
 
+struct WeaponArray {
+    Weapon *data;
+    i32 count;
+    i32 capacity;
+};
+
 //User
 struct texture {
     u32 pixel;
@@ -262,6 +268,7 @@ struct Entity
     f32 acting_cd;
     bool actable;
     bool can_climb;
+    bool affected_by_gravity;
 
     i32 sprite_index;
     f32 state_time;
@@ -386,6 +393,7 @@ void interact(Entity *interactible, Game_Input *input, Vector2 camera_pos);
 void create_level_entries();
 
 //Weapon
+WeaponArray make_weapon_array(i32 capacity);
 void load_weapon();
 void charged_projectile(Weapon *wep);
 void load_cleaver();
