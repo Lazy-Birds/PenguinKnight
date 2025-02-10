@@ -66,6 +66,12 @@ enum player_weapons {
 
 enum magic_spell {
     sp_magic_missile,
+    sp_flame_wheel,
+};
+
+enum spell_states {
+    st_increasing,
+    st_decreasing,
 };
 
 enum campfire_ids {
@@ -514,9 +520,13 @@ b32 player_in_poison();
 void draw_hook_shot(Entity *target);
 
 //Player actions
+
+
+//Magic
 i32 get_spell_slot();
 void magic_emit(i32 spell_type);
 void update_spells();
+void draw_flame_wheel(Entity *ent);
 
 //Coyote
 void coyote_action(Entity *coyote);

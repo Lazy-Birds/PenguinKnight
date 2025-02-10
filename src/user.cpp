@@ -100,6 +100,7 @@ Arena *inv_arena = NULL;
 #include "entity.cpp"
 #include "menu.cpp"
 #include "character.cpp"
+#include "magic.cpp"
 #include "player_actions.cpp"
 
 void set_camera_pos() {

@@ -272,22 +272,7 @@ void player_action(Game_Input *input) {
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 
-
-			if (c0.trigger && player.state_time*60 < 30 && player.current_stamina > 1) 
-			{
-				draw_player(fr_chatk_one);
-			} else if (c0.trigger && player.state_time*60 >= 30 && player.current_stamina > 1) {
-				draw_player(fr_chatk_one);
-				player.current_stamina-=40;
-
-				player.current_stamina = clamp_i32(player.current_stamina, 0, player.max_stamina);
-
-				player.state = STATECHARGEATTACKING;
-			} else
-			{
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
-			}
+			player_charging();
 			
 			/*if (c0.trigger && state_time*9 < player.weapon.charge_time && player.current_stamina > 1)
 			{
@@ -312,34 +297,7 @@ void player_action(Game_Input *input) {
 		{
 			player.velocity.x = move_f32(player.velocity.x, 0, 1200 * dt);
 
-			if (player.state_time*fps < 6)
-			{
-				draw_player(fr_chatk_two);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
-			} else if (player.state_time*fps < 12)
-			{
-				draw_player(fr_chatk_three);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
-			} else if (player.state_time*fps < 18)
-			{
-				draw_player(fr_chatk_four);
-
-				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
-			} else if (player.state_time*fps < 36)
-			{
-				if (player.weapon.sprite_index == 0 && player.current_mp > 20)
-				{
-					player.current_mp-= 20;
-					player.weapon.sprite_index = 1;
-				}
-				draw_player(fr_chatk_five);
-			} else {
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
-				set_enemy_vuln();
-			}
+			player_charge_attacking();
 			
 			/*if (state_time*11 + player.weapon.charged_frames.x < player.weapon.charged_frames.y) 
 			{

@@ -189,88 +189,101 @@ void player_attack_three() {
 	}
 }
 
-Entity spells[100] = {};
-i32 spell_count = 0;
-
-i32 get_spell_slot() {
-
-	for (int i = 0; i < 99; i++)
+void player_charging() {
+	Controller c0 = input->controllers[0];
+	
+	switch (player.weapon.type)
 	{
-		if (!spells[i].alive) return i;
-	}
-
-	return 100;
-}
-
-void magic_emit(i32 spell_type) {
-	i32 spell_slot = get_spell_slot();
-
-	assert(spell_slot < 100);
-
-	Entity *spell = &spells[spell_slot];
-
-	spell->alive = true;
-	spell->state_time = 0;
-	spell->sprite_index = 0;
-	spell->type = spell_type;
-	spell->id = spell_count;
-	spell->facing = player.facing;
-
-	switch (spell_type)
-	{
-	case sp_magic_missile:
+	case pw_cleaver:
 		{
-			static Image image[] = {
-				LoadImage(S("magic_missile1.png")),
-				LoadImage(S("magic_missile2.png")),
-			};
+			if (c0.trigger && player.state_time*60 < 30 && player.current_stamina > 20) 
+			{
+				draw_player(fr_chatk_one);
+			} else if (c0.trigger && player.state_time*60 >= 30 && player.current_stamina > 20) {
+				draw_player(fr_chatk_one);
+				player.current_stamina-=40;
 
-			spell->image = image;
-			spell->position = v2(player.position.x + 47*sign_f32( player.facing), player.position.y+36);
-			spell->size = v2(16, 9);
-			spell->hitbox = hitbox_simple(spell);
-			spell->velocity = v2(20000*input->dt*sign_f32(player.facing), 0);
-			spell->damage = 15;
-			draw_entity(spell, spell->sprite_index);
-			spell_count++;
+				player.current_stamina = clamp_i32(player.current_stamina, 0, player.max_stamina);
+
+				player.state = STATECHARGEATTACKING;
+			} else
+			{
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
+			}
+		} break;
+	case pw_staff:
+		{
+			if (c0.trigger && player.state_time*fps < 45 && player.current_stamina > 20)
+			{
+				draw_player(fr_chatk_one);
+			}
+			else if (c0.trigger && player.state_time*fps >= 45 && player.current_stamina > 20)
+			{
+				draw_player(fr_chatk_one);
+				player.current_stamina-=40;
+
+				player.current_stamina = clamp_i32(player.current_stamina, 0, player.max_stamina);
+
+				player.state = STATECHARGEATTACKING;
+			} else
+			{
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
+			}
 		} break;
 	}
 }
 
-void update_spells() {
-	for (int i = 0; i < spell_count; i++)
+void player_charge_attacking() {
+	switch (player.weapon.type)
 	{
-		Entity *spell = &spells[i];
-
-		if (!spell->alive) continue;
-
-		switch (spell->type)
+	case pw_cleaver:
 		{
-		case sp_magic_missile:
+			if (player.state_time*fps < 6)
 			{
-				spell->state_time+=input->dt;
+				draw_player(fr_chatk_two);
 
-				if (mod_f32(spell->state_time*fps, 6) == 0)
+				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
+			} else if (player.state_time*fps < 12)
+			{
+				draw_player(fr_chatk_three);
+
+				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
+			} else if (player.state_time*fps < 18)
+			{
+				draw_player(fr_chatk_four);
+
+				weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 2);
+			} else if (player.state_time*fps < 36)
+			{
+				if (player.weapon.sprite_index == 0 && player.current_mp > 20)
 				{
-					spell->sprite_index == 0 ? spell->sprite_index = 1 : spell->sprite_index = 0;
+					player.current_mp-= 20;
+					player.weapon.sprite_index = 1;
 				}
-
-				move_entity(spell, input->dt);
-				spell->hitbox = hitbox_simple(spell);
-
-				draw_entity(spell, spell->sprite_index);
-
-				Entity *enemy = enemy_hit(spell->hitbox);
-
-				if (enemy!=nullptr)
-				{
-					entity_take_damage(enemy, spell);
-					enemy->invuln = false;
-					spell->alive = false;
-				}
-
-				if (wall_ahead(spell) || spell->state_time*fps > 80) spell->alive = false;
-			} break;
-		}
+				draw_player(fr_chatk_five);
+			} else {
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
+				set_enemy_vuln();
+			}
+		} break;
+	case pw_staff:
+		{
+			if (player.state_time*fps < 1 && player.current_mp > 40) {
+				player.current_mp-=40;
+				magic_emit(sp_flame_wheel);
+				draw_player(fr_chatk_two);
+			} else if (player.state_time*fps < 18)
+			{
+				draw_player(fr_chatk_two);
+			} else
+			{
+				draw_player(fr_neutral);
+				player.state = NEUTRAL;
+			}
+		} break;
 	}
 }
+
