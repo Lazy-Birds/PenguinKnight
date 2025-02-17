@@ -14,7 +14,7 @@ pushd %project_root%
 
     pushd build
 
-        set flags=/Od -Oi -Zo -FC -Z7 -fp:fast -fp:except- /Zc:strictStrings- -Gm- -GR- -GS- -Gs4096
+        set flags=/std:c++20 /Od -Oi -Zo -FC -Z7 -fp:fast -fp:except- /Zc:strictStrings- -Gm- -GR- -GS- -Gs4096
         cl.exe -nologo /MD -DDEBUG=1 -DSHIP_MODE=0 /I ..\src %flags%  ..\src\pix16_win32.cpp /link -subsystem:windows -incremental:no -opt:ref -OUT:%exe_name%
         IF %errorlevel% NEQ 0 (popd && goto end)
 

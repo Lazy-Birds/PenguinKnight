@@ -67,6 +67,11 @@ EntityArrayP temp_arr = {};
 CampfireArray camps = {};
 i32 last_count = 0;
 
+Image icon;
+Image weapon_icon;
+Image *fairy_icon;
+Image spell_icon;
+
 bool swing_weapon;
 bool charging_weapon;
 bool on_cooldown;
@@ -94,6 +99,7 @@ i32 fps = 60;
 Arena *inv_arena = NULL;
 
 #include "levels.cpp"
+#include "animation.cpp"
 #include "weapon.cpp"
 #include "background.cpp"
 #include "dialogue.cpp"
@@ -147,7 +153,10 @@ void bosses_alive() {
 
 void GameStart(Game_Input *input, Game_Output *out)
 {
-    load_weapon();
+    w_list = make_weapon_array(pengu_arena, 10);
+
+    load_weapon(pw_cleaver);
+    
     static Image chargey_attack[] = {
         LoadImage(S("charged_attack1.png")),
         LoadImage(S("charged_attack2.png")),
@@ -182,7 +191,7 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.current_fairy_uses = player.fairy_uses;
     player.invuln = false;
     player.alive = true;
-    player.weapon = w_list.data[pw_staff];
+    player.weapon = w_list.data[pw_cleaver];
     player.weapon.position = player.position;
     player.inventory = make_inventory(100, pengu_arena);
     player.size = v2(40, 52);
@@ -196,6 +205,10 @@ void GameStart(Game_Input *input, Game_Output *out)
     player.hit = LoadSound(S("pengu_hurt.wav"));
     player.projectile = chargey_attack;
     player.entities_met = make_npc_list(100, pengu_arena);
+    player.spell_selected = 1;
+    player.spell_list = get_spell_array(pengu_arena, 100);
+
+    give_player_basic_spells();
 
     player.hitbox = r2_bounds(player.position, player.size, v2_zero, v2_one);
 
@@ -374,6 +387,15 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         set_world(false, World[0]);
         draw_last = make_entity_array_two(pengu_arena, 100);
         temp_arr = make_entity_array_three(pengu_arena, 500);
+        weapon_icon = LoadImage(S("icon.png"));
+
+        static Image image[] = {
+            LoadImage(S("fairy_icon1.png")),
+            LoadImage(S("fairy_icon2.png")),
+        };
+
+        fairy_icon = image;
+        spell_icon = LoadImage(S("spell_plaque.png"));
         initted = true;
     }
 
@@ -413,26 +435,6 @@ void GameUpdateAndRender(Game_Input *input, Game_Output *out)
         entity_processing(input, out);
 
         f32 dt = input->dt;
-
-        Image icon = LoadImage(S("icon.png"));
-        Image fairy_icon[] = {LoadImage(S("fairy_icon1.png")), LoadImage(S("fairy_icon2.png"))};
-
-        DrawImage(icon, v2(16, 16));
-        DrawImage(player.weapon.icon, v2(25, 25));
-
-        if (player.fairy_uses > 0) {
-            DrawRect(r2_bounds(v2(70, 64), v2(30*player.fairy_uses+2, 12), v2_zero, v2_one), v4_black);
-            for (int i = 0; i < player.current_fairy_uses; i++) {
-                DrawRect(r2_bounds(v2(72+(14+16)*i, 66), v2(16+12, 8), v2_zero, v2_one), rgb(162, 221, 225));
-            }
-
-            if (i32(player.state_time*60)%60 < 30) {
-                DrawImage(fairy_icon[0], v2(24, 66));
-            } else {
-                DrawImage(fairy_icon[1], v2(24, 66));
-
-            }
-        }
 
         draw_player_stats();
 

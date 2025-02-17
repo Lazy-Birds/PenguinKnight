@@ -19,6 +19,8 @@ enum {
 
     Button_A,
     Button_B,
+    Button_Q,
+    Button_E,
     Button_Start,
     Button_Back,
 
@@ -46,6 +48,8 @@ struct Controller
 
     b32 a;
     b32 b;
+    b32 q;
+    b32 e;
     b32 start;
     b32 pause;
 

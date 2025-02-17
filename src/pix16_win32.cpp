@@ -680,6 +680,8 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_inst, LPSTR argv, int ar
 
                 player0->h |= (GetKeyState('H') & (1 << 15)) == (1 << 15);
                 player0->u |= (GetKeyState('U') & (1 << 15)) == (1 << 15);
+                player0->q |= (GetKeyState('Q') & (1 << 15)) == (1 << 15);
+                player0->e |= (GetKeyState('E') & (1 << 15)) == (1 << 15);
             }
         }
 

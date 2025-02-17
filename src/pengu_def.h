@@ -28,6 +28,12 @@ enum entity_types {
     et_ladder,
 };
 
+enum boss_list {
+    b_penguin_prince,
+    b_coyote_nick,
+    b_the_ooze,
+};
+
 enum entity_subtypes {
     st_default,
     st_boss,
@@ -62,16 +68,21 @@ enum entity_subtypes {
 enum player_weapons {
     pw_cleaver,
     pw_staff,
+    pw_katana,
 };
 
 enum magic_spell {
     sp_magic_missile,
     sp_flame_wheel,
+    sp_flame_rain,
+    sp_flame_ball,
 };
 
 enum spell_states {
-    st_increasing,
-    st_decreasing,
+    st_ball_one,
+    st_ball_two,
+    st_ball_three,
+    st_ball_four,
 };
 
 enum campfire_ids {
@@ -96,10 +107,26 @@ enum player_stats {
 };
 
 //Structs
+//Animation
+struct Frame {
+    Image image;
+    i32 frame_length;
+};
+
+struct FrameArray {
+    Frame *data;
+    i32 capacity;
+    i32 count;
+};
+
+struct AnimationIndex {
+    i32 frame;
+    i32 index;
+};
+
 //Weapon
 struct Weapon {
-    Image *image;
-    Image *poisoned_image;
+    FrameArray *frames;
     i32 type;
     Image icon;
     Image *projectile;
@@ -216,6 +243,18 @@ struct CampfireArray {
     i32 count;
 };
 
+struct Spell {
+    i32 type;
+    i32 mp_cost;
+    Image icon;
+};
+
+struct SpellArray {
+    Spell *data;
+    i32 capacity;
+    i32 count;
+};
+
 struct Entity
 {
     i32 constitution;
@@ -261,6 +300,7 @@ struct Entity
     Vector2 size;
     Vector2 anchor;
     Vector2 offset;
+    AnimationIndex animation;
     Rectangle2 hitbox;
 
     i32 facing;
@@ -269,6 +309,8 @@ struct Entity
     i32 id;
     i32 movement_chks;
     i32 damage;
+    i32 spell_selected;
+    i32 sprite_index;
 
     bool acting;
     f32 acting_cd;
@@ -276,13 +318,16 @@ struct Entity
     bool can_climb;
     bool affected_by_gravity;
 
-    i32 sprite_index;
     f32 state_time;
     f32 animation_time;
 
     Weapon weapon;
+
+    //Arrays
     InventoryArray inventory;
+    SpellArray spell_list;
     NPCArray entities_met;
+    String_Array dialogue;
 
     Image *projectile;
     b32 projectile_launched;
@@ -297,7 +342,6 @@ struct Entity
     Image *portrait;
 
     String name;
-    String_Array dialogue;
     f32 dialogue_time;
     b32 talking;
 
@@ -400,10 +444,11 @@ void create_level_entries();
 
 //Weapon
 WeaponArray make_weapon_array(i32 capacity);
-void load_weapon();
+void load_weapon(i32 weapon);
 void charged_projectile(Weapon *wep);
 void load_cleaver();
 void load_staff();
+void load_katana();
 
 //Background
 i32 get_open_snowflake();
@@ -514,7 +559,7 @@ void player_action(Game_Input *input);
 void check_level();
 void set_enemy_vuln();
 void player_hit(Entity *entity, Game_Input *input);
-void draw_player(i32 frame);
+void draw_player(i32 action);
 void player_move(Game_Input *input);
 b32 player_in_poison();
 void draw_hook_shot(Entity *target);
@@ -523,10 +568,12 @@ void draw_hook_shot(Entity *target);
 
 
 //Magic
+SpellArray get_spell_array(Arena *arena, i32 capacity);
 i32 get_spell_slot();
+void give_player_basic_spells();
+Spell load_spells(i32 spell_type);
 void magic_emit(i32 spell_type);
 void update_spells();
-void draw_flame_wheel(Entity *ent);
 
 //Coyote
 void coyote_action(Entity *coyote);

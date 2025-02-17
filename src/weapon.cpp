@@ -1,47 +1,36 @@
-WeaponArray w_list = {};
+WeaponArray w_list = {NULL};
 
+//Enum for General frames, giv
+enum general_frames {
+    gf_move,
+    gf_hurt,
+    gf_sprint,
+    gf_jump,
+    gf_guard,
+    gf_dodge,
+};
+
+//Enums for the other weapons, weapons using gen frames start at 6
+
+//Cleaver Frames
 enum fr_cleaver {
-    fr_neutral,
-    fr_walk,
-    fr_damage,
-    fr_atk_one,
-    fr_atk_two,
-    fr_atk_three,
-    fr_atk_four,
-    fr_atk_five,
-    fr_atk_six,
-    fr_atk_seven,
-    fr_atk_eight,
-    fr_atk_nine,
-    fr_atk_ten,
-    fr_atk_eleven,
-    fr_atk_twelve,
-    fr_atk_thirteen,
-    fr_atk_fourteen,
-    fr_atk_fifteen,
-    fr_atk_sixteen,
-    fr_chatk_one,
-    fr_chatk_two,
-    fr_chatk_three,
-    fr_chatk_four,
-    fr_chatk_five,
-    fr_jmp_atk_one,
-    fr_jmp_atk_two,
-    fr_sprint_one,
-    fr_sprint_two,
-    fr_sprint_three,
-    fr_sprint_four,
-    fr_jmp_one,
-    fr_jmp_two,
-    fr_grd_one,
-    fr_grd_two,
-    fr_grd_three,
-    fr_dodge_one,
-    fr_dodge_two,
-    fr_dodge_three,
-    fr_dodge_four,
-    fr_dodge_five,
-    fr_dodge_six,
+    cf_attack_one = 6,
+    cf_attack_two,
+    cf_attack_three,
+    cf_charge_attack,
+    cf_jump_attack,
+};
+
+//Staff
+enum fr_staff {
+    sf_attack = 6,
+    sf_charged_spell,
+};
+
+//Katana
+enum fr_katana {
+    kf_attack = 6,
+    kf_jump_attack,
 };
 
 WeaponArray make_weapon_array(Arena *arena, i32 capacity) {
@@ -54,192 +43,95 @@ WeaponArray make_weapon_array(Arena *arena, i32 capacity) {
     return arr;
 }
 
-void load_weapon() {
+void load_weapon(i32 weapon_type) {
+    switch (weapon_type)
+    {
+    case pw_cleaver:
+        {
+            Weapon *cleaver = &w_list.data[pw_cleaver];
 
-    /*static Image sword_image[] = {
-        LoadImage(S("Excalibrrr_left1.png")),
-        LoadImage(S("Excalibrrr_left2.png")),
-        LoadImage(S("Excalibrrr_left3.png")),
-        LoadImage(S("Excalibrrr_left4.png")),
-        LoadImage(S("Excalibrrr_left5.png")),
-        LoadImage(S("Excalibrrr_left6.png")),
-        LoadImage(S("Excalibrrr_right1.png")),
-        LoadImage(S("Excalibrrr_right2.png")),
-        LoadImage(S("Excalibrrr_right3.png")),
-        LoadImage(S("Excalibrrr_right4.png")),
-        LoadImage(S("Excalibrrr_right5.png")),
-        LoadImage(S("Excalibrrr_right6.png")),
-    };
-    sword.image = sword_image;
-    sword.size = v2(48, 96);
-    sword.weapon_frames = v2(2, 6);
-    String sname = S("Excalibrrr");
-    sword.name = sname;
-    */
+            static Image icon = LoadImage(S("cleaver_icon.png"));
+            static Image proj[] = {
+                LoadImage(S("cleaver_charged1.png")),
+                LoadImage(S("cleaver_charged2.png")),
+                LoadImage(S("cleaver_charged3.png")),
+                LoadImage(S("cleaver_charged4.png")),
+                LoadImage(S("cleaver_charged5.png")),
+            };
 
-    w_list = make_weapon_array(pengu_arena, 100);
-
-    load_cleaver();
-    load_staff();
-}
-
-void load_cleaver() {
-    Weapon *cleaver = &w_list.data[pw_cleaver];
-
-     static Image cleaver_image[] = {
-        LoadImage(S("cleaver1.png")),
-        LoadImage(S("cleaver2.png")),
-        LoadImage(S("cleaver3.png")),
-        LoadImage(S("cleaver4.png")),
-        LoadImage(S("cleaver5.png")),
-        LoadImage(S("cleaver6.png")),
-        LoadImage(S("cleaver7.png")),
-        LoadImage(S("cleaver8.png")),
-        LoadImage(S("cleaver9.png")),
-        LoadImage(S("cleaver10.png")),
-        LoadImage(S("cleaver11.png")),
-        LoadImage(S("cleaver12.png")),
-        LoadImage(S("cleaver13.png")),
-        LoadImage(S("cleaver14.png")),
-        LoadImage(S("cleaver15.png")),
-        LoadImage(S("cleaver16.png")),
-        LoadImage(S("cleaver17.png")),
-        LoadImage(S("cleaver18.png")),
-        LoadImage(S("cleaver19.png")),
-        LoadImage(S("cleaver20.png")),
-        LoadImage(S("cleaver21.png")),
-        LoadImage(S("cleaver22.png")),
-        LoadImage(S("cleaver23.png")),
-        LoadImage(S("cleaver24.png")),
-        LoadImage(S("cleaver25.png")),
-        LoadImage(S("cleaver26.png")),
-        LoadImage(S("cleaver27.png")),
-        LoadImage(S("cleaver28.png")),
-        LoadImage(S("cleaver29.png")),
-        LoadImage(S("cleaver30.png")),
-        LoadImage(S("cleaver31.png")),
-        LoadImage(S("cleaver32.png")),
-        LoadImage(S("cleaver33.png")),
-        LoadImage(S("cleaver34.png")),
-        LoadImage(S("cleaver35.png")),
-        LoadImage(S("cleaver36.png")),
-        LoadImage(S("cleaver37.png")),
-        LoadImage(S("cleaver38.png")),
-        LoadImage(S("cleaver39.png")),
-        LoadImage(S("cleaver40.png")),
-        LoadImage(S("cleaver41.png")),
-    };
-
-    cleaver->image = cleaver_image;
-
-    static Image psn_img[] = {
-        LoadImage(S("cleaver_poisoned1.png")),
-        LoadImage(S("cleaver_poisoned2.png")),
-        LoadImage(S("cleaver_poisoned3.png")),
-        LoadImage(S("cleaver_poisoned4.png")),
-    };
-
-    cleaver->poisoned_image = psn_img;
-
-    static Image icon = LoadImage(S("cleaver_icon.png"));
-    static Image proj[] = {
-        LoadImage(S("cleaver_charged1.png")),
-        LoadImage(S("cleaver_charged2.png")),
-        LoadImage(S("cleaver_charged3.png")),
-        LoadImage(S("cleaver_charged4.png")),
-        LoadImage(S("cleaver_charged5.png")),
-    };
-
-    cleaver->size = v2(142, 88);
-    cleaver->weapon_frames = v2(4, 9);
-    cleaver->type = pw_cleaver;
-    cleaver->offset_right = v2(-42, -36);
-    cleaver->offset_left = v2(-60, -36);
-    cleaver->hit_size = v2(76, 81);
-    cleaver->hit_offset_right = v2(20, 30);
-    cleaver->hit_offset_left = v2(60, 30);
-    cleaver->charged_frames = v2(9, 14);
-    cleaver->base_damage = 30;
-    cleaver->damage_attribute = at_strength;
-    cleaver->damage_multiplier = 1.5;
-    cleaver->charge_time = 9;
-    cleaver->jump_frame = v2(14, 15);
-    cleaver->frame_hit = 2;
-    cleaver->dash_frame = v2(16, 19);
-    cleaver->icon = icon;
-    cleaver->jump = v2(20,21);
-    cleaver->guard = v2(22, 24);
-    cleaver->item_pickup = v2(25, 25);
-    cleaver->sprite_index = 0;
-    cleaver->projectile = proj;
-}
-
-void load_staff() {
-    static Image staff_image[] = {
-        LoadImage(S("staff1.png")),
-        LoadImage(S("staff2.png")),
-        LoadImage(S("staff3.png")),
-        LoadImage(S("staff4.png")),
-        LoadImage(S("staff5.png")),
-        LoadImage(S("staff6.png")),
-        LoadImage(S("staff7.png")),
-        LoadImage(S("staff8.png")),
-        LoadImage(S("staff9.png")),
-        LoadImage(S("staff10.png")),
-        LoadImage(S("staff11.png")),
-        LoadImage(S("staff12.png")),
-        LoadImage(S("staff13.png")),
-        LoadImage(S("staff14.png")),
-        LoadImage(S("staff15.png")),
-        LoadImage(S("staff16.png")),
-        LoadImage(S("staff17.png")),
-        LoadImage(S("staff18.png")),
-        LoadImage(S("staff19.png")),
-        LoadImage(S("staff20.png")),
-        LoadImage(S("staff21.png")),
-        LoadImage(S("staff22.png")),
-        LoadImage(S("staff23.png")),
-        LoadImage(S("staff24.png")),
-        LoadImage(S("staff25.png")),
-        LoadImage(S("staff26.png")),
-        LoadImage(S("staff27.png")),
-        LoadImage(S("staff28.png")),
-        LoadImage(S("staff29.png")),
-        LoadImage(S("staff30.png")),
-        LoadImage(S("staff31.png")),
-        LoadImage(S("staff32.png")),
-        LoadImage(S("staff33.png")),
-        LoadImage(S("staff34.png")),
-        LoadImage(S("staff35.png")),
-        LoadImage(S("staff36.png")),
-        LoadImage(S("staff37.png")),
-        LoadImage(S("staff38.png")),
-        LoadImage(S("staff39.png")),
-        LoadImage(S("staff40.png")),
-        LoadImage(S("staff41.png")),
-    };
-
-    Image icon = LoadImage(S("staff_icon.png"));
+            cleaver->frames = load_weapon_frames(pw_cleaver);
+            cleaver->size = v2(142, 88);
+            cleaver->weapon_frames = v2(4, 9);
+            cleaver->type = pw_cleaver;
+            cleaver->offset_right = v2(-42, -36);
+            cleaver->offset_left = v2(-60, -36);
+            cleaver->hit_size = v2(76, 81);
+            cleaver->hit_offset_right = v2(20, 30);
+            cleaver->hit_offset_left = v2(60, 30);
+            cleaver->charged_frames = v2(9, 14);
+            cleaver->base_damage = 30;
+            cleaver->damage_attribute = at_strength;
+            cleaver->damage_multiplier = 1.5;
+            cleaver->charge_time = 9;
+            cleaver->jump_frame = v2(14, 15);
+            cleaver->frame_hit = 2;
+            cleaver->dash_frame = v2(16, 19);
+            cleaver->icon = icon;
+            cleaver->jump = v2(20,21);
+            cleaver->guard = v2(22, 24);
+            cleaver->item_pickup = v2(25, 25);
+            cleaver->sprite_index = 0;
+            cleaver->projectile = proj;
+        } break;
+    case pw_staff:
+        {
+            Image icon = LoadImage(S("staff_icon.png"));
 
 
-    Weapon *staff = &w_list.data[pw_staff];
+            Weapon *staff = &w_list.data[pw_staff];
 
-    staff->image = staff_image;
-    staff->icon = icon;
-    staff->size = v2(106, 88);
-    staff->weapon_frames = v2(4, 9);
-    staff->type = pw_staff;
-    staff->offset_right = v2(-6, -36);
-    staff->offset_left = v2(-60, -36);
-    staff->hit_size = v2(76, 81);
-    staff->hit_offset_right = v2(20, 30);
-    staff->hit_offset_left = v2(60, 30);
-    staff->base_damage = 30;
-    staff->damage_attribute = at_strength;
-    staff->damage_multiplier = 1.5;
-    staff->charge_time = 9;
-    staff->icon = icon;
-    staff->sprite_index = 0;
+            staff->frames = load_weapon_frames(pw_staff);
+            staff->icon = icon;
+            staff->size = v2(106, 88);
+            staff->weapon_frames = v2(4, 9);
+            staff->type = pw_staff;
+            staff->offset_right = v2(-6, -36);
+            staff->offset_left = v2(-60, -36);
+            staff->hit_size = v2(76, 81);
+            staff->hit_offset_right = v2(20, 30);
+            staff->hit_offset_left = v2(60, 30);
+            staff->base_damage = 30;
+            staff->damage_attribute = at_strength;
+            staff->damage_multiplier = 1.5;
+            staff->charge_time = 9;
+            staff->icon = icon;
+            staff->sprite_index = 0;
+        } break;
+    case pw_katana:
+        {
+            Image icon = LoadImage(S("katana_icon.png"));
+
+
+            Weapon *katana = &w_list.data[pw_katana];
+
+            katana->frames = load_weapon_frames(pw_katana);
+            katana->icon = icon;
+            katana->size = v2(106, 88);
+            katana->weapon_frames = v2(4, 9);
+            katana->type = pw_staff;
+            katana->offset_right = v2(-18, -36);
+            katana->offset_left = v2(-60, -36);
+            katana->hit_size = v2(76, 81);
+            katana->hit_offset_right = v2(20, 30);
+            katana->hit_offset_left = v2(60, 30);
+            katana->base_damage = 25;
+            katana->damage_attribute = at_dexterity;
+            katana->damage_multiplier = 1.3;
+            katana->charge_time = 9;
+            katana->icon = icon;
+            katana->sprite_index = 0;
+        } break;
+    }
 }
 
 void weapon_attack(Vector2 pos, Weapon weapon, i32 facing, i32 dmg_attr, i32 attack_type) {

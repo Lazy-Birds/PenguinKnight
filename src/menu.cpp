@@ -54,6 +54,7 @@ void level_char_up(Entity *player, i32 stat) {
 	case men:
 		{
 			player->mental++;
+			player->max_mp = 100+6*(player->mental-10);
 		} break;
 	}
 

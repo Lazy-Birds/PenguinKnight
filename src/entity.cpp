@@ -380,6 +380,7 @@ Entity load_npc(Vector2 pos, i32 type) {
             nick.has_hit = false;
             nick.alive = true;
             nick.assymetric = false;
+            nick.name = S("Coyote Nick");
 
             return nick;
         } break;
@@ -1984,6 +1985,7 @@ void destroy_boss_walls() {
 }
 
 void draw_boss_health_bar(Entity *boss) {
+    DrawTextExt(font_hellomyoldfriend, boss->name, v2(out->width*.5-302, out->height-75), v4_white, v2_zero, 2.0);
     DrawRect(r2_bounds(v2(out->width*.5-302, out->height-50), v2(604, 12), v2_zero, v2_one), v4_black);
     DrawRect(r2_bounds(v2(out->width*.5-300, out->height-48), v2((boss->current_health/boss->max_health)*600, 8), v2_zero, v2_one), v4_red);
 }
@@ -2070,6 +2072,22 @@ Rectangle2 hitbox_simple(Entity *ent) {
     return hitbox;
 }
 
+bool restores_mp(Entity *ent) {
+    switch (ent->type)
+    {
+    case sp_flame_wheel:
+    case sp_flame_rain:
+    case sp_flame_ball:
+        {
+            return false;
+        } break;
+    default:
+        {
+            return true;
+        } break;
+    }
+}
+
 Entity* enemy_hit(Rectangle2 hitbox) {
     Level *level = &World[player.player_level];
     for (int i = 0; i < level->entities.count; i++) {
@@ -2111,7 +2129,7 @@ void entity_take_damage(Entity *ent, Entity *ent_2) {
         ent->state = DYING;
         ent->state_time = 0;
         player.exp_gained += ent->enemy.exp_dropped;
-        if (player.mp_cooldown <= 0) {
+        if (player.mp_cooldown <= 0 && restores_mp(ent_2)) {
             player.current_mp+=10;
             player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
             player.mp_cooldown+=.5;
@@ -2120,7 +2138,7 @@ void entity_take_damage(Entity *ent, Entity *ent_2) {
     } else {
         ent->current_health-=damage;
         ent->invuln = true;
-        if (player.mp_cooldown <= 0) {
+        if (player.mp_cooldown <= 0 && restores_mp(ent_2)) {
             player.current_mp+=10;
             player.current_mp = clamp_f32(player.current_mp, 0, player.max_mp);
             player.mp_cooldown+=.5;
@@ -2284,34 +2302,6 @@ void draw_fire(Entity *interactible, Game_Input *input) {
 
     if (random_f32_between(0, 1) < .1) {
         particle_emit(min, max, smoke);
-    }
-}
-
-void draw_ent(Entity *ent) {
-    switch (ent->type)
-    {
-    case 0:
-        {
-            if (ent->state_time*60 < 60) {
-                DrawImage(ent->image[0], v2(ent->position.x - camera_pos.x+out->width*.5, ent->position.y));
-            } else if (ent->state_time*60 < 120) {
-                DrawImage(ent->image[1], v2(ent->position.x - camera_pos.x+out->width*.5, ent->position.y));
-            } else {
-                DrawImage(ent->image[2], v2(ent->position.x - camera_pos.x+out->width*.5, ent->position.y));
-            }
-            
-            if (ent->state_time*60 > 180) {
-                    ent->state_time = 0;
-            }
-        } break;
-    case 1:
-        {
-            DrawImage(ent->image[0], v2(ent->position.x+camera_offset, ent->position.y));
-        } break;
-    case 2:
-        {
-            
-        } break;
     }
 }
 

@@ -18,9 +18,17 @@ void player_action(Game_Input *input) {
 
 	update_spells();
 
-	if (player.weapon.sprite_index > 0) {
-		charged_projectile(&player.weapon);
+	if (ControllerReleased(0, Button_E) && player.spell_selected < player.spell_list.count)
+	{
+		player.spell_selected++;
+	} else if (ControllerReleased(0, Button_Q) && player.spell_selected > 1)
+	{
+		player.spell_selected--;
 	}
+
+	/*if (player.weapon.sprite_index > 0) {
+		charged_projectile(&player.weapon);
+	}*/
 
 	if (player.mp_cooldown > 0) {
 		player.mp_cooldown-=dt;
@@ -47,23 +55,6 @@ void player_action(Game_Input *input) {
 		player.acting_cd-=input->dt;
 	}
 	
-
-	//Edge cases
-	if (player.state != state_change) {
-		switch (state_change)
-		{
-		case ATTACK:
-		case STATECHARGEATTACKING:
-		case STATEJUMPATTACK:
-			{
-				set_enemy_vuln();
-			} break;
-		}
-
-		state_change = player.state;
-		player.state_time = 0;
-	}
-
 	//Gear Change
 	if (player.state == NEUTRAL) {
 		if (!player.alive) {
@@ -95,8 +86,29 @@ void player_action(Game_Input *input) {
 			player.state = GUARD;
 			player.state_time = 0;
 		}
-		state_change = player.state;
+
+		player.animation.frame = 0;
+		player.animation.index = 0;
 	}
+
+	//Guvvy Work
+	if (player.state != state_change) {
+		switch (state_change)
+		{
+		case ATTACK:
+		case STATECHARGEATTACKING:
+		case STATEJUMPATTACK:
+			{
+				set_enemy_vuln();
+			} break;
+		}
+
+		state_change = player.state;
+		player.state_time = 0;
+		player.animation.frame = 0;
+		player.animation.index = 0;
+	}
+
 
 	//Healing
 	if (c0.h && heal_cd <= 0 && player.current_fairy_uses > 0) {
@@ -112,46 +124,27 @@ void player_action(Game_Input *input) {
 	} else {
 		player.acting = false;
 	}
-	
-	if (!(sleep<=0)) {
-		sleep--;
-		if (player.state == ATTACK)
-		{
-			draw_player(fr_atk_six);
-		} else if (player.state == STATECHARGEATTACKING)
-		{
-			draw_player(fr_chatk_four);
-		}
-		return;
-	}
+
 	switch (player.state) {
 	case NEUTRAL: 
 		{
+			player.animation.frame = 0;
 			player.facing = sign_i32(player.facing);
 			player.velocity.x = move_f32(player.velocity.x, 0, 3000 * dt);
-			draw_player(fr_neutral);
+			draw_player(gf_move);
 		} break;
 	case MOVE:
 		{
 			
 			if (c0.right)
-			{
-				
+			{	
 				player.velocity.x = move_f32(player.velocity.x, 350, 1000 * dt);
 				
-
 				if (player.facing < 0) {
 					player.facing = 1;
 				} else {
 					player.facing++;
 				}
-
-				if (i32(state_time*60)%30 < 15) {
-					draw_player(fr_neutral);	
-				} else {
-					draw_player(fr_walk);
-				}
-				
 			}
 			else if (c0.left)
 			{
@@ -163,50 +156,41 @@ void player_action(Game_Input *input) {
 				} else {
 					player.facing--;
 				}
+			}
 
-				if (i32(state_time*60)%30 < 15) {
-					draw_player(fr_neutral);	
-				} else {
-					draw_player(fr_walk);
-				}
+			if (player.animation.frame == 1 && player.animation.index == 7)
+			{
+				player.animation.frame = 0;
+				player.animation.index = 0;
 			}
 
 			if (c0.bumper && entity_in_air(&player)) {
-				state_time = 0;
 				player.state = STATEJUMPATTACK;
-				draw_player(fr_neutral);
 			} else if (c0.bumper) {
-				state_time = 0;
 				player.state = ATTACK;
-				draw_player(fr_neutral);
 			} else if (c0.trigger) {
-				state_time = 0;
 				player.state = CHARGING;
-				draw_player(fr_neutral);
 			} else if (c0.b) {
-				state_time = 0;
 				player.state = STATEDODGEDASH;
-				draw_player(fr_neutral);
 			} else if (c0.up) {
 				player.state = JUMP;
-				draw_player(fr_neutral);
 			} else if (!c0.left && !c0.right) {
-
 				player.state = NEUTRAL;
-				draw_player(fr_neutral);
 			} else if (c0.a) {
 				player.state = GUARD;
-				draw_player(fr_neutral);
 			}
 			
-
+			draw_player(gf_move);
 		} break;
 	case JUMP:
 		{
+
 			if (!entity_on_wall(&player)) {
-				draw_player(fr_neutral);
 				player.state = NEUTRAL;
-			} else if (player.current_stamina > 20) {
+				break;
+			} 
+
+			if (player.current_stamina > 20) {
 				if (c0.right)
 				{
 					player.velocity.x = move_f32(player.velocity.x, 250, 250 * dt);
@@ -230,25 +214,26 @@ void player_action(Game_Input *input) {
 						player.facing--;
 					}
 				}
-				if (player.state_time*60 < 7) {
-					draw_player(fr_jmp_one);
-				} else if (player.state_time*60 < 14 && entity_on_wall(&player)) {
-					draw_player(fr_jmp_two);
+				if (player.animation.frame == 2 && entity_on_wall(&player)) {
+
 					player.velocity.y-=240;
 					player.current_stamina-=20;
 
 					MixerPlaySound(player.jumpies, 1.0);
 
-				} else if (player.velocity.y < 0) {
-					draw_player(fr_jmp_two);
-				} else {
-					draw_player(fr_neutral);
+				}
+
+				//When the jump animation finishes switch to neutral state
+				if (player.animation.frame = 1 && player.animation.index == 44)
+				{
 					player.state = NEUTRAL;
 				}
 			} else {
-				draw_player(fr_neutral);
+
 				player.state = NEUTRAL;
 			}
+
+			draw_player(gf_jump);
 		} break;
 	case ATTACK: 
 		{
@@ -322,74 +307,66 @@ void player_action(Game_Input *input) {
 		} break;
 	case STATEJUMPATTACK: 
 		{
-			
+
 			if (player.weapon.type == pw_cleaver) 
 			{
-
-
-				if (player.state_time == 0 && player.current_stamina > 19) 
+				if (player.animation.frame == 0 && player.animation.index == 0 && player.current_stamina > 19) 
 				{
-					draw_player(fr_jmp_atk_one);
 					player.current_stamina-=20;
 					player.velocity.x += 1600*dt*sign_f32(player.facing);
 					weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 1);
-				} else if (entity_in_air(&player) && player.state_time*fps > 0) 
+				} else if (entity_in_air(&player) && player.animation.frame == 0 && player.animation.index > 0) 
 				{
-					draw_player(fr_jmp_atk_one);
 					player.velocity.x = move_f32(player.velocity.x, 0, 400 * dt);
 					weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 1);
-				} else if (!entity_in_air(&player) && player.state_time*fps > 0) 
+				} else if (player.animation.index < 89 && !entity_in_air(&player) && player.animation.index > 0) 
 				{
-					draw_player(fr_jmp_atk_two);
 					player.state = LANDED;
 					player.velocity.x = move_f32(player.velocity.x, 0, 400 * dt);
 					weapon_attack(player.position, player.weapon, player.facing, get_dmg_attr(), 1);
 				} else
 				{
-					draw_player(fr_neutral);
 					player.state = NEUTRAL;
 				}
+
+				draw_player(cf_jump_attack);
 			} else 
 			{
-				Dump("oops");
+				player.state = NEUTRAL;
+				draw_player(gf_move);
 			}
-
-			
 		} break;
 	case LANDED:
 		{
-			if (player.state_time*fps < 30) 
+			if (player.animation.frame == 0)
 			{
-				player.velocity.x = move_f32(player.velocity.x, 0, 400 * dt);
-				draw_player(fr_jmp_atk_two);
+				player.animation.frame = 1;
+			}
 
-			} else 
+			if (player.animation.frame == 1)
 			{
-				draw_player(fr_jmp_atk_two);
-				player.state = NEUTRAL;
+				
 				player.velocity.x = move_f32(player.velocity.x, 0, 400 * dt);
 				set_enemy_vuln();
+			} else
+			{
+				player.state = NEUTRAL;
 			}
 			
-			
+			draw_player(cf_jump_attack);
 		} break;
 	case HIT:
 		{
-			
-			if (player.state_time == 0)
+			if (player.animation.index < 3)
 			{
 				player.velocity.y = -6000*dt;
-				player.velocity.x = -6000*dt;
-
-				draw_player(fr_damage);
 
 				MixerPlaySound(player.hit, 1.0);
 			} else {
-				draw_player(fr_damage);
 				player.state = NEUTRAL;
-
 			} 
 			
+			draw_player(gf_hurt);
 		} break;
 	case EXHAUSTED:
 		{
@@ -397,32 +374,30 @@ void player_action(Game_Input *input) {
 		} break;
 	case STATEDODGEDASH:
 		{
-			if (player.state_time*fps < 12 && ControllerReleased(0, Button_B))
+			if (player.animation.index <= 7 && ControllerReleased(0, Button_B))
 			{
-				draw_player(fr_neutral);
 				player.state = STATEDODGE;
-			} else if (player.state_time*fps < 12 && ControllerDown(0, Button_B))
+			}  else if (player.animation.index > 7 && ControllerDown(0, Button_B))
 			{
-				draw_player(fr_neutral);
-			} else if (player.state_time*fps >= 12 && ControllerDown(0, Button_B))
-			{
-				draw_player(fr_neutral);
 				player.state = STATEDASH;
 			} else
 			{
-				draw_player(fr_neutral);
 				player.state = NEUTRAL;
 			}
+
+			draw_player(gf_move);
 		} break;
 	case STATEDODGE:
 		{
 			f32 dodgespeed = 600*input->dt*sign_f32(player.facing);
 
-
-
-			if (player.current_stamina > 20 && player.state_time*fps < 1)
+			if (player.animation.frame == 0)
 			{
-				draw_player(fr_dodge_one);
+				player.animation.frame = 12;
+			}
+
+			if (player.animation.frame == 0 && player.animation.index == 0 && player.current_stamina > 20)
+			{
 				player.current_stamina-=20;
 				invuln_time+=24*input->dt;
 
@@ -433,62 +408,38 @@ void player_action(Game_Input *input) {
 				{
 					player.facing = -1;
 				}
-			} else if (player.state_time*fps < 4)
+			} else if (player.animation.frame >= 0 &&player.animation.frame <= 4)
 			{
 				player.velocity.x+=dodgespeed;
-				draw_player(fr_dodge_one);
-			} else if (player.state_time*fps < 8)
-			{
-				
-				player.velocity.x+=dodgespeed;
-				draw_player(fr_dodge_two);
-			} else if (player.state_time*fps < 12)
+			} else if (player.animation.frame == 5)
 			{
 				player.velocity.x+=dodgespeed;
-				draw_player(fr_dodge_three);
-			} else if (player.state_time*fps < 16)
-			{
-				player.velocity.x+=dodgespeed;
-				draw_player(fr_dodge_four);
-			} else if (player.state_time*fps < 20)
-			{
-				player.velocity.x+=dodgespeed;
-				draw_player(fr_dodge_five);
-			} else if (player.state_time*fps < 24)
-			{
-				player.velocity.x-=dodgespeed;
-				draw_player(fr_dodge_six);
-			} else
-			{
-				player.state = NEUTRAL;
-				draw_player(fr_neutral);
+
+				if (player.animation.index == 3) {
+					player.state = NEUTRAL;
+				}
 			}
+
+			draw_player(gf_dodge);
 		} break;
 	case STATEDASH:
 		{
 			if (player.current_stamina < 1) {
-				draw_player(fr_neutral);
 				player.state = NEUTRAL;
 
-			} else if (state_time*60 <= 1) {
-				player.velocity.x = 0;
-				draw_player(fr_sprint_one);
-				player.current_stamina -= 10;
-			} else if (state_time*60 < 8) {
-				draw_player(fr_sprint_one);
-			} else if (state_time*60 < 12) {
-				draw_player(fr_sprint_two);
-				invuln_time+=(10*dt);
-			} else if (state_time*60 < 15) {
-				draw_player(fr_sprint_three);
-				player.velocity.x+=600*dt*sign_f32(player.facing);
-			} else if (c0.b) {
-				if (i32(state_time*60)%20 < 10) {
-					draw_player(fr_sprint_four);
-				} else {
-					draw_player(fr_sprint_three);
-				}
+			} 
 
+			if (ControllerReleased(0, Button_B))
+			{
+				player.state = NEUTRAL;
+			} else if (player.animation.frame == 0)
+			{
+				player.velocity.x = 0;
+			} else if (player.animation.frame == 1) 
+			{
+				player.velocity.x+=600*dt*sign_f32(player.facing);
+			} else if (player.animation.frame > 1 && player.animation.frame < 4)
+			{
 				if (player.facing > 0) {
 					player.velocity.x += 6000*dt;
 					player.velocity.x = clamp_f32(player.velocity.x, 0, 30000*dt);
@@ -496,7 +447,7 @@ void player_action(Game_Input *input) {
 					player.velocity.x += -6000*dt;
 					player.velocity.x = clamp_bot_f32(player.velocity.x, -30000*dt);
 				}
-				
+
 				player.current_stamina-= 30*dt;
 
 
@@ -533,30 +484,35 @@ void player_action(Game_Input *input) {
 				if (c0.up) {
 					player.state = JUMP;
 				}
-
-			} else if (state_time*60 < 28) {
-				draw_player(fr_sprint_two);
-				//player.velocity.x-=8000*dt*sign_f32(player.facing);
-			} else {
-				draw_player(fr_neutral);
-				player.state = NEUTRAL;
 			}
+
+			draw_player(gf_sprint);
 		} break;
 	case GUARD:
 		{
-			if (state_time*60 < 15) {
-				draw_player(fr_grd_one);
-				player.velocity.x = 0;
-			} else if (c0.a && player.current_mp > 0 && player.shield_hit > 0) {
-				draw_player(fr_grd_three);
-				player.current_mp-=30*dt;
-			} else if (c0.a && player.current_mp > 0) {
-				draw_player(fr_grd_two);
-				player.current_mp-=30*dt;
-			}  else {
-				draw_player(fr_neutral);
+			if (player.current_mp <= 0)
+			{
 				player.state = NEUTRAL;
 			}
+
+			if (ControllerReleased(0, Button_A) || (player.animation.frame == 1 && player.animation.index == 29))
+			{
+				player.state = NEUTRAL;
+			} else if (player.animation.frame == 0 && player.shield_hit > 0 && player.current_mp > 0)
+			{
+				player.current_mp-=30*input->dt;
+
+				player.current_mp = clamp_i32(player.current_mp, 0, player.max_mp);
+
+				player.animation.frame = 1;
+				player.animation.index = 0;
+			} else
+			{
+				player.current_mp-=30*input->dt;
+				player.current_mp = clamp_i32(player.current_mp, 0, player.max_mp);
+			}
+
+			draw_player(gf_guard);
 		} break;
 	case HOOKSHOTTING:
 		{
@@ -568,12 +524,14 @@ void player_action(Game_Input *input) {
 					}
 
 				}
-				draw_player(fr_jmp_two);
+				
+				player.animation.frame = 1;
+				player.animation.index = 0;
 			} else {
-				draw_player(fr_jmp_two);
 				player.state = NEUTRAL;
 			}
-			
+
+			draw_player(gf_jump);			
 		} break;
 	case DEAD:
 		{
@@ -619,8 +577,8 @@ void set_enemy_vuln() {
 void player_hit(Entity *entity, Game_Input *input) {
 	if (player.state == GUARD && player.current_mp > 10) {
 		player.current_mp-=10;
-		invuln_time = 60*input->dt;
-		player.shield_hit = 60*input->dt;
+		invuln_time = 30*input->dt;
+		player.shield_hit = 30*input->dt;
 
 		if (player.position.x < entity->position.x && r2_intersects(get_entity_rect(&player), entity->hitbox)) {
 			player.velocity.x-=6000*input->dt;
@@ -806,28 +764,35 @@ void charged_projectile(Weapon *wep) {
 	}
 }
 
-void draw_player(i32 frame) {
-	Weapon weapon = player.weapon;
-	Vector2 position = player.position;
-	i32 facing = player.facing;
-
-    if (sign_i32(facing) < 0) {
-        DrawImageMirrored(weapon.image[frame], v2(position.x + weapon.offset_left.x+camera_offset, position.y+weapon.offset_left.y), true, false);
-        //DrawImage(weapon.image[i32(frame + weapon.weapon_frames.y+1)], v2(position.x + weapon.offset_right.x, position.y+weapon.offset_right.y));
-    } else {
-        DrawImage(weapon.image[frame], v2(position.x + weapon.offset_right.x+camera_offset, position.y+weapon.offset_right.y));
-    }
-}
-
 void draw_player_stats() {
-	DrawRect(r2_bounds(v2(70, 20), v2(20+player.max_health, 12), v2_zero, v2_one), v4_black);
-    DrawRect(r2_bounds(v2(72, 22), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
+	DrawRect(r2_bounds(v2(140, 20), v2(20+player.max_health, 12), v2_zero, v2_one), v4_black);
+    DrawRect(r2_bounds(v2(142, 22), v2(16+player.current_health, 8), v2_zero, v2_one), v4_red);
 
-    DrawRect(r2_bounds(v2(70, 34), v2(20+player.max_stamina, 12), v2_zero, v2_one), v4_black);
-    DrawRect(r2_bounds(v2(72, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
+    DrawRect(r2_bounds(v2(140, 34), v2(20+player.max_stamina, 12), v2_zero, v2_one), v4_black);
+    DrawRect(r2_bounds(v2(142, 36), v2(16+player.current_stamina, 8), v2_zero, v2_one), v4_green);
 
-    DrawRect(r2_bounds(v2(70, 48), v2(20+player.max_mp, 12), v2_zero, v2_one), v4_black);
-    DrawRect(r2_bounds(v2(72, 50), v2(16+player.current_mp, 8), v2_zero, v2_one), v4_blue);
+    DrawRect(r2_bounds(v2(140, 48), v2(20+player.max_mp, 12), v2_zero, v2_one), v4_black);
+    DrawRect(r2_bounds(v2(142, 50), v2(16+player.current_mp, 8), v2_zero, v2_one), v4_blue);
+
+    DrawImage(weapon_icon, v2(16, 16));
+    DrawImage(player.weapon.icon, v2(25, 25));
+
+    if (player.fairy_uses > 0) {
+        DrawRect(r2_bounds(v2(140, 64), v2(30*player.fairy_uses+2, 12), v2_zero, v2_one), v4_black);
+        for (int i = 0; i < player.current_fairy_uses; i++) {
+            DrawRect(r2_bounds(v2(142+(14+16)*i, 66), v2(16+12, 8), v2_zero, v2_one), rgb(162, 221, 225));
+        }
+
+        if (i32(player.state_time*60)%60 < 30) {
+            DrawImage(fairy_icon[0], v2(59, 66));
+        } else {
+            DrawImage(fairy_icon[1], v2(59, 66));
+
+        }
+    }
+
+    DrawImage(weapon_icon, v2(86, 16));
+    DrawImage(player.spell_list.data[player.spell_selected].icon, v2(95, 25));
 }
 
 void player_move(Game_Input *input) {

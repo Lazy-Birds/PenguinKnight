@@ -2,6 +2,9 @@ Notes:
 -17 milliseconds ~= 1 frame
 -Research Windows Controller Input
 -https://learn.microsoft.com/en-us/windows/win32/api/xinput/ns-xinput-xinput_gamepad
+-Arenas
+--Pengu_Arena - Entity's/Levels
+--Animations - animation_arena
 
 80-97 = 3840, 4656
 
@@ -16,6 +19,11 @@ Credits:
 Lou Bagel Itch.io
 
 Todo:
+
+Graphics
+--Shader Toy
+--Radiance Cascades
+--Make Alphablending function
 
 -Sound
 --Learn Reaper
@@ -33,6 +41,8 @@ Todo:
 -Enemies
 --Put pengu kings title above health bar
 --make better slime darts
+--Attack Freeze Frame
+
 -Marmosets
 --Quick shooter
 --Travels in a pair with a hedgehog
